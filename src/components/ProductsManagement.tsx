@@ -13,7 +13,7 @@ import {
     Filter,
     DollarSign
 } from 'lucide-react';
-import { Product, CreateProductData, ProductCategory } from '@/types/product';
+import { Product, CreateProductData, ProductCategory, ProductVariant } from '@/types/product';
 import { mockProducts } from '@/data/mockProducts';
 import Footer from './Footer';
 
@@ -42,31 +42,31 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
         'Pan choco', 'Melvas', 'Muffins', 'Panes', 'Pasteles chocolate', 'Pasteles de naranja'
     ];
 
-    const getVariantsByCategory = (category: ProductCategory) => {
+    const getVariantsByCategory = (category: ProductCategory): ProductVariant[] => {
         switch (category) {
             case 'Donut':
             case 'Mini donut':
-                return ['choco', 'choco grajeas', 'choco coco', 'glase', 'glase grajeas', 'glase coco'];
+                return ['choco', 'choco grajeas', 'choco coco', 'glase', 'glase grajeas', 'glase coco'] as ProductVariant[];
             case 'Rellenas':
             case 'Mini rellenas':
-                return ['chantilly', 'manjar'];
+                return ['chantilly', 'manjar'] as ProductVariant[];
             case 'Orejas':
-                return ['orejas', 'mini orejas'];
+                return ['orejas', 'mini orejas'] as ProductVariant[];
             case 'Pizzas':
-                return ['cuadrada', 'redonda', 'mini'];
+                return ['cuadrada', 'redonda', 'mini'] as ProductVariant[];
             case 'Pan choco':
-                return ['panes', 'mini panes'];
+                return ['panes', 'mini panes'] as ProductVariant[];
             case 'Melvas':
-                return ['melvas', 'mini melvas'];
+                return ['melvas', 'mini melvas'] as ProductVariant[];
             case 'Muffins':
-                return ['normales', 'manjar'];
+                return ['normales', 'manjar'] as ProductVariant[];
             case 'Panes':
-                return ['hamburguesa', 'mini hamburguesa', 'hot dog', 'mini hot dog', 'gusano', 'mini gusano'];
+                return ['hamburguesa', 'mini hamburguesa', 'hot dog', 'mini hot dog', 'gusano', 'mini gusano'] as ProductVariant[];
             case 'Pasteles chocolate':
             case 'Pasteles de naranja':
-                return ['normales', 'choco grajeas', 'sin cortar (s/c)', 'x12', 'x14', 'decorados'];
+                return ['normales', 'choco grajeas', 'sin cortar (s/c)', 'x12', 'x14', 'decorados'] as ProductVariant[];
             default:
-                return ['normales'];
+                return ['normales'] as ProductVariant[];
         }
     };
 
@@ -165,7 +165,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
         return price ? `$${price.toFixed(2)}` : 'N/A';
     };
 
-    const getCategoryIcon = (category: ProductCategory) => {
+    const getCategoryIcon = (_category: ProductCategory) => {
         return <ShoppingBag className="h-5 w-5 text-orange-600" />;
     };
 
@@ -397,7 +397,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                             </label>
                                             <select
                                                 value={formData.variant}
-                                                onChange={(e) => setFormData({ ...formData, variant: e.target.value })}
+                                                onChange={(e) => setFormData({ ...formData, variant: e.target.value as ProductVariant })}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                                             >
                                                 {getVariantsByCategory(formData.category).map(variant => (
