@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: '20.x'
+  NODE_ENV: 'development'
 
 jobs:
   build-and-deploy:
@@ -23,7 +24,10 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install -f
+        run: |
+          npm install
+          npm install -D tailwindcss postcss autoprefixer
+          npx tailwindcss init -p
 
       - name: Build
         run: npm run build
@@ -34,5 +38,5 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: out # Next.js static export output
+          folder: out
           branch: gh-pages 
