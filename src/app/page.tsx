@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { User, CreditCard, Eye, EyeOff } from 'lucide-react';
 import { ClipLoader } from 'react-spinners';
+import Image from 'next/image';
 import Logo from '@/components/Logo';
 import ContactModal from '@/components/ContactModal';
 import Dashboard from '@/components/Dashboard';
@@ -148,10 +149,14 @@ export default function LoginPage() {
       {/* Imagen de Panadería - Lado Derecho */}
       <div className="flex-1 relative hidden lg:block">
         <div className="absolute inset-0 bg-gradient-to-br from-orange-600/20 to-amber-600/20 z-10"></div>
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
           alt="Panadería y producción de pan"
-          className="w-full h-full object-cover"
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="object-cover"
+          priority
+          quality={85}
         />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-8 text-white">
           <h3 className="text-2xl font-bold mb-2">Qitson</h3>

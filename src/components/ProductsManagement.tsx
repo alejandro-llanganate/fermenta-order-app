@@ -13,7 +13,7 @@ import {
     Filter,
     DollarSign
 } from 'lucide-react';
-import { Product, CreateProductData, UpdateProductData, ProductCategory } from '@/types/product';
+import { Product, CreateProductData, ProductCategory } from '@/types/product';
 import { mockProducts } from '@/data/mockProducts';
 import Footer from './Footer';
 
@@ -304,8 +304,8 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${product.isActive
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
                                                     }`}>
                                                     {product.isActive ? 'Disponible' : 'No disponible'}
                                                 </span>
@@ -380,7 +380,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                                     setFormData({
                                                         ...formData,
                                                         category: newCategory,
-                                                        variant: variants[0] as any
+                                                        variant: variants[0]
                                                     });
                                                 }}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
@@ -397,7 +397,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                             </label>
                                             <select
                                                 value={formData.variant}
-                                                onChange={(e) => setFormData({ ...formData, variant: e.target.value as any })}
+                                                onChange={(e) => setFormData({ ...formData, variant: e.target.value })}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                                             >
                                                 {getVariantsByCategory(formData.category).map(variant => (

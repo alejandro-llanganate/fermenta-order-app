@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import {
-    Users,
     Plus,
     Search,
     ArrowLeft,
@@ -14,7 +13,7 @@ import {
     Phone,
     MapPin as MapPinIcon
 } from 'lucide-react';
-import { Client, CreateClientData, UpdateClientData } from '@/types/client';
+import { Client, CreateClientData } from '@/types/client';
 import { mockClients } from '@/data/mockClients';
 import Footer from './Footer';
 
@@ -226,8 +225,8 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${client.isActive
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
                                                     }`}>
                                                     {client.isActive ? 'Cliente activo' : 'Cliente inactivo'}
                                                 </span>

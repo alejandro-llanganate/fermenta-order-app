@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Users, 
   Plus, 
@@ -13,7 +13,7 @@ import {
   Shield,
   ShieldCheck
 } from 'lucide-react';
-import { User, CreateUserData, UpdateUserData, UserRole } from '@/types/user';
+import { User, CreateUserData, UserRole } from '@/types/user';
 import { mockUsers } from '@/data/mockUsers';
 import Footer from './Footer';
 

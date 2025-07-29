@@ -8,24 +8,17 @@ import {
     ArrowLeft,
     Check,
     X,
-    UserCheck,
-    UserX,
     Calendar,
     DollarSign,
     Printer,
-    Eye,
     Trash2,
-    Edit3,
-    Building,
-    Phone,
     MapPin as MapPinIcon,
-    CreditCard,
     Package
 } from 'lucide-react';
-import { Order, CreateOrderData, UpdateOrderData, PaymentMethod, OrderItem } from '@/types/order';
+import { Order, CreateOrderData, PaymentMethod, OrderItem } from '@/types/order';
 import { Product } from '@/types/product';
 import { Client } from '@/types/client';
-import { Route } from '@/types/route';
+
 import { mockOrders } from '@/data/mockOrders';
 import { mockProducts } from '@/data/mockProducts';
 import { mockClients } from '@/data/mockClients';
@@ -45,17 +38,17 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const printRef = useRef<HTMLDivElement>(null);
 
-      // Estados para el formulario
-  const [formData, setFormData] = useState<CreateOrderData>({
-    clientName: '',
-    clientPhone: '',
-    clientCity: '',
-    clientAddress: '',
-    paymentMethod: 'Efectivo',
-    routeId: '',
-    items: [],
-    notes: ''
-  });
+    // Estados para el formulario
+    const [formData, setFormData] = useState<CreateOrderData>({
+        clientName: '',
+        clientPhone: '',
+        clientCity: '',
+        clientAddress: '',
+        paymentMethod: 'Efectivo',
+        routeId: '',
+        items: [],
+        notes: ''
+    });
 
     // Estados para búsquedas
     const [clientSearchTerm, setClientSearchTerm] = useState('');
@@ -154,60 +147,60 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         setSelectedItems(selectedItems.filter(item => item.id !== itemId));
     };
 
-      const handleCreateOrder = () => {
-    if (selectedItems.length === 0 || !formData.clientName.trim()) return;
+    const handleCreateOrder = () => {
+        if (selectedItems.length === 0 || !formData.clientName.trim()) return;
 
-    const { subtotal, totalAmount } = calculateTotals(selectedItems);
-    const selectedRoute = mockRoutes.find(route => route.id === formData.routeId);
-    
-    const newOrder: Order = {
-      id: Date.now().toString(),
-      orderNumber: generateOrderNumber(),
-      clientName: formData.clientName,
-      clientPhone: formData.clientPhone,
-      clientCity: formData.clientCity,
-      clientAddress: formData.clientAddress,
-      orderDate: new Date(),
-      paymentMethod: formData.paymentMethod,
-      routeId: formData.routeId,
-      routeName: selectedRoute?.nombre,
-      items: selectedItems,
-      subtotal,
-      totalAmount,
-      status: 'Pendiente',
-      isActive: true,
-      createdAt: new Date(),
-      notes: formData.notes
-    };
+        const { subtotal, totalAmount } = calculateTotals(selectedItems);
+        const selectedRoute = mockRoutes.find(route => route.id === formData.routeId);
 
-    setOrders([newOrder, ...orders]);
-    setShowCreateModal(false);
-    resetForm();
-  };
-
-      const handleUpdateOrder = () => {
-    if (!editingOrder || selectedItems.length === 0) return;
-
-    const { subtotal, totalAmount } = calculateTotals(selectedItems);
-    const selectedRoute = mockRoutes.find(route => route.id === formData.routeId);
-    
-    const updatedOrders = orders.map(order =>
-      order.id === editingOrder.id
-        ? { 
-            ...order, 
-            ...formData,
+        const newOrder: Order = {
+            id: Date.now().toString(),
+            orderNumber: generateOrderNumber(),
+            clientName: formData.clientName,
+            clientPhone: formData.clientPhone,
+            clientCity: formData.clientCity,
+            clientAddress: formData.clientAddress,
+            orderDate: new Date(),
+            paymentMethod: formData.paymentMethod,
+            routeId: formData.routeId,
             routeName: selectedRoute?.nombre,
             items: selectedItems,
             subtotal,
-            totalAmount
-          }
-        : order
-    );
+            totalAmount,
+            status: 'Pendiente',
+            isActive: true,
+            createdAt: new Date(),
+            notes: formData.notes
+        };
 
-    setOrders(updatedOrders);
-    setEditingOrder(null);
-    resetForm();
-  };
+        setOrders([newOrder, ...orders]);
+        setShowCreateModal(false);
+        resetForm();
+    };
+
+    const handleUpdateOrder = () => {
+        if (!editingOrder || selectedItems.length === 0) return;
+
+        const { subtotal, totalAmount } = calculateTotals(selectedItems);
+        const selectedRoute = mockRoutes.find(route => route.id === formData.routeId);
+
+        const updatedOrders = orders.map(order =>
+            order.id === editingOrder.id
+                ? {
+                    ...order,
+                    ...formData,
+                    routeName: selectedRoute?.nombre,
+                    items: selectedItems,
+                    subtotal,
+                    totalAmount
+                }
+                : order
+        );
+
+        setOrders(updatedOrders);
+        setEditingOrder(null);
+        resetForm();
+    };
 
     const handleDeleteOrder = (orderId: string) => {
         if (confirm('¿Está seguro de que desea eliminar este pedido? Esta acción no se puede deshacer.')) {
@@ -223,45 +216,45 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         ));
     };
 
-      const openEditModal = (order: Order) => {
-    setEditingOrder(order);
-    setFormData({
-      clientName: order.clientName,
-      clientPhone: order.clientPhone,
-      clientCity: order.clientCity,
-      clientAddress: order.clientAddress,
-      paymentMethod: order.paymentMethod,
-      routeId: order.routeId || '',
-      items: order.items.map(item => ({
-        productId: item.productId,
-        productName: item.productName,
-        productCategory: item.productCategory,
-        productVariant: item.productVariant,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        usePaginaPrice: item.usePaginaPrice
-      })),
-      notes: order.notes || ''
-    });
-    setSelectedItems([...order.items]);
-    setClientSearchTerm(order.clientName);
-  };
+    const openEditModal = (order: Order) => {
+        setEditingOrder(order);
+        setFormData({
+            clientName: order.clientName,
+            clientPhone: order.clientPhone,
+            clientCity: order.clientCity,
+            clientAddress: order.clientAddress,
+            paymentMethod: order.paymentMethod,
+            routeId: order.routeId || '',
+            items: order.items.map(item => ({
+                productId: item.productId,
+                productName: item.productName,
+                productCategory: item.productCategory,
+                productVariant: item.productVariant,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                usePaginaPrice: item.usePaginaPrice
+            })),
+            notes: order.notes || ''
+        });
+        setSelectedItems([...order.items]);
+        setClientSearchTerm(order.clientName);
+    };
 
-      const resetForm = () => {
-    setFormData({
-      clientName: '',
-      clientPhone: '',
-      clientCity: '',
-      clientAddress: '',
-      paymentMethod: 'Efectivo',
-      routeId: '',
-      items: [],
-      notes: ''
-    });
-    setSelectedItems([]);
-    setClientSearchTerm('');
-    setProductSearchTerm('');
-  };
+    const resetForm = () => {
+        setFormData({
+            clientName: '',
+            clientPhone: '',
+            clientCity: '',
+            clientAddress: '',
+            paymentMethod: 'Efectivo',
+            routeId: '',
+            items: [],
+            notes: ''
+        });
+        setSelectedItems([]);
+        setClientSearchTerm('');
+        setProductSearchTerm('');
+    };
 
     const closeModal = () => {
         setShowCreateModal(false);
@@ -372,13 +365,13 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                          <input
-                type="text"
-                placeholder="Buscar por número de pedido, cliente, teléfono o estado..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
-              />
+                            <input
+                                type="text"
+                                placeholder="Buscar por número de pedido, cliente, teléfono o estado..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
+                            />
                         </div>
                     </div>
 
@@ -391,21 +384,21 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Número de pedido
                                         </th>
-                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Cliente
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ruta
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Fecha
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Estado
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total
-                    </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Cliente
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Ruta
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Fecha
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Estado
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Total
+                                        </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Opciones
                                         </th>
@@ -428,33 +421,33 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                     </div>
                                                 </div>
                                             </td>
-                                                                  <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {order.clientName}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {order.clientPhone}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                              <MapPinIcon className="h-4 w-4 text-yellow-600" />
-                            </div>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">
-                              {order.routeName || 'Sin asignar'}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {order.orderDate.toLocaleDateString('es-ES')}
-                      </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div>
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                        {order.clientName}
+                                                    </div>
+                                                    <div className="text-sm text-gray-500">
+                                                        {order.clientPhone}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <div className="flex-shrink-0 h-8 w-8">
+                                                        <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                                                            <MapPinIcon className="h-4 w-4 text-yellow-600" />
+                                                        </div>
+                                                    </div>
+                                                    <div className="ml-3">
+                                                        <div className="text-sm font-medium text-gray-900">
+                                                            {order.routeName || 'Sin asignar'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {order.orderDate.toLocaleDateString('es-ES')}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <select
                                                     value={order.status}
@@ -581,17 +574,17 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Buscar cliente existente
                                         </label>
-                                                            <input
-                      type="text"
-                      value={clientSearchTerm}
-                      onChange={(e) => {
-                        setClientSearchTerm(e.target.value);
-                        setShowClientDropdown(e.target.value.length > 0);
-                      }}
-                      onFocus={() => setShowClientDropdown(clientSearchTerm.length > 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
-                      placeholder="Buscar por nombre o institución..."
-                    />
+                                        <input
+                                            type="text"
+                                            value={clientSearchTerm}
+                                            onChange={(e) => {
+                                                setClientSearchTerm(e.target.value);
+                                                setShowClientDropdown(e.target.value.length > 0);
+                                            }}
+                                            onFocus={() => setShowClientDropdown(clientSearchTerm.length > 0)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
+                                            placeholder="Buscar por nombre o institución..."
+                                        />
 
                                         {showClientDropdown && filteredClients.length > 0 && (
                                             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
