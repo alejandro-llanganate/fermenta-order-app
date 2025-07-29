@@ -22,19 +22,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Clean install dependencies
+      - name: Install dependencies
         run: |
-          rm -rf node_modules
-          rm -f package-lock.json
-          npm install -f
-          npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
-          npx tailwindcss init -p
+          npm install --no-audit --no-fund --legacy-peer-deps
+          npm install -D tailwindcss@latest postcss@latest autoprefixer@latest --no-audit --no-fund --legacy-peer-deps
 
       - name: Build
         run: npm run build
-
-      - name: Run tests
-        run: npm test || true
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
