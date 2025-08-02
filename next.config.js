@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  output: 'standalone',
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -10,8 +10,9 @@ const nextConfig = {
       },
     ],
   },
-  basePath: process.env.NODE_ENV === 'production' ? '/fermenta-order-app' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/fermenta-order-app/' : '',
+  // Remove GitHub Pages specific config for Railway deployment
+  // basePath: process.env.NODE_ENV === 'production' ? '/fermenta-order-app' : '',
+  // assetPrefix: process.env.NODE_ENV === 'production' ? '/fermenta-order-app/' : '',
 }
 
 module.exports = nextConfig 
