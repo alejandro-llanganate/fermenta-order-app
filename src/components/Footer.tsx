@@ -18,12 +18,12 @@ export default function Footer() {
                                 </svg>
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Qitson</h3>
+                                <h3 className="text-lg font-bold text-white">Mega Donut</h3>
                                 <p className="text-sm text-gray-300">Sistema de Gestión</p>
                             </div>
                         </div>
                         <p className="text-gray-300 text-sm">
-                            Sistema inteligente de gestión de pedidos para Panadería Encarnación.
+                            Sistema inteligente de gestión de pedidos para Mega Donut.
                             Facilitamos la administración de usuarios, clientes, rutas y pedidos.
                         </p>
                     </div>
@@ -36,7 +36,7 @@ export default function Footer() {
                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                                 </svg>
-                                <span>Panadería Encarnación</span>
+                                <span>Mega Donut</span>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -85,10 +85,10 @@ export default function Footer() {
                 <div className="border-t border-gray-700 mt-8 pt-6">
                     <div className="flex flex-col md:flex-row justify-between items-center">
                         <p className="text-sm text-gray-400">
-                            © {currentYear} Qitson - Sistema de Gestión de Pedidos. Todos los derechos reservados.
+                            © {currentYear} Mega Donut - Sistema de Gestión de Pedidos. Todos los derechos reservados.
                         </p>
                         <p className="text-sm text-gray-400 mt-2 md:mt-0">
-                            Desarrollado para Panadería Encarnación
+                            Desarrollado para Mega Donut
                         </p>
                     </div>
                 </div>

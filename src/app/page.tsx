@@ -43,10 +43,10 @@ export default function LoginPage() {
       {/* Formulario de Login - Lado Izquierdo */}
       <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50 p-8">
         <div className="w-full max-w-md">
-          {/* Logo Qitson */}
+          {/* Logo Mega Donut */}
           <div className="text-center mb-8">
             <Logo size="lg" className="justify-center mb-4" />
-            <p className="text-orange-600 font-medium">Panadería Encarnación</p>
+            <p className="text-orange-600 font-medium">Mega Donut</p>
           </div>
 
           {/* Formulario */}
@@ -159,9 +159,9 @@ export default function LoginPage() {
           quality={85}
         />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-8 text-white">
-          <h3 className="text-2xl font-bold mb-2">Qitson</h3>
+          <h3 className="text-2xl font-bold mb-2">Mega Donut</h3>
           <p className="text-lg opacity-90">
-            Gestión inteligente para tu panadería
+            Gestión inteligente para tu negocio
           </p>
         </div>
       </div>

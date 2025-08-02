@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Client, CreateClientData } from '@/types/client';
 import { mockClients } from '@/data/mockClients';
+import { mockRoutes } from '@/data/mockRoutes';
 import Footer from './Footer';
 
 interface ClientsManagementProps {
@@ -31,16 +32,20 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
         institucionEducativa: '',
         nombreCompleto: '',
         telefono: '',
-        direccion: ''
+        direccion: '',
+        routeId: ''
     });
 
     const handleCreateClient = () => {
+        const selectedRoute = mockRoutes.find(route => route.id === formData.routeId);
         const newClient: Client = {
             id: Date.now().toString(),
             institucionEducativa: formData.institucionEducativa,
             nombreCompleto: formData.nombreCompleto,
             telefono: formData.telefono,
             direccion: formData.direccion,
+            routeId: formData.routeId || undefined,
+            routeName: selectedRoute?.nombre,
             isActive: true,
             createdAt: new Date()
         };
@@ -58,9 +63,15 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
     const handleUpdateClient = () => {
         if (!editingClient) return;
 
+        const selectedRoute = mockRoutes.find(route => route.id === formData.routeId);
         const updatedClients = clients.map(client =>
             client.id === editingClient.id
-                ? { ...client, ...formData }
+                ? {
+                    ...client,
+                    ...formData,
+                    routeId: formData.routeId || undefined,
+                    routeName: selectedRoute?.nombre
+                }
                 : client
         );
 
@@ -70,7 +81,8 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
             institucionEducativa: '',
             nombreCompleto: '',
             telefono: '',
-            direccion: ''
+            direccion: '',
+            routeId: ''
         });
     };
 
@@ -92,7 +104,9 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
         const matchesSearch = client.institucionEducativa.toLowerCase().includes(searchTerm.toLowerCase()) ||
             client.nombreCompleto.toLowerCase().includes(searchTerm.toLowerCase()) ||
             client.telefono.includes(searchTerm) ||
-            client.direccion.toLowerCase().includes(searchTerm.toLowerCase());
+            client.direccion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (client.routeName && client.routeName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (client.routeId && mockRoutes.find(route => route.id === client.routeId)?.identificador.toLowerCase().includes(searchTerm.toLowerCase()));
 
         return matchesSearch;
     });
@@ -103,7 +117,8 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
             institucionEducativa: client.institucionEducativa,
             nombreCompleto: client.nombreCompleto,
             telefono: client.telefono,
-            direccion: client.direccion
+            direccion: client.direccion,
+            routeId: client.routeId || ''
         });
     };
 
@@ -114,7 +129,8 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
             institucionEducativa: '',
             nombreCompleto: '',
             telefono: '',
-            direccion: ''
+            direccion: '',
+            routeId: ''
         });
     };
 
@@ -157,7 +173,7 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Buscar por institución, nombre, teléfono o dirección..."
+                                placeholder="Buscar por institución, nombre, teléfono, dirección o ruta..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
@@ -182,6 +198,9 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Dirección
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Ruta
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Estado actual
@@ -222,6 +241,19 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                                     <MapPinIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                                     <span className="truncate" title={client.direccion}>{client.direccion}</span>
                                                 </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {client.routeName ? (
+                                                    <div className="flex items-center space-x-1">
+                                                        <MapPinIcon className="h-4 w-4 text-orange-400" />
+                                                        <span className="font-medium text-orange-600">{client.routeName}</span>
+                                                        <span className="text-xs text-gray-500">
+                                                            ({mockRoutes.find(route => route.id === client.routeId)?.identificador})
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400 text-xs">Sin asignar</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${client.isActive
@@ -327,6 +359,24 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                                 placeholder="Ejemplo: Av. 10 de Agosto N24-15 y Cordero, Quito"
                                             />
                                         </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Ruta asignada
+                                            </label>
+                                            <select
+                                                value={formData.routeId}
+                                                onChange={(e) => setFormData({ ...formData, routeId: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
+                                            >
+                                                <option value="">Seleccionar una ruta</option>
+                                                {mockRoutes.filter(route => route.isActive).map((route) => (
+                                                    <option key={route.id} value={route.id}>
+                                                        {route.identificador} - {route.nombre}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
 
                                     <div className="flex justify-end space-x-3 mt-6">
@@ -352,7 +402,7 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                     )}
 
                     {/* Statistics */}
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -388,6 +438,18 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                 <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
                                     <div className="w-3 h-3 bg-white rounded-full"></div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">Con ruta asignada</p>
+                                    <p className="text-2xl font-bold text-orange-600">
+                                        {clients.filter(client => client.routeId).length}
+                                    </p>
+                                </div>
+                                <MapPinIcon className="h-8 w-8 text-orange-500" />
                             </div>
                         </div>
                     </div>

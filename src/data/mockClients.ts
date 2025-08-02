@@ -7,6 +7,8 @@ export const mockClients: Client[] = [
     nombreCompleto: 'María Elena González Pérez',
     telefono: '0998765432',
     direccion: 'Av. 10 de Agosto N24-15 y Cordero, Quito',
+    routeId: '1',
+    routeName: 'NORTE',
     isActive: true,
     createdAt: new Date('2024-01-15')
   },
@@ -16,6 +18,8 @@ export const mockClients: Client[] = [
     nombreCompleto: 'Carlos Roberto Martínez López',
     telefono: '0987654321',
     direccion: 'Calle Venezuela N8-45 y Chile, Quito',
+    routeId: '2',
+    routeName: 'CENTRO',
     isActive: true,
     createdAt: new Date('2024-01-20')
   },
@@ -25,6 +29,8 @@ export const mockClients: Client[] = [
     nombreCompleto: 'Ana Patricia Rodríguez Torres',
     telefono: '0976543210',
     direccion: 'Av. Amazonas N32-86 y Mariana de Jesús, Quito',
+    routeId: '3',
+    routeName: 'CARAPUNGO',
     isActive: true,
     createdAt: new Date('2024-02-01')
   },
@@ -34,6 +40,8 @@ export const mockClients: Client[] = [
     nombreCompleto: 'Luis Fernando Herrera Vásquez',
     telefono: '0965432109',
     direccion: 'Av. 6 de Diciembre N26-145 y Colón, Quito',
+    routeId: '6',
+    routeName: 'CUMBAYA',
     isActive: true,
     createdAt: new Date('2024-02-05')
   },
@@ -43,6 +51,8 @@ export const mockClients: Client[] = [
     nombreCompleto: 'Carmen Isabel Flores Morales',
     telefono: '0954321098',
     direccion: 'Calle García Moreno S1-47 y Sucre, Quito',
+    routeId: '4',
+    routeName: 'OFELIA',
     isActive: false,
     createdAt: new Date('2024-02-10')
   },
@@ -52,6 +62,8 @@ export const mockClients: Client[] = [
     nombreCompleto: 'Roberto Miguel Castillo Núñez',
     telefono: '0943210987',
     direccion: 'Av. América y Universitaria, Ciudad Universitaria, Quito',
+    routeId: '5',
+    routeName: 'MDM',
     isActive: true,
     createdAt: new Date('2024-02-15')
   },
@@ -61,6 +73,8 @@ export const mockClients: Client[] = [
     nombreCompleto: 'Patricia Alejandra Ramírez Silva',
     telefono: '0932109876',
     direccion: 'Calle Cuenca N4-23 y Mideros, Quito',
+    routeId: '7',
+    routeName: 'SUR',
     isActive: true,
     createdAt: new Date('2024-02-20')
   },
@@ -70,6 +84,8 @@ export const mockClients: Client[] = [
     nombreCompleto: 'Fernando José Aguirre Moreno',
     telefono: '0921098765',
     direccion: 'Av. Mariscal Sucre y Antisana, Quito',
+    routeId: '8',
+    routeName: 'AUX. SUR',
     isActive: true,
     createdAt: new Date('2024-02-25')
   }

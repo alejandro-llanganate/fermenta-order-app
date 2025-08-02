@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Product, CreateProductData, ProductCategory, ProductVariant } from '@/types/product';
 import { mockProducts } from '@/data/mockProducts';
+import { mockOrders } from '@/data/mockOrders';
 import Footer from './Footer';
 
 interface ProductsManagementProps {
@@ -25,6 +26,8 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
     const [products, setProducts] = useState<Product[]>(mockProducts);
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [selectedProductForExport, setSelectedProductForExport] = useState<string>('');
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [filterCategory, setFilterCategory] = useState<ProductCategory | 'Todos'>('Todos');
 
@@ -169,6 +172,71 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
         return <ShoppingBag className="h-5 w-5 text-orange-600" />;
     };
 
+    // Funciones para exportación por producto
+    const openExportModal = () => {
+        setShowExportModal(true);
+    };
+
+    const generateProductExportPDF = async () => {
+        if (!selectedProductForExport) return;
+
+        try {
+            // Importar dinámicamente para evitar errores de SSR
+            const jsPDF = (await import('jspdf')).default;
+            const html2canvas = (await import('html2canvas')).default;
+
+            const exportRef = document.getElementById('product-export-content');
+            if (!exportRef) return;
+
+            const canvas = await html2canvas(exportRef, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+
+            const imgWidth = 210;
+            const pageHeight = 295;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+
+            let position = 0;
+
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            const product = products.find(p => p.id === selectedProductForExport);
+            const productName = product ? `${product.name}-${product.category}-${product.variant}` : 'producto';
+            pdf.save(`Reporte-Pedidos-${productName}-${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`);
+        } catch (error) {
+            console.error('Error generando PDF de exportación por producto:', error);
+            alert('Error al generar el PDF de exportación. Por favor, inténtalo de nuevo.');
+        }
+    };
+
+    // Obtener pedidos por producto
+    const getOrdersByProduct = (productId: string) => {
+        const product = products.find(p => p.id === productId);
+        if (!product) return [];
+
+        return mockOrders.filter(order =>
+            order.items.some(item =>
+                item.productName === product.name &&
+                item.productCategory === product.category &&
+                item.productVariant === product.variant
+            )
+        );
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex flex-col">
             <div className="flex-1 p-6">
@@ -187,13 +255,22 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                 <h1 className="text-2xl font-bold text-gray-900">Gestión de productos</h1>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="flex items-center space-x-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
-                        >
-                            <Plus className="h-4 w-4" />
-                            <span>Agregar nuevo producto</span>
-                        </button>
+                        <div className="flex items-center space-x-3">
+                            <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="flex items-center space-x-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                            >
+                                <Plus className="h-4 w-4" />
+                                <span>Agregar nuevo producto</span>
+                            </button>
+                            <button
+                                onClick={openExportModal}
+                                className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                            >
+                                <DollarSign className="h-4 w-4" />
+                                <span>Exportar por producto</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Filters */}
@@ -522,6 +599,205 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Exportación por Producto */}
+            {showExportModal && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={handleModalBackdropClick}
+                >
+                    <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-xl font-semibold text-gray-900">Exportar Pedidos por Producto</h2>
+                                <div className="flex items-center space-x-3">
+                                    <button
+                                        onClick={generateProductExportPDF}
+                                        disabled={!selectedProductForExport}
+                                        className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <DollarSign className="h-4 w-4" />
+                                        <span>Generar PDF</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setShowExportModal(false)}
+                                        className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                                    >
+                                        Cerrar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Selector de Producto */}
+                        <div className="p-6 border-b border-gray-200">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Seleccionar Producto
+                            </label>
+                            <select
+                                value={selectedProductForExport}
+                                onChange={(e) => setSelectedProductForExport(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            >
+                                <option value="">Seleccionar un producto</option>
+                                {products.filter(product => product.isActive).map((product) => (
+                                    <option key={product.id} value={product.id}>
+                                        {product.name} - {product.category} - {product.variant}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Contenido de Exportación */}
+                        {selectedProductForExport && (
+                            <div id="product-export-content" className="p-6">
+                                {(() => {
+                                    const product = products.find(p => p.id === selectedProductForExport);
+                                    const productOrders = getOrdersByProduct(selectedProductForExport);
+                                    const totalQuantity = productOrders.reduce((sum, order) => {
+                                        return sum + order.items.reduce((itemSum, item) => {
+                                            if (item.productName === product?.name &&
+                                                item.productCategory === product?.category &&
+                                                item.productVariant === product?.variant) {
+                                                return itemSum + item.quantity;
+                                            }
+                                            return itemSum;
+                                        }, 0);
+                                    }, 0);
+                                    const totalValue = productOrders.reduce((sum, order) => {
+                                        return sum + order.items.reduce((itemSum, item) => {
+                                            if (item.productName === product?.name &&
+                                                item.productCategory === product?.category &&
+                                                item.productVariant === product?.variant) {
+                                                return itemSum + item.individualValue;
+                                            }
+                                            return itemSum;
+                                        }, 0);
+                                    }, 0);
+
+                                    if (!product) return <p className="text-gray-500">Producto no encontrado</p>;
+
+                                    return (
+                                        <div className="space-y-6">
+                                            {/* Header del Reporte */}
+                                            <div className="text-center border-b border-gray-200 pb-4">
+                                                <h1 className="text-2xl font-bold text-black">Mega Donut</h1>
+                                                <h2 className="text-xl font-semibold text-gray-800">Reporte de Pedidos por Producto</h2>
+                                                <p className="text-sm text-gray-500">
+                                                    Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
+                                                </p>
+                                            </div>
+
+                                            {/* Información del Producto */}
+                                            <div className="bg-gray-50 p-4 rounded-lg">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Información del Producto</h3>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-600">Nombre</p>
+                                                        <p className="text-lg font-semibold text-gray-900">{product.name}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-600">Categoría</p>
+                                                        <p className="text-lg font-semibold text-gray-900">{product.category}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-600">Variante</p>
+                                                        <p className="text-lg font-semibold text-gray-900">{product.variant}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-600">Precio Regular</p>
+                                                        <p className="text-lg font-semibold text-green-600">${product.priceRegular.toFixed(2)}</p>
+                                                    </div>
+                                                    {product.pricePage && (
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-600">Precio PAGINA</p>
+                                                            <p className="text-lg font-semibold text-orange-600">${product.pricePage.toFixed(2)}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Resumen */}
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-blue-50 p-4 rounded-lg">
+                                                <div className="text-center">
+                                                    <p className="text-sm font-medium text-gray-600">Total de Pedidos</p>
+                                                    <p className="text-2xl font-bold text-blue-600">{productOrders.length}</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm font-medium text-gray-600">Cantidad Total</p>
+                                                    <p className="text-2xl font-bold text-green-600">{totalQuantity}</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm font-medium text-gray-600">Valor Total</p>
+                                                    <p className="text-2xl font-bold text-purple-600">${totalValue.toFixed(2)}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Tabla de Pedidos */}
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Detalle de Pedidos</h3>
+                                                <div className="overflow-x-auto">
+                                                    <table className="min-w-full border border-gray-300">
+                                                        <thead>
+                                                            <tr className="bg-gray-100">
+                                                                <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold">Número</th>
+                                                                <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold">Cliente</th>
+                                                                <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold">Fecha</th>
+                                                                <th className="border border-gray-300 px-3 py-2 text-center text-black font-semibold">Cantidad</th>
+                                                                <th className="border border-gray-300 px-3 py-2 text-right text-black font-semibold">Precio Unit.</th>
+                                                                <th className="border border-gray-300 px-3 py-2 text-right text-black font-semibold">Total</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {productOrders.map((order, index) => {
+                                                                const productItems = order.items.filter(item =>
+                                                                    item.productName === product.name &&
+                                                                    item.productCategory === product.category &&
+                                                                    item.productVariant === product.variant
+                                                                );
+
+                                                                return productItems.map((item, itemIndex) => (
+                                                                    <tr key={`${order.id}-${itemIndex}`} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                                                        <td className="border border-gray-300 px-3 py-2 text-black">{order.orderNumber}</td>
+                                                                        <td className="border border-gray-300 px-3 py-2 text-black">{order.clientName}</td>
+                                                                        <td className="border border-gray-300 px-3 py-2 text-black">{order.orderDate.toLocaleDateString('es-ES')}</td>
+                                                                        <td className="border border-gray-300 px-3 py-2 text-center text-black">{item.quantity}</td>
+                                                                        <td className="border border-gray-300 px-3 py-2 text-right text-black">${item.unitPrice.toFixed(2)}</td>
+                                                                        <td className="border border-gray-300 px-3 py-2 text-right font-medium text-black">${item.individualValue.toFixed(2)}</td>
+                                                                    </tr>
+                                                                ));
+                                                            })}
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr className="bg-gray-100">
+                                                                <td colSpan={3} className="border border-gray-300 px-3 py-2 text-right font-bold text-black">TOTALES:</td>
+                                                                <td className="border border-gray-300 px-3 py-2 text-center font-bold text-black">{totalQuantity}</td>
+                                                                <td className="border border-gray-300 px-3 py-2 text-right font-bold text-black">-</td>
+                                                                <td className="border border-gray-300 px-3 py-2 text-right font-bold text-lg text-black">${totalValue.toFixed(2)}</td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                            {/* Footer */}
+                                            <div className="mt-8 pt-4 border-t border-gray-300">
+                                                <p className="text-center text-sm text-gray-800 font-medium">
+                                                    Reporte generado para Mega Donut<br />
+                                                    {productOrders.length} pedidos con {product.name}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <Footer />
         </div>
     );

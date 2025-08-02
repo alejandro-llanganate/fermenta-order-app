@@ -1,14 +1,14 @@
-# Qitson - Sistema de Gestión de pedidos
+# Mega Donut - Sistema de Gestión de pedidos
 
-Un sistema moderno de Gestión de pedidos diseñado específicamente para **Panadería Encarnación**, construido con Next.js y TypeScript.
+Un sistema moderno de Gestión de pedidos diseñado específicamente para **Mega Donut**, construido con Next.js y TypeScript.
 
 ## 🚀 Características
 
 - **Interfaz en Español**: Completamente localizada para usuarios hispanohablantes
 - **Diseño Responsivo**: Funciona perfectamente en dispositivos móviles y de escritorio
 - **Autenticación Segura**: Sistema de login con validación de usuario y cédula
-- **Logo Personalizado**: Diseño único para la marca Qitson
-- **Imagen de Panadería**: Imagen de fondo relacionada con la producción de pan
+- **Logo Personalizado**: Diseño único para la marca Mega Donut
+- **Imagen de Negocio**: Imagen de fondo relacionada con la producción
 - **Modal de Contacto**: Sistema integrado para contactar al administrador
 
 ## 🛠️ Tecnologías Utilizadas
@@ -127,7 +127,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 ## 📞 Contacto
 
-**Qitson** - Sistema de Gestión para Panadería Encarnación
+**Mega Donut** - Sistema de Gestión para Mega Donut
 
 - **Email**: alejandro.llanganate@owasp.org
 - **WhatsApp**: +593 98 335 2024

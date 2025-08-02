@@ -106,7 +106,7 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
                             <Logo size="md" />
                             <div className="text-center">
                                 <h1 className="text-xl font-bold text-orange-600">MEGA DONUT</h1>
-                                <p className="text-sm text-gray-600">Panadería Encarnación</p>
+                                <p className="text-sm text-gray-600">Sistema de Gestión</p>
                             </div>
                             <div className="ml-6">
                                 <h2 className="text-lg font-bold text-gray-900">Panel de Control</h2>
