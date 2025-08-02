@@ -9,6 +9,11 @@ on:
 env:
   NODE_VERSION: '20.x'
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
