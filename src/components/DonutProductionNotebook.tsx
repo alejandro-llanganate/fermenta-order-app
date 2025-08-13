@@ -116,45 +116,45 @@ export default function DonutProductionNotebook({ onBack }: DonutProductionNoteb
 
                 if (category === 'donut') {
                     if (variant.includes('choc') && variant.includes('coco')) {
-                        routeData[order.routeId].donuts.chocoCoco += item.quantity;
+                        routeData[order.routeId!].donuts.chocoCoco += item.quantity;
                     } else if (variant.includes('grag') && variant.includes('glace')) {
-                        routeData[order.routeId].donuts.gragGlace += item.quantity;
+                        routeData[order.routeId!].donuts.gragGlace += item.quantity;
                     } else if (variant.includes('glace') && variant.includes('coco')) {
-                        routeData[order.routeId].donuts.glaceCoco += item.quantity;
+                        routeData[order.routeId!].donuts.glaceCoco += item.quantity;
                     } else if (variant.includes('choc')) {
-                        routeData[order.routeId].donuts.choc += item.quantity;
+                        routeData[order.routeId!].donuts.choc += item.quantity;
                     } else if (variant.includes('grag')) {
-                        routeData[order.routeId].donuts.grag += item.quantity;
+                        routeData[order.routeId!].donuts.grag += item.quantity;
                     } else if (variant.includes('glace')) {
-                        routeData[order.routeId].donuts.glace += item.quantity;
+                        routeData[order.routeId!].donuts.glace += item.quantity;
                     }
                 } else if (category === 'rellenas') {
                     if (variant.includes('chant')) {
-                        routeData[order.routeId].rellenas.chant += item.quantity;
+                        routeData[order.routeId!].rellenas.chant += item.quantity;
                     } else if (variant.includes('manu') || variant.includes('manjar')) {
-                        routeData[order.routeId].rellenas.manu += item.quantity;
+                        routeData[order.routeId!].rellenas.manu += item.quantity;
                     }
                 } else if (category === 'mini donut') {
                     if (variant.includes('choc') && variant.includes('coco')) {
-                        routeData[order.routeId].miniDonuts.chocoCoco += item.quantity;
+                        routeData[order.routeId!].miniDonuts.choco += item.quantity;
                     } else if (variant.includes('grag') && variant.includes('glace')) {
-                        routeData[order.routeId].miniDonuts.gragGlace += item.quantity;
+                        routeData[order.routeId!].miniDonuts.gragGlace += item.quantity;
                     } else if (variant.includes('glace') && variant.includes('coco')) {
-                        routeData[order.routeId].miniDonuts.glaceCoco += item.quantity;
+                        routeData[order.routeId!].miniDonuts.glaceCoco += item.quantity;
                     } else if (variant.includes('choc')) {
-                        routeData[order.routeId].miniDonuts.choc += item.quantity;
+                        routeData[order.routeId!].miniDonuts.choc += item.quantity;
                     } else if (variant.includes('grag')) {
-                        routeData[order.routeId].miniDonuts.grag += item.quantity;
+                        routeData[order.routeId!].miniDonuts.grag += item.quantity;
                     } else if (variant.includes('glace')) {
-                        routeData[order.routeId].miniDonuts.glace += item.quantity;
+                        routeData[order.routeId!].miniDonuts.glace += item.quantity;
                     } else if (variant.includes('choco')) {
-                        routeData[order.routeId].miniDonuts.choco += item.quantity;
+                        routeData[order.routeId!].miniDonuts.choco += item.quantity;
                     }
                 } else if (category === 'mini rellenas') {
                     if (variant.includes('chant')) {
-                        routeData[order.routeId].miniRellenas.chant += item.quantity;
+                        routeData[order.routeId!].miniRellenas.chant += item.quantity;
                     } else if (variant.includes('manu') || variant.includes('manjar')) {
-                        routeData[order.routeId].miniRellenas.manu += item.quantity;
+                        routeData[order.routeId!].miniRellenas.manu += item.quantity;
                     }
                 }
             });
