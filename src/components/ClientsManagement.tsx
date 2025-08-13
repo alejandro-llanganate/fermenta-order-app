@@ -32,6 +32,8 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
         institucionEducativa: '',
         nombreCompleto: '',
         telefono: '',
+        cedula: '',
+        email: '',
         direccion: '',
         routeId: ''
     });
@@ -43,6 +45,8 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
             institucionEducativa: formData.institucionEducativa,
             nombreCompleto: formData.nombreCompleto,
             telefono: formData.telefono,
+            cedula: formData.cedula,
+            email: formData.email,
             direccion: formData.direccion,
             routeId: formData.routeId || undefined,
             routeName: selectedRoute?.nombre,
@@ -56,7 +60,10 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
             institucionEducativa: '',
             nombreCompleto: '',
             telefono: '',
-            direccion: ''
+            cedula: '',
+            email: '',
+            direccion: '',
+            routeId: ''
         });
     };
 
@@ -81,6 +88,8 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
             institucionEducativa: '',
             nombreCompleto: '',
             telefono: '',
+            cedula: '',
+            email: '',
             direccion: '',
             routeId: ''
         });
@@ -117,6 +126,8 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
             institucionEducativa: client.institucionEducativa,
             nombreCompleto: client.nombreCompleto,
             telefono: client.telefono,
+            cedula: client.cedula,
+            email: client.email,
             direccion: client.direccion,
             routeId: client.routeId || ''
         });
@@ -129,6 +140,8 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
             institucionEducativa: '',
             nombreCompleto: '',
             telefono: '',
+            cedula: '',
+            email: '',
             direccion: '',
             routeId: ''
         });
@@ -188,6 +201,9 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Ruta
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Institución educativa
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -200,9 +216,6 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                             Dirección
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Ruta
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Estado actual
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -213,6 +226,33 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {filteredClients.map((client) => (
                                         <tr key={client.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {client.routeName ? (
+                                                    <div className="flex items-center space-x-1">
+                                                        <MapPinIcon className="h-4 w-4 text-orange-400" />
+                                                        <span className="font-medium text-orange-600">{client.routeName}</span>
+                                                        <button
+                                                            onClick={() => {
+                                                                const routeIdentifier = mockRoutes.find(route => route.id === client.routeId)?.identificador;
+                                                                if (routeIdentifier) {
+                                                                    setSearchTerm(routeIdentifier);
+                                                                    // Scroll to top of the table
+                                                                    const tableElement = document.querySelector('.overflow-x-auto');
+                                                                    if (tableElement) {
+                                                                        tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                                    }
+                                                                }
+                                                            }}
+                                                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium"
+                                                            title="Hacer clic para buscar rápidamente esta ruta"
+                                                        >
+                                                            ({mockRoutes.find(route => route.id === client.routeId)?.identificador})
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400 text-xs">Sin asignar</span>
+                                                )}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
                                                     <div className="flex-shrink-0 h-10 w-10">
@@ -241,19 +281,6 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                                     <MapPinIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                                     <span className="truncate" title={client.direccion}>{client.direccion}</span>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {client.routeName ? (
-                                                    <div className="flex items-center space-x-1">
-                                                        <MapPinIcon className="h-4 w-4 text-orange-400" />
-                                                        <span className="font-medium text-orange-600">{client.routeName}</span>
-                                                        <span className="text-xs text-gray-500">
-                                                            ({mockRoutes.find(route => route.id === client.routeId)?.identificador})
-                                                        </span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-gray-400 text-xs">Sin asignar</span>
-                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${client.isActive
@@ -349,6 +376,32 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Cédula *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.cedula}
+                                                onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
+                                                placeholder="Ejemplo: 1723456789"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Correo electrónico *
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={formData.email}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
+                                                placeholder="Ejemplo: contacto@institucion.edu.ec"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Dirección de la institución *
                                             </label>
                                             <textarea
@@ -389,7 +442,7 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                         </button>
                                         <button
                                             onClick={editingClient ? handleUpdateClient : handleCreateClient}
-                                            disabled={!formData.institucionEducativa.trim() || !formData.nombreCompleto.trim() || !formData.telefono.trim() || !formData.direccion.trim()}
+                                            disabled={!formData.institucionEducativa.trim() || !formData.nombreCompleto.trim() || !formData.telefono.trim() || !formData.cedula.trim() || !formData.email.trim() || !formData.direccion.trim()}
                                             className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Check className="h-4 w-4" />

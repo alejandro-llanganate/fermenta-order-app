@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, ShoppingCart, LogOut, Clock, UserCheck, MapPin, ShoppingBag, BarChart3, DollarSign } from 'lucide-react';
+import { Users, ShoppingCart, LogOut, Clock, UserCheck, MapPin, ShoppingBag, BarChart3, DollarSign, BookOpen } from 'lucide-react';
 import Logo from './Logo';
 import UsersManagement from './UsersManagement';
 import ClientsManagement from './ClientsManagement';
@@ -9,6 +9,7 @@ import RoutesManagement from './RoutesManagement';
 import ProductsManagement from './ProductsManagement';
 import OrdersManagement from './OrdersManagement';
 import ReportsManagement from './ReportsManagement';
+import Notebooks from './Notebooks';
 import { weeklyProgressData } from '@/data/mockChartData';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
@@ -19,7 +20,7 @@ interface DashboardProps {
 
 export default function Dashboard({ username, onLogout }: DashboardProps) {
     const [currentTime, setCurrentTime] = useState(new Date());
-    const [currentView, setCurrentView] = useState<'dashboard' | 'users' | 'orders' | 'clients' | 'routes' | 'products' | 'reports'>('dashboard');
+    const [currentView, setCurrentView] = useState<'dashboard' | 'users' | 'orders' | 'clients' | 'routes' | 'products' | 'reports' | 'notebooks'>('dashboard');
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -65,6 +66,12 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
             icon: BarChart3,
             color: 'bg-gradient-to-br from-orange-500 to-orange-700 hover:from-orange-600 hover:to-orange-800',
             onClick: () => setCurrentView('reports')
+        },
+        {
+            label: 'Cuadernos',
+            icon: BookOpen,
+            color: 'bg-gradient-to-br from-teal-500 to-teal-700 hover:from-teal-600 hover:to-teal-800',
+            onClick: () => setCurrentView('notebooks')
         }
     ];
 
@@ -91,6 +98,10 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
 
     if (currentView === 'reports') {
         return <ReportsManagement onBack={() => setCurrentView('dashboard')} />;
+    }
+
+    if (currentView === 'notebooks') {
+        return <Notebooks onBack={() => setCurrentView('dashboard')} />;
     }
 
 

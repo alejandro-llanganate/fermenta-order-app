@@ -36,7 +36,7 @@ export interface Order {
   totalAmount: number;
   
   // Estado
-  status: 'Pendiente' | 'En preparación' | 'Listo' | 'Entregado' | 'Cancelado';
+  status: 'PENDIENTE' | 'LISTO' | 'MODIFICAR';
   isActive: boolean;
   createdAt: Date;
   
@@ -63,6 +63,6 @@ export interface UpdateOrderData {
   paymentMethod?: PaymentMethod;
   routeId?: string;
   items?: Omit<OrderItem, 'id' | 'individualValue'>[];
-  status?: 'Pendiente' | 'En preparación' | 'Listo' | 'Entregado' | 'Cancelado';
+  status?: 'PENDIENTE' | 'LISTO' | 'MODIFICAR';
   notes?: string;
 } 

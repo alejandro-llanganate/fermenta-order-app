@@ -173,7 +173,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             items: selectedItems,
             subtotal,
             totalAmount,
-            status: 'Pendiente',
+            status: 'PENDIENTE',
             isActive: true,
             createdAt: new Date(),
             notes: formData.notes
@@ -475,11 +475,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
     const getStatusColor = (status: Order['status']) => {
         switch (status) {
-            case 'Pendiente': return 'bg-yellow-100 text-yellow-800';
-            case 'En preparación': return 'bg-blue-100 text-blue-800';
-            case 'Listo': return 'bg-green-100 text-green-800';
-            case 'Entregado': return 'bg-gray-100 text-gray-800';
-            case 'Cancelado': return 'bg-red-100 text-red-800';
+            case 'PENDIENTE': return 'bg-yellow-100 text-yellow-800';
+            case 'LISTO': return 'bg-green-100 text-green-800';
+            case 'MODIFICAR': return 'bg-orange-100 text-orange-800';
             default: return 'bg-gray-100 text-gray-800';
         }
     };
@@ -650,11 +648,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                     onChange={(e) => handleUpdateStatus(order.id, e.target.value as Order['status'])}
                                                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border-none ${getStatusColor(order.status)}`}
                                                 >
-                                                    <option value="Pendiente">Pendiente</option>
-                                                    <option value="En preparación">En preparación</option>
-                                                    <option value="Listo">Listo</option>
-                                                    <option value="Entregado">Entregado</option>
-                                                    <option value="Cancelado">Cancelado</option>
+                                                    <option value="PENDIENTE">PENDIENTE</option>
+                                                    <option value="LISTO">LISTO</option>
+                                                    <option value="MODIFICAR">MODIFICAR</option>
                                                 </select>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -714,7 +710,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 <div>
                                     <p className="text-sm font-medium text-gray-600">Pedidos pendientes</p>
                                     <p className="text-2xl font-bold text-yellow-600">
-                                        {orders.filter(order => order.status === 'Pendiente').length}
+                                        {orders.filter(order => order.status === 'PENDIENTE').length}
                                     </p>
                                 </div>
                                 <Calendar className="h-8 w-8 text-yellow-500" />
@@ -724,9 +720,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Pedidos entregados</p>
+                                    <p className="text-sm font-medium text-gray-600">Pedidos listos</p>
                                     <p className="text-2xl font-bold text-green-600">
-                                        {orders.filter(order => order.status === 'Entregado').length}
+                                        {orders.filter(order => order.status === 'LISTO').length}
                                     </p>
                                 </div>
                                 <Package className="h-8 w-8 text-green-500" />
@@ -738,7 +734,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 <div>
                                     <p className="text-sm font-medium text-gray-600">Ventas totales</p>
                                     <p className="text-2xl font-bold text-purple-600">
-                                        ${orders.filter(order => order.status === 'Entregado').reduce((sum, order) => sum + order.totalAmount, 0).toFixed(2)}
+                                        ${orders.filter(order => order.status === 'LISTO').reduce((sum, order) => sum + order.totalAmount, 0).toFixed(2)}
                                     </p>
                                 </div>
                                 <DollarSign className="h-8 w-8 text-purple-500" />
@@ -1118,7 +1114,6 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                 <td className="border border-gray-300 px-3 py-2">
                                                     <div>
                                                         <div className="font-medium text-black">{item.productName}</div>
-                                                        <div className="text-sm text-gray-800">{item.productCategory} - {item.productVariant}</div>
                                                     </div>
                                                 </td>
                                                 <td className="border border-gray-300 px-3 py-2 text-center text-black">{item.quantity}</td>
@@ -1151,7 +1146,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                     Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
                                 </p>
                                 <p className="text-center text-xs text-red-600 mt-2 font-medium">
-                                    En caso de no cancelar el valor emitido en la nota vigente pedido a MEGA DONUT, el cliente está sujeto a TRÁMITES LEGALES
+                                    En caso de incumplimiento en el pago del valor establecido en la nota de pedido emitida por MEGA DONUT, el cliente se someterá a las acciones legales correspondientes.
                                 </p>
                             </div>
                         </div>
@@ -1401,13 +1396,13 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             <div className="text-center">
                                                 <p className="text-sm font-medium text-gray-600">Pedidos Pendientes</p>
                                                 <p className="text-2xl font-bold text-yellow-600">
-                                                    {exportOrders.filter(o => o.status === 'Pendiente').length}
+                                                    {exportOrders.filter(o => o.status === 'PENDIENTE').length}
                                                 </p>
                                             </div>
                                             <div className="text-center">
-                                                <p className="text-sm font-medium text-gray-600">Pedidos Entregados</p>
+                                                <p className="text-sm font-medium text-gray-600">Pedidos Listos</p>
                                                 <p className="text-2xl font-bold text-gray-600">
-                                                    {exportOrders.filter(o => o.status === 'Entregado').length}
+                                                    {exportOrders.filter(o => o.status === 'LISTO').length}
                                                 </p>
                                             </div>
                                         </div>
