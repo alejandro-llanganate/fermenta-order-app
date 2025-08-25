@@ -7,35 +7,37 @@ import Image from 'next/image';
 import Logo from '@/components/Logo';
 import ContactModal from '@/components/ContactModal';
 import Dashboard from '@/components/Dashboard';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [cedula, setCedula] = useState('');
   const [showCedula, setShowCedula] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [error, setError] = useState('');
+
+  const { user, isLoading, signIn, signOut, isAuthenticated } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setError('');
 
-    // Simular proceso de autenticación
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsAuthenticated(true);
-    }, 2000);
+    const result = await signIn(username, cedula);
+
+    if (!result.success) {
+      setError(result.error || 'Error de autenticación');
+    }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
+  const handleLogout = async () => {
+    await signOut();
     setUsername('');
     setCedula('');
   };
 
   // Si está autenticado, mostrar el dashboard
-  if (isAuthenticated) {
-    return <Dashboard username={username} onLogout={handleLogout} />;
+  if (isAuthenticated && user) {
+    return <Dashboard username={user.username} onLogout={handleLogout} />;
   }
 
   return (
@@ -59,6 +61,13 @@ export default function LoginPage() {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
               {/* Campo Usuario */}
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
@@ -133,14 +142,20 @@ export default function LoginPage() {
             </form>
 
             {/* Enlaces adicionales */}
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-2">
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                className="text-sm text-orange-600 hover:text-orange-700 font-medium block"
                 disabled={isLoading}
               >
                 ¿Olvidaste tu contraseña?
               </button>
+              <a
+                href="/admin"
+                className="text-xs text-gray-500 hover:text-gray-700 font-medium block"
+              >
+                Acceso Administrativo
+              </a>
             </div>
           </div>
         </div>
