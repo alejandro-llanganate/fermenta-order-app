@@ -9,6 +9,12 @@ const nextConfig = {
       },
     ],
   },
+  // Deshabilitar pre-renderizado estático para páginas que usan Supabase
+  experimental: {
+    // Esto evita que Next.js intente pre-renderizar páginas con variables de entorno
+    workerThreads: false,
+    cpus: 1
+  }
 }
 
 module.exports = nextConfig 

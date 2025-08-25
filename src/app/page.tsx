@@ -1,5 +1,8 @@
 'use client';
 
+// Forzar renderizado dinámico para evitar problemas con variables de entorno
+export const dynamic = 'force-dynamic';
+
 import { useState } from 'react';
 import { User, CreditCard, Eye, EyeOff } from 'lucide-react';
 import { ClipLoader } from 'react-spinners';
