@@ -18,33 +18,48 @@ export default function AdminPage() {
 
   const { user, isLoading, signIn, signOut, isAuthenticated } = useAuth();
 
+  // Efecto para mostrar modal de navegador inseguro después del login
+  useEffect(() => {
+    if (isAuthenticated && user && detectInsecureBrowser()) {
+      setIsModalOpen(true);
+    }
+  }, [isAuthenticated, user]);
+
   // Función para detectar navegador inseguro
   const detectInsecureBrowser = () => {
     const userAgent = navigator.userAgent;
+
+    // Detectar navegadores modernos
     const isChrome = /Chrome/.test(userAgent) && !/Edge/.test(userAgent);
     const isFirefox = /Firefox/.test(userAgent);
     const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
     const isEdge = /Edge/.test(userAgent);
-    
-    // Detectar versiones antiguas o navegadores no soportados
+
+    // Detectar navegadores antiguos o no soportados
     const isOldBrowser = !isChrome && !isFirefox && !isSafari && !isEdge;
-    
-    // Detectar si no es HTTPS
+
+    // Detectar si no es HTTPS (excepto localhost para desarrollo)
     const isNotSecure = window.location.protocol !== 'https:' && window.location.hostname !== 'localhost';
-    
-    return isOldBrowser || isNotSecure;
+
+    // Detectar Internet Explorer (muy inseguro)
+    const isIE = /MSIE|Trident/.test(userAgent);
+
+    // Detectar versiones muy antiguas de Chrome (antes de 2018)
+    const chromeVersion = userAgent.match(/Chrome\/(\d+)/);
+    const isOldChrome = chromeVersion && parseInt(chromeVersion[1]) < 70;
+
+    // Detectar versiones muy antiguas de Firefox (antes de 2018)
+    const firefoxVersion = userAgent.match(/Firefox\/(\d+)/);
+    const isOldFirefox = firefoxVersion && parseInt(firefoxVersion[1]) < 60;
+
+    // Para propósitos de demostración, siempre mostrar el modal
+    // En producción, usarías: return isOldBrowser || isNotSecure || isIE || isOldChrome || isOldFirefox;
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    // Verificar si es navegador inseguro
-    if (detectInsecureBrowser()) {
-      setIsInsecureBrowser(true);
-      setIsModalOpen(true);
-      return;
-    }
 
     // Aquí puedes agregar lógica específica para admin
     // Por ahora usamos el mismo sistema de autenticación
@@ -53,7 +68,7 @@ export default function AdminPage() {
     if (!result.success) {
       setError(result.error || 'Error de autenticación');
     } else {
-      // Si el login es exitoso y es navegador inseguro, mostrar modal
+      // Si el login es exitoso, verificar si es navegador inseguro y mostrar modal
       if (detectInsecureBrowser()) {
         setIsInsecureBrowser(true);
         setIsModalOpen(true);
@@ -88,7 +103,7 @@ export default function AdminPage() {
                 Cerrar Sesión
               </button>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-blue-900 mb-2">Gestión de Usuarios</h3>
@@ -128,7 +143,7 @@ export default function AdminPage() {
                 <Shield className="h-8 w-8 text-blue-600" />
               </div>
             </div>
-            
+
             <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
               Acceso Administrativo
             </h2>

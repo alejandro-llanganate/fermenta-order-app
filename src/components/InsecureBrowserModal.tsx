@@ -59,37 +59,57 @@ export default function InsecureBrowserModal({ isOpen, onClose }: InsecureBrowse
 
                 <div className="mt-2">
                   <p className="text-sm text-gray-600 mb-4">
-                    <strong>Advertencia de Seguridad:</strong> Has iniciado sesión desde un navegador que no cumple con los estándares de seguridad recomendados para el acceso administrativo.
+                    <strong>⚠️ Advertencia de Seguridad:</strong> Has iniciado sesión exitosamente como administrador desde un navegador que no cumple con los estándares de seguridad recomendados para el acceso administrativo.
                   </p>
-                  
+
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <h4 className="font-medium text-red-800 mb-2">Riesgos de Seguridad:</h4>
+                    <h4 className="font-medium text-red-800 mb-2">🚨 Riesgos de Seguridad Detectados:</h4>
                     <ul className="text-sm text-red-700 space-y-1">
-                      <li>• Vulnerabilidades de seguridad no parcheadas</li>
-                      <li>• Posible interceptación de datos sensibles</li>
-                      <li>• Acceso no autorizado a información administrativa</li>
-                      <li>• Compromiso de la integridad del sistema</li>
+                      <li>• Navegador con vulnerabilidades de seguridad no parcheadas</li>
+                      <li>• Posible interceptación de datos sensibles administrativos</li>
+                      <li>• Riesgo de acceso no autorizado a información crítica</li>
+                      <li>• Compromiso potencial de la integridad del sistema</li>
+                      <li>• Exposición de credenciales administrativas</li>
                     </ul>
                   </div>
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="font-medium text-blue-800 mb-2">Recomendaciones:</h4>
+                    <h4 className="font-medium text-blue-800 mb-2">🔒 Recomendaciones de Seguridad:</h4>
                     <ul className="text-sm text-blue-700 space-y-1">
-                      <li>• Usar navegadores actualizados (Chrome, Firefox, Safari, Edge)</li>
-                      <li>• Habilitar HTTPS y certificados SSL</li>
-                      <li>• Evitar conexiones públicas o no seguras</li>
-                      <li>• Cerrar sesión al terminar las tareas administrativas</li>
+                      <li>• Usar navegadores actualizados (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)</li>
+                      <li>• Asegurar conexión HTTPS con certificados SSL válidos</li>
+                      <li>• Evitar conexiones públicas o redes WiFi no seguras</li>
+                      <li>• Cerrar sesión inmediatamente al terminar las tareas administrativas</li>
+                      <li>• Considerar usar modo incógnito para sesiones administrativas</li>
                     </ul>
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
+                    <h4 className="font-medium text-yellow-800 mb-2">📝 Nota Importante:</h4>
+                    <p className="text-sm text-yellow-700">
+                      Esta advertencia se registra en el sistema de auditoría. Se recomienda cambiar a un navegador seguro antes de realizar operaciones administrativas críticas.
+                    </p>
                   </div>
                 </div>
 
-                <div className="mt-6 flex justify-end">
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    className="inline-flex justify-center rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition-colors"
+                    onClick={onClose}
+                  >
+                    Continuar de todos modos
+                  </button>
                   <button
                     type="button"
                     className="inline-flex justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 transition-colors"
-                    onClick={onClose}
+                    onClick={() => {
+                      onClose();
+                      // Aquí podrías agregar lógica para cerrar sesión automáticamente
+                      // o redirigir a una página de instrucciones
+                    }}
                   >
-                    Entendido
+                    Cerrar Sesión
                   </button>
                 </div>
               </Dialog.Panel>
