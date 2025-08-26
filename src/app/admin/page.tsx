@@ -4,11 +4,13 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
-import { User, Lock, Eye, EyeOff, Shield, AlertTriangle } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, Shield, AlertTriangle, Settings, Users, BarChart3, Building2 } from 'lucide-react';
 import { ClipLoader } from 'react-spinners';
 import Image from 'next/image';
 import Logo from '@/components/Logo';
 import InsecureBrowserModal from '@/components/InsecureBrowserModal';
+import CompanyConfig from '@/components/CompanyConfig';
+import UsersManagement from '@/components/UsersManagement';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function AdminPage() {
@@ -18,6 +20,7 @@ export default function AdminPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [isInsecureBrowser, setIsInsecureBrowser] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const { user, isLoading, signIn, signOut, isAuthenticated } = useAuth();
 
@@ -88,14 +91,15 @@ export default function AdminPage() {
   // Si está autenticado, mostrar dashboard de admin
   if (isAuthenticated && user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-2xl shadow-2xl p-8">
-            <div className="flex items-center justify-between mb-8">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <Shield className="h-8 w-8 text-blue-600" />
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Panel de Administración</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">Panel de Administración</h1>
                   <p className="text-gray-600">Bienvenido, {user.username}</p>
                 </div>
               </div>
@@ -106,22 +110,126 @@ export default function AdminPage() {
                 Cerrar Sesión
               </button>
             </div>
+          </div>
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">Gestión de Usuarios</h3>
-                <p className="text-blue-700">Administrar usuarios del sistema</p>
+        {/* Navigation Tabs */}
+        <div className="bg-white border-b">
+          <div className="container mx-auto px-4">
+            <nav className="flex space-x-8">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'dashboard'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Dashboard</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('config')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'config'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Settings className="h-4 w-4" />
+                  <span>Configuración</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'users'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Users className="h-4 w-4" />
+                  <span>Usuarios</span>
+                </div>
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="container mx-auto px-4 py-8">
+          {activeTab === 'dashboard' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Users className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Total Usuarios</p>
+                      <p className="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <BarChart3 className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Reportes</p>
+                      <p className="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Building2 className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Configurado</p>
+                      <p className="text-2xl font-bold text-gray-900">Sí</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-green-900 mb-2">Reportes</h3>
-                <p className="text-green-700">Ver estadísticas y reportes</p>
-              </div>
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-purple-900 mb-2">Configuración</h3>
-                <p className="text-purple-700">Configurar parámetros del sistema</p>
+
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Resumen del Sistema</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Gestión de Usuarios</h3>
+                    <p className="text-gray-600">Administrar usuarios del sistema, roles y permisos.</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Reportes</h3>
+                    <p className="text-gray-600">Ver estadísticas y reportes del sistema.</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Configuración</h3>
+                    <p className="text-gray-600">Configurar parámetros de la empresa y sistema.</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Soporte</h3>
+                    <p className="text-gray-600">Sistema de tickets y soporte técnico.</p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {activeTab === 'config' && (
+            <CompanyConfig />
+          )}
+
+          {activeTab === 'users' && (
+            <UsersManagement />
+          )}
         </div>
       </div>
     );

@@ -1,27 +1,48 @@
 import { supabase, RegisterUser, AuthResponse } from './supabase';
 
-// Custom authentication for register users
+// Custom authentication for register users and Supabase Auth users
 export const authService = {
-  // Sign in with username and cedula
-  async signIn(username: string, cedula: string): Promise<AuthResponse> {
+  // Sign in with username/email and password
+  async signIn(username: string, password: string): Promise<AuthResponse> {
     try {
-      // Query the register_users table to find the user
+      // First, try to authenticate with Supabase Auth (for admin users)
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: username,
+        password: password
+      });
+
+      if (authData.user && !authError) {
+        // User authenticated with Supabase Auth
+        const user: RegisterUser = {
+          id: authData.user.id,
+          username: username,
+          cedula: 'ADMIN',
+          type: 'admin',
+          created_at: authData.user.created_at,
+          updated_at: authData.user.updated_at || authData.user.created_at
+        };
+
+        // Store user in session storage for persistence
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('currentUser', JSON.stringify(user));
+        }
+
+        return {
+          user: user,
+          error: null
+        };
+      }
+
+      // If Supabase Auth fails, try register_users table
       const { data: users, error } = await supabase
         .from('register_users')
         .select('*')
         .eq('username', username)
-        .eq('cedula', cedula)
+        .eq('cedula', password) // Using password as cedula for register users
         .eq('type', 'register')
         .single();
 
-      if (error) {
-        return {
-          user: null,
-          error: 'Usuario no encontrado o credenciales incorrectas'
-        };
-      }
-
-      if (!users) {
+      if (error || !users) {
         return {
           user: null,
           error: 'Usuario no encontrado o credenciales incorrectas'
@@ -48,6 +69,10 @@ export const authService = {
 
   // Sign out
   async signOut(): Promise<void> {
+    // Sign out from Supabase Auth
+    await supabase.auth.signOut();
+    
+    // Clear session storage
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('currentUser');
     }
@@ -70,6 +95,12 @@ export const authService = {
   // Check if user is authenticated
   isAuthenticated(): boolean {
     return this.getCurrentUser() !== null;
+  },
+
+  // Check if user is admin
+  isAdmin(): boolean {
+    const user = this.getCurrentUser();
+    return user?.type === 'admin';
   }
 };
 

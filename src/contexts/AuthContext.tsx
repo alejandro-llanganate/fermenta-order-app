@@ -7,9 +7,10 @@ import { authService } from '@/lib/auth';
 interface AuthContextType {
   user: RegisterUser | null;
   isLoading: boolean;
-  signIn: (username: string, cedula: string) => Promise<{ success: boolean; error?: string }>;
+  signIn: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,11 +38,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(false);
   }, []);
 
-  const signIn = async (username: string, cedula: string) => {
+  const signIn = async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await authService.signIn(username, cedula);
-      
+      const response = await authService.signIn(username, password);
+
       if (response.error) {
         return { success: false, error: response.error };
       }
@@ -71,6 +72,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signIn,
     signOut,
     isAuthenticated: !!user,
+    isAdmin: authService.isAdmin(),
   };
 
   return (
