@@ -77,7 +77,7 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
 
     // Render specific management component
     if (currentView === 'users') {
-        return <UsersManagement onBack={() => setCurrentView('dashboard')} />;
+        return <UsersManagement />;
     }
 
     if (currentView === 'products') {
