@@ -18,7 +18,7 @@ export interface RegisterUser {
   id: string;
   username: string;
   cedula: string;
-  type: 'register';
+  type: 'register' | 'admin';
   created_at: string;
   updated_at: string;
 }
