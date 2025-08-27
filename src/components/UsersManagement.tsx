@@ -12,7 +12,7 @@ interface Usuario {
   last_name: string;
   user_number: string;
   cedula: string;
-  role: 'admin' | 'user' | 'manager';
+  role: 'Administrador' | 'Auxiliar' | 'Secretaria';
   is_active: boolean;
   created_by: string;
   created_at: string;
@@ -24,7 +24,7 @@ interface UserFormData {
   first_name: string;
   last_name: string;
   cedula: string;
-  role: 'admin' | 'user' | 'manager';
+  role: 'Administrador' | 'Auxiliar' | 'Secretaria';
 }
 
 export default function UsersManagement() {
@@ -41,7 +41,7 @@ export default function UsersManagement() {
     first_name: '',
     last_name: '',
     cedula: '',
-    role: 'user'
+    role: 'Auxiliar'
   });
 
   useEffect(() => {
@@ -231,7 +231,7 @@ export default function UsersManagement() {
       first_name: '',
       last_name: '',
       cedula: '',
-      role: 'user'
+      role: 'Auxiliar'
     });
     setEditingUser(null);
     setShowForm(false);
@@ -239,8 +239,9 @@ export default function UsersManagement() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'manager': return 'bg-blue-100 text-blue-800';
+      case 'Administrador': return 'bg-red-100 text-red-800';
+      case 'Secretaria': return 'bg-blue-100 text-blue-800';
+      case 'Auxiliar': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -353,9 +354,9 @@ export default function UsersManagement() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
-                <option value="user">Usuario</option>
-                <option value="manager">Gerente</option>
-                <option value="admin">Administrador</option>
+                <option value="Auxiliar">Auxiliar</option>
+                <option value="Secretaria">Secretaria</option>
+                <option value="Administrador">Administrador</option>
               </select>
             </div>
 
@@ -442,8 +443,7 @@ export default function UsersManagement() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
-                    {user.role === 'admin' ? 'Administrador' :
-                      user.role === 'manager' ? 'Gerente' : 'Usuario'}
+                    {user.role}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
