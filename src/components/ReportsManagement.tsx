@@ -1,41 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     BarChart3,
     ArrowLeft,
-    Calendar,
     Download,
-    Filter,
-    TrendingUp,
-    Package,
-    MapPin,
+    Calendar,
     DollarSign,
-    AlertTriangle,
-    ShoppingCart,
-    Eye
+    TrendingUp,
+    Users,
+    Package
 } from 'lucide-react';
-import { ReportType } from '@/types/reports';
-import { mockSalesReport, mockProductionReport, mockInventoryReport, mockRouteReports } from '@/data/mockReports';
-import { weeklyProgressData, monthlyProgressData, topProductsData, salesByRouteData, quarterlyGrowthData, paymentMethodsData } from '@/data/mockChartData';
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-    BarChart,
-    Bar,
-    PieChart as RechartsPieChart,
-    Pie,
-    Cell,
-    AreaChart,
-    Area,
-    ComposedChart
-} from 'recharts';
+import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
 
 interface ReportsManagementProps {
@@ -43,49 +19,49 @@ interface ReportsManagementProps {
 }
 
 export default function ReportsManagement({ onBack }: ReportsManagementProps) {
-    const [selectedReportType, setSelectedReportType] = useState<ReportType | null>(null);
+    const [selectedReportType, setSelectedReportType] = useState<string | null>(null);
     const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
     const [startDate, setStartDate] = useState(new Date('2024-03-11').toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState(new Date('2024-03-17').toISOString().split('T')[0]);
 
     const reportTypes = [
         {
-            id: 'sales' as ReportType,
+            id: 'sales',
             title: 'Reporte de Ventas',
             description: 'Análisis completo de ventas por período, productos y rutas',
             icon: DollarSign,
             color: 'bg-gradient-to-br from-green-500 to-green-700'
         },
         {
-            id: 'production' as ReportType,
+            id: 'production',
             title: 'Reporte de Producción',
             description: 'Comparativo planificado vs real, eficiencia y costos',
             icon: Package,
             color: 'bg-gradient-to-br from-blue-500 to-blue-700'
         },
         {
-            id: 'inventory' as ReportType,
+            id: 'inventory',
             title: 'Reporte de Inventario',
             description: 'Stock actual, productos con bajo inventario y valorización',
             icon: Package,
             color: 'bg-gradient-to-br from-purple-500 to-purple-700'
         },
         {
-            id: 'routes' as ReportType,
+            id: 'routes',
             title: 'Reporte por Rutas',
             description: 'Rendimiento por ruta, clientes activos y productos top',
-            icon: MapPin,
+            icon: Users,
             color: 'bg-gradient-to-br from-yellow-500 to-yellow-700'
         },
         {
-            id: 'products' as ReportType,
+            id: 'products',
             title: 'Reporte de Productos',
             description: 'Análisis detallado por categoría y línea de productos',
-            icon: ShoppingCart,
+            icon: Package,
             color: 'bg-gradient-to-br from-red-500 to-red-700'
         },
         {
-            id: 'comparative' as ReportType,
+            id: 'comparative',
             title: 'Reporte Comparativo',
             description: 'Comparaciones entre períodos y análisis de tendencias',
             icon: TrendingUp,
@@ -93,7 +69,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
         }
     ];
 
-    const generateReport = (type: ReportType) => {
+    const generateReport = (type: string) => {
         setSelectedReportType(type);
     };
 
@@ -169,7 +145,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Ventas Totales</p>
                                             <p className="text-2xl font-semibold text-gray-900">
-                                                {formatCurrency(mockSalesReport.totalSales)}
+                                                {/* {formatCurrency(mockSalesReport.totalSales)} */}
                                             </p>
                                         </div>
                                     </div>
@@ -178,12 +154,12 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
-                                            <ShoppingCart className="h-8 w-8 text-blue-600" />
+                                            <Package className="h-8 w-8 text-blue-600" />
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Total Pedidos</p>
                                             <p className="text-2xl font-semibold text-gray-900">
-                                                {mockSalesReport.totalOrders}
+                                                {/* {mockSalesReport.totalOrders} */}
                                             </p>
                                         </div>
                                     </div>
@@ -197,7 +173,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Promedio por Pedido</p>
                                             <p className="text-2xl font-semibold text-gray-900">
-                                                {formatCurrency(mockSalesReport.averageOrderValue)}
+                                                {/* {formatCurrency(mockSalesReport.averageOrderValue)} */}
                                             </p>
                                         </div>
                                     </div>
@@ -211,7 +187,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Período</p>
                                             <p className="text-sm font-semibold text-gray-900">
-                                                {mockSalesReport.startDate.toLocaleDateString('es-ES')} - {mockSalesReport.endDate.toLocaleDateString('es-ES')}
+                                                {/* {mockSalesReport.startDate.toLocaleDateString('es-ES')} - {mockSalesReport.endDate.toLocaleDateString('es-ES')} */}
                                             </p>
                                         </div>
                                     </div>
@@ -240,7 +216,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
-                                            {mockSalesReport.topProducts.map((product, index) => (
+                                            {/* {mockSalesReport.topProducts.map((product, index) => (
                                                 <tr key={index}>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div>
@@ -258,7 +234,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                                         {formatCurrency(product.averagePrice)}
                                                     </td>
                                                 </tr>
-                                            ))}
+                                            ))} */}
                                         </tbody>
                                     </table>
                                 </div>
@@ -268,7 +244,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                             <div className="bg-white p-6 rounded-lg shadow-sm border">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Ventas por Ruta</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {mockSalesReport.salesByRoute.map((route, index) => (
+                                    {/* {mockSalesReport.salesByRoute.map((route, index) => (
                                         <div key={index} className="border rounded-lg p-4">
                                             <div className="flex items-center justify-between mb-2">
                                                 <h4 className="font-medium text-gray-900">{route.routeName}</h4>
@@ -286,7 +262,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                                 </p>
                                             </div>
                                         </div>
-                                    ))}
+                                    ))} */}
                                 </div>
                             </div>
 
@@ -295,7 +271,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 {/* Progreso semanal */}
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Progreso Semanal</h3>
-                                    <ResponsiveContainer width="100%" height={300}>
+                                    {/* <ResponsiveContainer width="100%" height={300}>
                                         <LineChart data={weeklyProgressData}>
                                             <CartesianGrid strokeDasharray="3 3" />
                                             <XAxis dataKey="day" />
@@ -308,13 +284,13 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             <Line type="monotone" dataKey="ventas" stroke="#10B981" strokeWidth={2} name="Ventas" />
                                             <Line type="monotone" dataKey="meta" stroke="#EF4444" strokeDasharray="5 5" name="Meta" />
                                         </LineChart>
-                                    </ResponsiveContainer>
+                                    </ResponsiveContainer> */}
                                 </div>
 
                                 {/* Progreso mensual */}
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Progreso Mensual</h3>
-                                    <ResponsiveContainer width="100%" height={300}>
+                                    {/* <ResponsiveContainer width="100%" height={300}>
                                         <AreaChart data={monthlyProgressData}>
                                             <CartesianGrid strokeDasharray="3 3" />
                                             <XAxis dataKey="month" />
@@ -327,7 +303,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             <Area type="monotone" dataKey="ventas" stackId="1" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} name="Ventas" />
                                             <Line type="monotone" dataKey="meta" stroke="#F59E0B" strokeDasharray="5 5" name="Meta" />
                                         </AreaChart>
-                                    </ResponsiveContainer>
+                                    </ResponsiveContainer> */}
                                 </div>
                             </div>
 
@@ -336,7 +312,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 {/* Productos más vendidos */}
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Productos Más Vendidos</h3>
-                                    <ResponsiveContainer width="100%" height={300}>
+                                    {/* <ResponsiveContainer width="100%" height={300}>
                                         <RechartsPieChart>
                                             <Pie
                                                 data={topProductsData}
@@ -354,13 +330,13 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             </Pie>
                                             <Tooltip formatter={(value) => [value, 'Ventas']} />
                                         </RechartsPieChart>
-                                    </ResponsiveContainer>
+                                    </ResponsiveContainer> */}
                                 </div>
 
                                 {/* Ventas por ruta */}
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Ventas por Ruta</h3>
-                                    <ResponsiveContainer width="100%" height={300}>
+                                    {/* <ResponsiveContainer width="100%" height={300}>
                                         <BarChart data={salesByRouteData}>
                                             <CartesianGrid strokeDasharray="3 3" />
                                             <XAxis dataKey="ruta" />
@@ -372,14 +348,14 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             <Legend />
                                             <Bar dataKey="ventas" fill="#3B82F6" name="Ventas" />
                                         </BarChart>
-                                    </ResponsiveContainer>
+                                    </ResponsiveContainer> */}
                                 </div>
                             </div>
 
                             {/* Crecimiento trimestral */}
                             <div className="bg-white p-6 rounded-lg shadow-sm border">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Crecimiento Trimestral</h3>
-                                <ResponsiveContainer width="100%" height={350}>
+                                {/* <ResponsiveContainer width="100%" height={350}>
                                     <ComposedChart data={quarterlyGrowthData}>
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="quarter" />
@@ -393,7 +369,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <Bar yAxisId="left" dataKey="ventas" fill="#10B981" name="Ventas" />
                                         <Line yAxisId="right" type="monotone" dataKey="crecimiento" stroke="#F59E0B" strokeWidth={3} name="Crecimiento %" />
                                     </ComposedChart>
-                                </ResponsiveContainer>
+                                </ResponsiveContainer> */}
                             </div>
 
                             {/* Ventas por método de pago */}
@@ -401,7 +377,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Ventas por Método de Pago</h3>
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div className="space-y-4">
-                                        {mockSalesReport.salesByPaymentMethod.map((method, index) => (
+                                        {/* {mockSalesReport.salesByPaymentMethod.map((method, index) => (
                                             <div key={index} className="flex items-center justify-between">
                                                 <div className="flex items-center">
                                                     <div className="w-4 h-4 bg-blue-500 rounded-full mr-3"></div>
@@ -417,9 +393,9 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                                     </span>
                                                 </div>
                                             </div>
-                                        ))}
+                                        ))} */}
                                     </div>
-                                    <ResponsiveContainer width="100%" height={200}>
+                                    {/* <ResponsiveContainer width="100%" height={200}>
                                         <RechartsPieChart>
                                             <Pie
                                                 data={paymentMethodsData}
@@ -436,7 +412,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             </Pie>
                                             <Tooltip formatter={(value) => [`${value}%`, 'Porcentaje']} />
                                         </RechartsPieChart>
-                                    </ResponsiveContainer>
+                                    </ResponsiveContainer> */}
                                 </div>
                             </div>
                         </div>
@@ -454,7 +430,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Eficiencia</p>
                                             <p className="text-2xl font-semibold text-gray-900">
-                                                {formatPercentage(mockProductionReport.efficiency)}
+                                                {/* {formatPercentage(mockProductionReport.efficiency)} */}
                                             </p>
                                         </div>
                                     </div>
@@ -468,7 +444,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Costo Total</p>
                                             <p className="text-2xl font-semibold text-gray-900">
-                                                {formatCurrency(mockProductionReport.totalCost)}
+                                                {/* {formatCurrency(mockProductionReport.totalCost)} */}
                                             </p>
                                         </div>
                                     </div>
@@ -482,7 +458,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Productos</p>
                                             <p className="text-2xl font-semibold text-gray-900">
-                                                {mockProductionReport.plannedProduction.length}
+                                                {/* {mockProductionReport.plannedProduction.length} */}
                                             </p>
                                         </div>
                                     </div>
@@ -496,7 +472,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Fecha</p>
                                             <p className="text-sm font-semibold text-gray-900">
-                                                {mockProductionReport.date.toLocaleDateString('es-ES')}
+                                                {/* {mockProductionReport.date.toLocaleDateString('es-ES')} */}
                                             </p>
                                         </div>
                                     </div>
@@ -528,7 +504,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
-                                            {mockProductionReport.variance.map((item, index) => {
+                                            {/* {mockProductionReport.variance.map((item, index) => {
                                                 const actualItem = mockProductionReport.actualProduction[index];
                                                 return (
                                                     <tr key={index}>
@@ -554,7 +530,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                                         </td>
                                                     </tr>
                                                 );
-                                            })}
+                                            })} */}
                                         </tbody>
                                     </table>
                                 </div>
@@ -574,7 +550,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Valor Total</p>
                                             <p className="text-2xl font-semibold text-gray-900">
-                                                {formatCurrency(mockInventoryReport.totalValue)}
+                                                {/* {formatCurrency(mockInventoryReport.totalValue)} */}
                                             </p>
                                         </div>
                                     </div>
@@ -583,12 +559,12 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
-                                            <AlertTriangle className="h-8 w-8 text-red-600" />
+                                            <Package className="h-8 w-8 text-red-600" />
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Stock Bajo</p>
                                             <p className="text-2xl font-semibold text-gray-900">
-                                                {mockInventoryReport.lowStockItems.length}
+                                                {/* {mockInventoryReport.lowStockItems.length} */}
                                             </p>
                                         </div>
                                     </div>
@@ -597,12 +573,12 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
-                                            <ShoppingCart className="h-8 w-8 text-green-600" />
+                                            <Package className="h-8 w-8 text-green-600" />
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Total Productos</p>
                                             <p className="text-2xl font-semibold text-gray-900">
-                                                {mockInventoryReport.products.length}
+                                                {/* {mockInventoryReport.products.length} */}
                                             </p>
                                         </div>
                                     </div>
@@ -616,7 +592,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Fecha</p>
                                             <p className="text-sm font-semibold text-gray-900">
-                                                {mockInventoryReport.date.toLocaleDateString('es-ES')}
+                                                {/* {mockInventoryReport.date.toLocaleDateString('es-ES')} */}
                                             </p>
                                         </div>
                                     </div>
@@ -648,7 +624,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
-                                            {mockInventoryReport.products.map((product, index) => (
+                                            {/* {mockInventoryReport.products.map((product, index) => (
                                                 <tr key={index}>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div>
@@ -677,7 +653,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                                         </span>
                                                     </td>
                                                 </tr>
-                                            ))}
+                                            ))} */}
                                         </tbody>
                                     </table>
                                 </div>
@@ -687,7 +663,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
 
                     {selectedReportType === 'routes' && (
                         <div className="space-y-6">
-                            {mockRouteReports.map((route, index) => (
+                            {/* {mockRouteReports.map((route, index) => (
                                 <div key={index} className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center justify-between mb-6">
                                         <h3 className="text-lg font-semibold text-gray-900">Ruta {route.routeName}</h3>
@@ -741,7 +717,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            ))} */}
                         </div>
                     )}
 
@@ -780,7 +756,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                             <h1 className="text-xl font-semibold text-gray-900">Centro de Reportes</h1>
                         </div>
                         <div className="flex items-center space-x-3">
-                            <Filter className="h-5 w-5 text-gray-400" />
+                            {/* <Filter className="h-5 w-5 text-gray-400" /> */}
                             <select
                                 value={selectedPeriod}
                                 onChange={(e) => setSelectedPeriod(e.target.value as 'daily' | 'weekly' | 'monthly')}
@@ -854,7 +830,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <span className="text-sm text-orange-600 font-medium">
                                             Generar reporte
                                         </span>
-                                        <Eye className="h-4 w-4 text-orange-600" />
+                                        {/* <Eye className="h-4 w-4 text-orange-600" /> */}
                                     </div>
                                 </div>
                             </div>
@@ -869,25 +845,25 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <div className="text-center">
                                 <div className="text-2xl font-semibold text-green-600">
-                                    {formatCurrency(mockSalesReport.totalSales)}
+                                    {/* {formatCurrency(mockSalesReport.totalSales)} */}
                                 </div>
                                 <div className="text-sm text-gray-500">Ventas Totales</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-semibold text-blue-600">
-                                    {mockSalesReport.totalOrders}
+                                    {/* {mockSalesReport.totalOrders} */}
                                 </div>
                                 <div className="text-sm text-gray-500">Pedidos</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-semibold text-purple-600">
-                                    {formatPercentage(mockProductionReport.efficiency)}
+                                    {/* {formatPercentage(mockProductionReport.efficiency)} */}
                                 </div>
                                 <div className="text-sm text-gray-500">Eficiencia</div>
                             </div>
                             <div className="text-center">
                                 <div className="text-2xl font-semibold text-red-600">
-                                    {mockInventoryReport.lowStockItems.length}
+                                    {/* {mockInventoryReport.lowStockItems.length} */}
                                 </div>
                                 <div className="text-sm text-gray-500">Productos Bajo Stock</div>
                             </div>
@@ -898,7 +874,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Tendencia Semanal</h3>
-                            <ResponsiveContainer width="100%" height={200}>
+                            {/* <ResponsiveContainer width="100%" height={200}>
                                 <LineChart data={weeklyProgressData}>
                                     <XAxis dataKey="day" />
                                     <YAxis hide />
@@ -909,19 +885,19 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                     <Line type="monotone" dataKey="ventas" stroke="#10B981" strokeWidth={3} dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }} />
                                     <Line type="monotone" dataKey="meta" stroke="#EF4444" strokeDasharray="5 5" strokeWidth={2} dot={false} />
                                 </LineChart>
-                            </ResponsiveContainer>
+                            </ResponsiveContainer> */}
                         </div>
 
                         <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución por Rutas</h3>
-                            <ResponsiveContainer width="100%" height={200}>
+                            {/* <ResponsiveContainer width="100%" height={200}>
                                 <BarChart data={salesByRouteData}>
                                     <XAxis dataKey="ruta" />
                                     <YAxis hide />
                                     <Tooltip formatter={(value) => [formatCurrency(Number(value)), 'Ventas']} />
                                     <Bar dataKey="ventas" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                                 </BarChart>
-                            </ResponsiveContainer>
+                            </ResponsiveContainer> */}
                         </div>
                     </div>
                 </div>

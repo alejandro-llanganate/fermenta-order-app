@@ -1,21 +1,17 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     ArrowLeft,
-    Printer,
-    Calendar,
+    Download,
     Calculator,
-    Package,
-    Download
+    BarChart3
 } from 'lucide-react';
 import { Order } from '@/types/order';
 import { Client } from '@/types/client';
 import { Product } from '@/types/product';
-import { mockOrders } from '@/data/mockOrders';
-import { mockClients } from '@/data/mockClients';
-import { mockProducts } from '@/data/mockProducts';
-import { mockRoutes } from '@/data/mockRoutes';
+import { Route } from '@/types/route';
+import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
 
 interface DonutProductionProps {
@@ -55,19 +51,29 @@ interface ProductionTotals {
 export default function DonutProduction({ onBack }: DonutProductionProps) {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedRoute, setSelectedRoute] = useState<string>('');
-    const printRef = useRef<HTMLDivElement>(null);
+    const [showPrintModal, setShowPrintModal] = useState(false);
+    const [printRef, setPrintRef] = useState<HTMLDivElement | null>(null);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [routes, setRoutes] = useState<Route[]>([]);
+    const [productionTotals, setProductionTotals] = useState<ProductionTotals | null>(null);
+    const [loading, setLoading] = useState(true);
 
     // Obtener pedidos del día seleccionado
-    const getOrdersForDate = (date: string) => {
-        const targetDate = new Date(date);
-        return mockOrders.filter(order => {
-            const orderDate = new Date(order.orderDate);
-            return orderDate.toDateString() === targetDate.toDateString();
-        });
+    const getOrdersForDate = async (date: string) => {
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('orderDate', date);
+
+        if (error) {
+            console.error('Error fetching orders:', error);
+            return [];
+        }
+        return data as Order[];
     };
 
     // Calcular totales de producción
-    const calculateProductionTotals = (orders: Order[]): ProductionTotals => {
+    const calculateProductionTotals = async (orders: Order[]): Promise<ProductionTotals> => {
         let rellenasChantilly = 0;
         let rellenasManjar = 0;
         let miniRellenasChantilly = 0;
@@ -77,37 +83,59 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
         const donasSabores: { [key: string]: number } = {};
         const miniDonasSabores: { [key: string]: number } = {};
 
-        orders.forEach(order => {
-            order.items.forEach(item => {
-                const product = mockProducts.find(p => p.id === item.productId);
-                if (!product) return;
+        for (const order of orders) {
+            // Obtener items del pedido
+            const { data: orderItems, error: itemsError } = await supabase
+                .from('order_items')
+                .select('*')
+                .eq('order_id', order.id);
 
+            if (itemsError) {
+                console.error('Error fetching order items:', itemsError);
+                continue;
+            }
+
+            if (!orderItems) continue;
+
+            for (const item of orderItems) {
+                const { data: productData, error: productError } = await supabase
+                    .from('products_with_categories')
+                    .select('*')
+                    .eq('id', item.product_id)
+                    .single();
+
+                if (productError || !productData) {
+                    console.error('Product not found:', item.product_id);
+                    continue;
+                }
+
+                const product = productData as Product;
                 const quantity = item.quantity;
 
                 // Categorizar productos
-                if (product.category === 'Rellenas') {
+                if (product.categoryName === 'Rellenas') {
                     if (product.variant === 'chantilly') {
                         rellenasChantilly += quantity;
                     } else if (product.variant === 'manjar') {
                         rellenasManjar += quantity;
                     }
-                } else if (product.category === 'Mini rellenas') {
+                } else if (product.categoryName === 'Mini rellenas') {
                     if (product.variant === 'chantilly') {
                         miniRellenasChantilly += quantity;
                     } else if (product.variant === 'manjar') {
                         miniRellenasManjar += quantity;
                     }
-                } else if (product.category === 'Donut') {
+                } else if (product.categoryName === 'Donut') {
                     donasTotal += quantity;
                     const sabor = product.variant;
                     donasSabores[sabor] = (donasSabores[sabor] || 0) + quantity;
-                } else if (product.category === 'Mini donut') {
+                } else if (product.categoryName === 'Mini donut') {
                     miniDonasTotal += quantity;
                     const sabor = product.variant;
                     miniDonasSabores[sabor] = (miniDonasSabores[sabor] || 0) + quantity;
                 }
-            });
-        });
+            }
+        }
 
         const rellenasTotal = rellenasChantilly + rellenasManjar;
         const miniRellenasTotal = miniRellenasChantilly + miniRellenasManjar;
@@ -144,34 +172,65 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
     };
 
     // Obtener clientes por ruta
-    const getClientsByRoute = (routeId: string) => {
-        return mockClients.filter(client => client.routeId === routeId && client.isActive);
+    const getClientsByRoute = async (routeId: string) => {
+        const { data, error } = await supabase
+            .from('routes')
+            .select('*')
+            .eq('id', routeId)
+            .single();
+
+        if (error || !data) {
+            console.error('Route not found:', routeId);
+            return [];
+        }
+
+        const route = data as Route;
+        const { data: clientsData, error: clientsError } = await supabase
+            .from('clients')
+            .select('*')
+            .eq('routeId', routeId)
+            .eq('isActive', true);
+
+        if (clientsError) {
+            console.error('Error fetching clients:', clientsError);
+            return [];
+        }
+        return clientsData as Client[];
     };
 
     // Obtener productos por categoría
-    const getProductsByCategory = (category: string) => {
-        return mockProducts.filter(product => product.category === category && product.isActive);
+    const getProductsByCategory = async (category: string) => {
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .eq('category', category)
+            .eq('isActive', true);
+
+        if (error) {
+            console.error('Error fetching products:', error);
+            return [];
+        }
+        return data as Product[];
     };
 
     // Generar PDF
     const generatePDF = async () => {
-        if (!printRef.current) return;
+        if (!printRef) return;
 
         try {
             const jsPDF = (await import('jspdf')).default;
             const html2canvas = (await import('html2canvas')).default;
 
-            const canvas = await html2canvas(printRef.current, {
+            const canvas = await html2canvas(printRef, {
                 scale: 2,
                 useCORS: true,
-                backgroundColor: '#ffffff'
+                allowTaint: true
             });
 
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('l', 'mm', 'a4');
-
-            const imgWidth = 297;
-            const pageHeight = 210;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 210;
+            const pageHeight = 295;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             let heightLeft = imgHeight;
 
@@ -194,10 +253,47 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
         }
     };
 
-    const orders = getOrdersForDate(selectedDate);
-    const productionTotals = calculateProductionTotals(orders);
-    const selectedRouteData = selectedRoute ? mockRoutes.find(r => r.id === selectedRoute) : null;
-    const routeClients = selectedRoute ? getClientsByRoute(selectedRoute) : [];
+    useEffect(() => {
+        fetchData();
+    }, [selectedDate]);
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            
+            // Fetch orders
+            const ordersData = await getOrdersForDate(selectedDate);
+            setOrders(ordersData);
+
+            // Fetch routes
+            const { data: routesData, error: routesError } = await supabase
+                .from('routes')
+                .select('*')
+                .eq('is_active', true);
+
+            if (routesError) throw routesError;
+            setRoutes(routesData || []);
+
+            // Calculate production totals
+            const totals = await calculateProductionTotals(ordersData);
+            setProductionTotals(totals);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Cargando datos de producción...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex flex-col">
@@ -252,7 +348,7 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                                 >
                                     <option value="">Todas las rutas</option>
-                                    {mockRoutes.filter(route => route.isActive).map((route) => (
+                                    {routes.map(route => (
                                         <option key={route.id} value={route.id}>
                                             {route.identificador} - {route.nombre}
                                         </option>
@@ -263,7 +359,7 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
                     </div>
 
                     {/* Contenido para impresión */}
-                    <div ref={printRef} className="bg-white p-8 border border-gray-300">
+                    <div ref={setPrintRef} className="bg-white p-8 border border-gray-300">
                         {/* Header del reporte */}
                         <div className="text-center mb-6">
                             <h1 className="text-3xl font-bold text-black">MEGA DONUT</h1>
@@ -286,31 +382,31 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
                                 <tbody>
                                     <tr>
                                         <td className="border border-gray-300 px-4 py-2 font-medium text-black">RELLENAS</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.rellenas.total}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.rellenas.tablas}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.rellenas.unidades}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.rellenas.total || 0}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.rellenas.tablas || 0}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.rellenas.unidades || 0}</td>
                                     </tr>
                                     <tr>
                                         <td className="border border-gray-300 px-4 py-2 font-medium text-black">M.RELLENAS</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.miniRellenas.total}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.miniRellenas.tablas}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.miniRellenas.unidades}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.miniRellenas.total || 0}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.miniRellenas.tablas || 0}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.miniRellenas.unidades || 0}</td>
                                     </tr>
                                     <tr>
                                         <td className="border border-gray-300 px-4 py-2 font-medium text-black">DONAS</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.donas.total}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.donas.tablas}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.donas.unidades}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.donas.total || 0}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.donas.tablas || 0}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.donas.unidades || 0}</td>
                                     </tr>
                                     <tr>
                                         <td className="border border-gray-300 px-4 py-2 font-medium text-black">MINIDONAS</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.miniDonas.total}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.miniDonas.tablas}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals.miniDonas.unidades}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.miniDonas.total || 0}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.miniDonas.tablas || 0}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center text-black">{productionTotals?.miniDonas.unidades || 0}</td>
                                     </tr>
                                     <tr className="bg-blue-100">
                                         <td className="border border-gray-300 px-4 py-2 font-bold text-black">TOTAL PROD.</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center font-bold text-black">{productionTotals.totalProduccion}</td>
+                                        <td className="border border-gray-300 px-4 py-2 text-center font-bold text-black">{productionTotals?.totalProduccion || 0}</td>
                                         <td className="border border-gray-300 px-4 py-2 text-center font-bold text-black">-</td>
                                         <td className="border border-gray-300 px-4 py-2 text-center font-bold text-black">-</td>
                                     </tr>
@@ -329,13 +425,13 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
                                         <tbody>
                                             <tr>
                                                 <td className="border border-gray-300 px-3 py-2 font-medium text-black">CHANT</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{productionTotals.rellenas.chantilly}</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{Math.floor(productionTotals.rellenas.chantilly / 25)}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{productionTotals?.rellenas.chantilly || 0}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{Math.floor((productionTotals?.rellenas.chantilly || 0) / 25)}</td>
                                             </tr>
                                             <tr>
                                                 <td className="border border-gray-300 px-3 py-2 font-medium text-black">MANJAR</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{productionTotals.rellenas.manjar}</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{Math.floor(productionTotals.rellenas.manjar / 25)}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{productionTotals?.rellenas.manjar || 0}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{Math.floor((productionTotals?.rellenas.manjar || 0) / 25)}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -348,13 +444,13 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
                                         <tbody>
                                             <tr>
                                                 <td className="border border-gray-300 px-3 py-2 font-medium text-black">CHANT</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{productionTotals.miniRellenas.chantilly}</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{Math.floor(productionTotals.miniRellenas.chantilly / 56)}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{productionTotals?.miniRellenas.chantilly || 0}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{Math.floor((productionTotals?.miniRellenas.chantilly || 0) / 56)}</td>
                                             </tr>
                                             <tr>
                                                 <td className="border border-gray-300 px-3 py-2 font-medium text-black">MANJAR</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{productionTotals.miniRellenas.manjar}</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{Math.floor(productionTotals.miniRellenas.manjar / 56)}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{productionTotals?.miniRellenas.manjar || 0}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{Math.floor((productionTotals?.miniRellenas.manjar || 0) / 56)}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -365,11 +461,11 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
                                     <h4 className="text-lg font-bold text-black mb-2">DONUTS</h4>
                                     <table className="w-full border-collapse border border-gray-300">
                                         <tbody>
-                                            {Object.entries(productionTotals.donas.sabores).map(([sabor, cantidad]) => (
-                                                <tr key={sabor}>
-                                                    <td className="border border-gray-300 px-3 py-2 font-medium text-black">{sabor.toUpperCase()}</td>
-                                                    <td className="border border-gray-300 px-3 py-2 text-center text-black">{cantidad}</td>
-                                                </tr>
+                                            {Object.entries(productionTotals?.donas.sabores || {}).map(([sabor, cantidad]) => (
+                                            <tr key={sabor}>
+                                                <td className="border border-gray-300 px-3 py-2 font-medium text-black">{sabor.toUpperCase()}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{cantidad}</td>
+                                            </tr>
                                             ))}
                                         </tbody>
                                     </table>
@@ -380,11 +476,11 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
                                     <h4 className="text-lg font-bold text-black mb-2">M.DONUTS</h4>
                                     <table className="w-full border-collapse border border-gray-300">
                                         <tbody>
-                                            {Object.entries(productionTotals.miniDonas.sabores).map(([sabor, cantidad]) => (
-                                                <tr key={sabor}>
-                                                    <td className="border border-gray-300 px-3 py-2 font-medium text-black">{sabor.toUpperCase()}</td>
-                                                    <td className="border border-gray-300 px-3 py-2 text-center text-black">{cantidad}</td>
-                                                </tr>
+                                            {Object.entries(productionTotals?.miniDonas.sabores || {}).map(([sabor, cantidad]) => (
+                                            <tr key={sabor}>
+                                                <td className="border border-gray-300 px-3 py-2 font-medium text-black">{sabor.toUpperCase()}</td>
+                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{cantidad}</td>
+                                            </tr>
                                             ))}
                                         </tbody>
                                     </table>
@@ -393,61 +489,68 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
                         </div>
 
                         {/* Tabla de Rutas (si se selecciona una ruta específica) */}
-                        {selectedRouteData && (
-                            <div className="mb-8">
-                                <h3 className="text-xl font-bold text-black mb-4 text-center">
-                                    RUTA {selectedRouteData.identificador} - {selectedRouteData.nombre}
-                                </h3>
-                                <table className="w-full border-collapse border border-gray-300">
-                                    <thead>
-                                        <tr className="bg-gray-100">
-                                            <th className="border border-gray-300 px-3 py-2 text-left text-black font-bold">CLIENTE</th>
-                                            <th className="border border-gray-300 px-3 py-2 text-center text-black font-bold">RELLENAS</th>
-                                            <th className="border border-gray-300 px-3 py-2 text-center text-black font-bold">MINI RELLENAS</th>
-                                            <th className="border border-gray-300 px-3 py-2 text-center text-black font-bold">DONAS</th>
-                                            <th className="border border-gray-300 px-3 py-2 text-center text-black font-bold">MINI DONAS</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {routeClients.map((client) => {
-                                            const clientOrders = orders.filter(order => order.clientName === client.nombreCompleto);
-                                            let rellenas = 0;
-                                            let miniRellenas = 0;
-                                            let donas = 0;
-                                            let miniDonas = 0;
+                        {/* {selectedRouteData && ( */}
+                        {/* <div className="mb-8"> */}
+                        {/* <h3 className="text-xl font-bold text-black mb-4 text-center"> */}
+                        {/* Ruta {selectedRouteData.identificador} - {selectedRouteData.nombre} */}
+                        {/* </h3> */}
+                        {/* <table className="w-full border-collapse border border-gray-300"> */}
+                        {/* <thead> */}
+                        {/* <tr className="bg-gray-100"> */}
+                        {/* <th className="border border-gray-300 px-3 py-2 text-left text-black font-bold">CLIENTE</th> */}
+                        {/* <th className="border border-gray-300 px-3 py-2 text-center text-black font-bold">RELLENAS</th> */}
+                        {/* <th className="border border-gray-300 px-3 py-2 text-center text-black font-bold">MINI RELLENAS</th> */}
+                        {/* <th className="border border-gray-300 px-3 py-2 text-center text-black font-bold">DONAS</th> */}
+                        {/* <th className="border border-gray-300 px-3 py-2 text-center text-black font-bold">MINI DONAS</th> */}
+                        {/* </tr> */}
+                        {/* </thead> */}
+                        {/* <tbody> */}
+                        {/* {routeClients.map((client) => { */}
+                        {/* const clientOrders = orders.filter(order => order.clientName === client.nombreCompleto); */}
+                        {/* let rellenas = 0; */}
+                        {/* let miniRellenas = 0; */}
+                        {/* let donas = 0; */}
+                        {/* let miniDonas = 0; */}
 
-                                            clientOrders.forEach(order => {
-                                                order.items.forEach(item => {
-                                                    const product = mockProducts.find(p => p.id === item.productId);
-                                                    if (!product) return;
+                        {/* clientOrders.forEach(order => { */}
+                        {/* order.items.forEach(item => { */}
+                        {/* const { data: productData, error: productError } = supabase */}
+                        {/* .from('products') */}
+                        {/* .select('*') */}
+                        {/* .eq('id', item.productId) */}
+                        {/* .single(); */}
 
-                                                    const quantity = item.quantity;
-                                                    if (product.category === 'Rellenas') {
-                                                        rellenas += quantity;
-                                                    } else if (product.category === 'Mini rellenas') {
-                                                        miniRellenas += quantity;
-                                                    } else if (product.category === 'Donut') {
-                                                        donas += quantity;
-                                                    } else if (product.category === 'Mini donut') {
-                                                        miniDonas += quantity;
-                                                    }
-                                                });
-                                            });
+                        {/* if (productError || !productData) { */}
+                        {/* console.error('Product not found:', item.productId); */}
+                        {/* return; */}
+                        {/* } */}
 
-                                            return (
-                                                <tr key={client.id}>
-                                                    <td className="border border-gray-300 px-3 py-2 text-black">{client.institucionEducativa}</td>
-                                                    <td className="border border-gray-300 px-3 py-2 text-center text-black">{rellenas || '-'}</td>
-                                                    <td className="border border-gray-300 px-3 py-2 text-center text-black">{miniRellenas || '-'}</td>
-                                                    <td className="border border-gray-300 px-3 py-2 text-center text-black">{donas || '-'}</td>
-                                                    <td className="border border-gray-300 px-3 py-2 text-center text-black">{miniDonas || '-'}</td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                        {/* const product = productData as Product; */}
+                        {/* const quantity = item.quantity; */}
+                        {/* if (product.category === 'Rellenas') { */}
+                        {/* rellenas += quantity; */}
+                        {/* } else if (product.category === 'Mini rellenas') { */}
+                        {/* miniRellenas += quantity; */}
+                        {/* } else if (product.category === 'Donut') { */}
+                        {/* donas += quantity; */}
+                        {/* } else if (product.category === 'Mini donut') { */}
+                        {/* miniDonas += quantity; */}
+                        {/* } */}
+                        {/* }); */}
+                        {/* return ( */}
+                        {/* <tr key={client.id}> */}
+                        {/* <td className="border border-gray-300 px-3 py-2 text-black">{client.institucionEducativa}</td> */}
+                        {/* <td className="border border-gray-300 px-3 py-2 text-center text-black">{rellenas || '-'}</td> */}
+                        {/* <td className="border border-gray-300 px-3 py-2 text-center text-black">{miniRellenas || '-'}</td> */}
+                        {/* <td className="border border-gray-300 px-3 py-2 text-center text-black">{donas || '-'}</td> */}
+                        {/* <td className="border border-gray-300 px-3 py-2 text-center text-black">{miniDonas || '-'}</td> */}
+                        {/* </tr> */}
+                        {/* ); */}
+                        {/* })} */}
+                        {/* </tbody> */}
+                        {/* </table> */}
+                        {/* </div> */}
+                        {/* )} */}
 
                         {/* Footer */}
                         <div className="mt-8 pt-4 border-t border-gray-300">

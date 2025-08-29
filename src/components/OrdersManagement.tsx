@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
     ShoppingCart,
     Plus,
@@ -18,11 +18,8 @@ import {
 import { Order, CreateOrderData, PaymentMethod, OrderItem } from '@/types/order';
 import { Product } from '@/types/product';
 import { Client } from '@/types/client';
-
-import { mockOrders } from '@/data/mockOrders';
-import { mockProducts } from '@/data/mockProducts';
-import { mockClients } from '@/data/mockClients';
-import { mockRoutes } from '@/data/mockRoutes';
+import { Route } from '@/types/route';
+import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
 
 interface OrdersManagementProps {
@@ -30,7 +27,10 @@ interface OrdersManagementProps {
 }
 
 export default function OrdersManagement({ onBack }: OrdersManagementProps) {
-    const [orders, setOrders] = useState<Order[]>(mockOrders);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [clients, setClients] = useState<Client[]>([]);
+    const [routes, setRoutes] = useState<Route[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
@@ -40,19 +40,20 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const [showExportModal, setShowExportModal] = useState(false);
     const [editingOrder, setEditingOrder] = useState<Order | null>(null);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [loading, setLoading] = useState(true);
     const printRef = useRef<HTMLDivElement>(null);
     const routePreviewRef = useRef<HTMLDivElement>(null);
     const exportRef = useRef<HTMLDivElement>(null);
 
     // Estados para el formulario
     const [formData, setFormData] = useState<CreateOrderData>({
-        clientName: '',
-        clientPhone: '',
-        clientCity: '',
-        clientAddress: '',
-        paymentMethod: 'Efectivo',
+        orderNumber: '',
+        clientId: '',
         routeId: '',
-        items: [],
+        orderDate: new Date(),
+        deliveryDate: undefined,
+        status: 'pending',
+        totalAmount: 0,
         notes: ''
     });
 
@@ -61,20 +62,69 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const [productSearchTerm, setProductSearchTerm] = useState('');
     const [showClientDropdown, setShowClientDropdown] = useState(false);
     const [showProductDropdown, setShowProductDropdown] = useState(false);
-    const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]);
+    const [selectedItems, setSelectedItems] = useState<Omit<OrderItem, 'orderId' | 'createdAt'>[]>([]);
 
     const paymentMethods: PaymentMethod[] = ['Efectivo', 'Transferencia', 'Tarjeta de crédito', 'Tarjeta de débito', 'Cheque'];
 
-    const filteredClients = mockClients.filter(client =>
-        client.institucionEducativa.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-        client.nombreCompleto.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-        client.telefono.includes(clientSearchTerm)
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+
+            // Fetch orders
+            const { data: ordersData, error: ordersError } = await supabase
+                .from('orders_with_details')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (ordersError) throw ordersError;
+            setOrders(ordersData || []);
+
+            // Fetch products
+            const { data: productsData, error: productsError } = await supabase
+                .from('products_with_categories')
+                .select('*')
+                .eq('is_active', true);
+
+            if (productsError) throw productsError;
+            setProducts(productsData || []);
+
+            // Fetch clients
+            const { data: clientsData, error: clientsError } = await supabase
+                .from('clients_with_routes')
+                .select('*')
+                .eq('is_active', true);
+
+            if (clientsError) throw clientsError;
+            setClients(clientsData || []);
+
+            // Fetch routes
+            const { data: routesData, error: routesError } = await supabase
+                .from('routes')
+                .select('*')
+                .eq('is_active', true);
+
+            if (routesError) throw routesError;
+            setRoutes(routesData || []);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const filteredClients = clients.filter(client =>
+        client.nombre.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+        (client.telefono && client.telefono.toLowerCase().includes(clientSearchTerm.toLowerCase()))
     ).slice(0, 5);
 
-    const filteredProducts = mockProducts.filter(product =>
+    const filteredProducts = products.filter(product =>
         product.isActive && (
             product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
-            product.category.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+            product.categoryName.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
             product.variant.toLowerCase().includes(productSearchTerm.toLowerCase())
         )
     ).slice(0, 10);
@@ -85,34 +135,32 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         return `PED-${String(lastNumber + 1).padStart(3, '0')}`;
     };
 
-    const calculateTotals = (items: OrderItem[]) => {
-        const subtotal = items.reduce((sum, item) => sum + item.individualValue, 0);
+    const calculateTotals = (items: Omit<OrderItem, 'orderId' | 'createdAt'>[]) => {
+        const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
         return { subtotal, totalAmount: subtotal };
     };
 
     const selectClient = (client: Client) => {
         setFormData({
             ...formData,
-            clientName: client.nombreCompleto,
-            clientPhone: client.telefono,
-            clientCity: 'Quito', // Por defecto
-            clientAddress: client.direccion
+            clientId: client.id
         });
-        setClientSearchTerm(client.nombreCompleto);
+        setClientSearchTerm(client.nombre);
         setShowClientDropdown(false);
     };
 
     const addProduct = (product: Product) => {
-        const newItem: OrderItem = {
+        const newItem: Omit<OrderItem, 'orderId' | 'createdAt'> = {
             id: Date.now().toString(),
             productId: product.id,
             productName: product.name,
-            productCategory: product.category,
+            productCategory: product.categoryName,
             productVariant: product.variant,
             quantity: 1,
             unitPrice: product.priceRegular,
             usePaginaPrice: false,
-            individualValue: product.priceRegular
+            individualValue: product.priceRegular,
+            totalPrice: product.priceRegular
         };
 
         setSelectedItems([...selectedItems, newItem]);
@@ -128,7 +176,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
         setSelectedItems(selectedItems.map(item =>
             item.id === itemId
-                ? { ...item, quantity, individualValue: quantity * item.unitPrice }
+                ? { ...item, quantity, individualValue: quantity * item.unitPrice, totalPrice: quantity * item.unitPrice }
                 : item
         ));
     };
@@ -142,7 +190,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     ...item,
                     usePaginaPrice: usePagina,
                     unitPrice,
-                    individualValue: item.quantity * unitPrice
+                    individualValue: item.quantity * unitPrice,
+                    totalPrice: item.quantity * unitPrice
                 };
             }
             return item;
@@ -153,113 +202,193 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         setSelectedItems(selectedItems.filter(item => item.id !== itemId));
     };
 
-    const handleCreateOrder = () => {
-        if (selectedItems.length === 0 || !formData.clientName.trim()) return;
+    const handleCreateOrder = async () => {
+        if (selectedItems.length === 0 || !formData.clientId) return;
 
         const { subtotal, totalAmount } = calculateTotals(selectedItems);
-        const selectedRoute = mockRoutes.find(route => route.id === formData.routeId);
+        const selectedRoute = routes.find(route => route.id === formData.routeId);
 
         const newOrder: Order = {
             id: Date.now().toString(),
             orderNumber: generateOrderNumber(),
-            clientName: formData.clientName,
-            clientPhone: formData.clientPhone,
-            clientCity: formData.clientCity,
-            clientAddress: formData.clientAddress,
-            orderDate: new Date(),
-            paymentMethod: formData.paymentMethod,
+            clientId: formData.clientId,
             routeId: formData.routeId,
-            routeName: selectedRoute?.nombre,
-            items: selectedItems,
-            subtotal,
-            totalAmount,
-            status: 'PENDIENTE',
-            isActive: true,
+            orderDate: formData.orderDate,
+            deliveryDate: formData.deliveryDate,
+            status: formData.status || 'pending',
+            totalAmount: totalAmount,
+            notes: formData.notes,
             createdAt: new Date(),
-            notes: formData.notes
+            updatedAt: new Date()
         };
 
-        setOrders([newOrder, ...orders]);
-        setShowCreateModal(false);
-        resetForm();
-    };
+        try {
+            const { data, error } = await supabase
+                .from('orders')
+                .insert([newOrder])
+                .select()
+                .single();
 
-    const handleUpdateOrder = () => {
-        if (!editingOrder || selectedItems.length === 0) return;
+            if (error) throw error;
 
-        const { subtotal, totalAmount } = calculateTotals(selectedItems);
-        const selectedRoute = mockRoutes.find(route => route.id === formData.routeId);
+            // Insert order items
+            const orderItemsToInsert = selectedItems.map(item => ({
+                order_id: data.id,
+                product_id: item.productId,
+                quantity: item.quantity,
+                unit_price: item.unitPrice,
+                use_pagina_price: item.usePaginaPrice,
+                individual_value: item.individualValue,
+                total_price: item.totalPrice
+            }));
 
-        const updatedOrders = orders.map(order =>
-            order.id === editingOrder.id
-                ? {
-                    ...order,
-                    ...formData,
-                    routeName: selectedRoute?.nombre,
-                    items: selectedItems,
-                    subtotal,
-                    totalAmount
-                }
-                : order
-        );
+            const { error: itemsError } = await supabase
+                .from('order_items')
+                .insert(orderItemsToInsert);
 
-        setOrders(updatedOrders);
-        setEditingOrder(null);
-        resetForm();
-    };
+            if (itemsError) throw itemsError;
 
-    const handleDeleteOrder = (orderId: string) => {
-        if (confirm('¿Está seguro de que desea eliminar este pedido? Esta acción no se puede deshacer.')) {
-            setOrders(orders.filter(order => order.id !== orderId));
+            fetchData(); // Refresh orders
+            setShowCreateModal(false);
+            resetForm();
+        } catch (err) {
+            console.error('Error creating order:', err);
+            alert('Error al crear el pedido. Por favor, inténtalo de nuevo.');
         }
     };
 
-    const handleUpdateStatus = (orderId: string, newStatus: Order['status']) => {
-        setOrders(orders.map(order =>
-            order.id === orderId
-                ? { ...order, status: newStatus }
-                : order
-        ));
+    const handleUpdateOrder = async () => {
+        if (!editingOrder || selectedItems.length === 0) return;
+
+        const { subtotal, totalAmount } = calculateTotals(selectedItems);
+        const selectedRoute = routes.find(route => route.id === formData.routeId);
+
+        const updatedOrder: Order = {
+            ...editingOrder,
+            ...formData,
+            status: formData.status || 'pending',
+            routeId: formData.routeId,
+            totalAmount: totalAmount,
+            updatedAt: new Date()
+        };
+
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .update(updatedOrder)
+                .eq('id', editingOrder.id);
+
+            if (error) throw error;
+
+            // Update order items
+            const orderItemsToUpdate = selectedItems.map(item => ({
+                order_id: editingOrder.id,
+                product_id: item.productId,
+                quantity: item.quantity,
+                unit_price: item.unitPrice,
+                use_pagina_price: item.usePaginaPrice,
+                individual_value: item.individualValue,
+                total_price: item.totalPrice
+            }));
+
+            const { error: itemsError } = await supabase
+                .from('order_items')
+                .upsert(orderItemsToUpdate, { onConflict: 'order_id, product_id' });
+
+            if (itemsError) throw itemsError;
+
+            fetchData(); // Refresh orders
+            setEditingOrder(null);
+            resetForm();
+        } catch (err) {
+            console.error('Error updating order:', err);
+            alert('Error al modificar el pedido. Por favor, inténtalo de nuevo.');
+        }
+    };
+
+    const handleDeleteOrder = async (orderId: string) => {
+        if (confirm('¿Está seguro de que desea eliminar este pedido? Esta acción no se puede deshacer.')) {
+            try {
+                const { error } = await supabase
+                    .from('orders')
+                    .delete()
+                    .eq('id', orderId);
+
+                if (error) throw error;
+
+                const { error: itemsError } = await supabase
+                    .from('order_items')
+                    .delete()
+                    .eq('order_id', orderId);
+
+                if (itemsError) throw itemsError;
+
+                fetchData(); // Refresh orders
+            } catch (err) {
+                console.error('Error deleting order:', err);
+                alert('Error al eliminar el pedido. Por favor, inténtalo de nuevo.');
+            }
+        }
+    };
+
+    const handleUpdateStatus = async (orderId: string, newStatus: Order['status']) => {
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .update({ status: newStatus, updatedAt: new Date() })
+                .eq('id', orderId);
+
+            if (error) throw error;
+            fetchData(); // Refresh orders
+        } catch (err) {
+            console.error('Error updating status:', err);
+            alert('Error al actualizar el estado del pedido. Por favor, inténtalo de nuevo.');
+        }
     };
 
     const openEditModal = (order: Order) => {
         setEditingOrder(order);
         setFormData({
-            clientName: order.clientName,
-            clientPhone: order.clientPhone,
-            clientCity: order.clientCity,
-            clientAddress: order.clientAddress,
-            paymentMethod: order.paymentMethod,
-            routeId: order.routeId || '',
-            items: order.items.map(item => ({
-                productId: item.productId,
-                productName: item.productName,
-                productCategory: item.productCategory,
-                productVariant: item.productVariant,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice,
-                usePaginaPrice: item.usePaginaPrice
-            })),
-            notes: order.notes || ''
+            orderNumber: order.orderNumber,
+            clientId: order.clientId,
+            routeId: order.routeId,
+            orderDate: order.orderDate,
+            deliveryDate: order.deliveryDate,
+            status: order.status,
+            totalAmount: order.totalAmount,
+            notes: order.notes
         });
-        setSelectedItems([...order.items]);
-        setClientSearchTerm(order.clientName);
+        setSelectedItems(order.items ? order.items.map(item => ({
+            id: item.id,
+            productId: item.productId,
+            productName: item.productName,
+            productCategory: item.productCategory,
+            productVariant: item.productVariant,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            usePaginaPrice: item.usePaginaPrice,
+            individualValue: item.individualValue,
+            totalPrice: item.totalPrice
+        })) : []);
+        setClientSearchTerm(order.clientName || ''); // Assuming clientName is available in the order object
     };
 
     const resetForm = () => {
         setFormData({
-            clientName: '',
-            clientPhone: '',
-            clientCity: '',
-            clientAddress: '',
-            paymentMethod: 'Efectivo',
+            orderNumber: '',
+            clientId: '',
             routeId: '',
-            items: [],
+            orderDate: new Date(),
+            deliveryDate: undefined,
+            status: 'pending',
+            totalAmount: 0,
             notes: ''
         });
         setSelectedItems([]);
         setClientSearchTerm('');
         setProductSearchTerm('');
+        setShowClientDropdown(false);
+        setShowProductDropdown(false);
     };
 
     const closeModal = () => {
@@ -273,6 +402,17 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             closeModal();
         }
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Cargando pedidos...</p>
+                </div>
+            </div>
+        );
+    }
 
     const handlePrint = async (order: Order) => {
         setSelectedOrder(order);
@@ -360,7 +500,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 heightLeft -= pageHeight;
             }
 
-            const route = mockRoutes.find(r => r.id === selectedRoute);
+            const route = routes.find(r => r.id === selectedRoute);
             pdf.save(`Guia-Ruta-${route?.identificador}-${route?.nombre}.pdf`);
         } catch (error) {
             console.error('Error generando PDF de ruta:', error);
@@ -372,14 +512,14 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const getRouteData = () => {
         if (!selectedRoute) return { route: null, clients: [], orders: [], products: new Set() };
 
-        const route = mockRoutes.find(r => r.id === selectedRoute);
-        const routeClients = mockClients.filter(client => client.routeId === selectedRoute);
+        const route = routes.find(r => r.id === selectedRoute);
+        const routeClients = clients.filter(client => client.routeId === selectedRoute);
         const routeOrders = orders.filter(order => order.routeId === selectedRoute);
 
         // Obtener productos únicos de los pedidos de la ruta
         const routeProducts = new Set<string>();
         routeOrders.forEach(order => {
-            order.items.forEach(item => {
+            order.items?.forEach(item => {
                 routeProducts.add(`${item.productName} - ${item.productCategory} - ${item.productVariant}`);
             });
         });
@@ -426,7 +566,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 heightLeft -= pageHeight;
             }
 
-            const filterText = routeFilter ? `-Filtro-Ruta-${mockRoutes.find(r => r.id === routeFilter)?.identificador}` : '';
+            const filterText = routeFilter ? `-Filtro-Ruta-${routes.find(r => r.id === routeFilter)?.identificador}` : '';
             pdf.save(`Reporte-Pedidos${filterText}-${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`);
         } catch (error) {
             console.error('Error generando PDF de exportación:', error);
@@ -442,11 +582,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         if (searchTerm) {
             filtered = filtered.filter(order => {
                 const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    order.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    order.clientPhone.includes(searchTerm) ||
+                    (order.clientName && order.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
                     order.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     (order.routeName && order.routeName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                    (order.routeId && mockRoutes.find(route => route.id === order.routeId)?.identificador.toLowerCase().includes(searchTerm.toLowerCase()));
+                    (order.routeId && routes.find(route => route.id === order.routeId)?.identificador.toLowerCase().includes(searchTerm.toLowerCase()));
 
                 return matchesSearch;
             });
@@ -462,11 +601,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
     const filteredOrders = orders.filter(order => {
         const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            order.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            order.clientPhone.includes(searchTerm) ||
+            (order.clientName && order.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
             order.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (order.routeName && order.routeName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (order.routeId && mockRoutes.find(route => route.id === order.routeId)?.identificador.toLowerCase().includes(searchTerm.toLowerCase()));
+            (order.routeId && routes.find(route => route.id === order.routeId)?.identificador.toLowerCase().includes(searchTerm.toLowerCase()));
 
         const matchesRouteFilter = !routeFilter || order.routeId === routeFilter;
 
@@ -475,9 +613,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
     const getStatusColor = (status: Order['status']) => {
         switch (status) {
-            case 'PENDIENTE': return 'bg-yellow-100 text-yellow-800';
-            case 'LISTO': return 'bg-green-100 text-green-800';
-            case 'MODIFICAR': return 'bg-orange-100 text-orange-800';
+            case 'pending': return 'bg-yellow-100 text-yellow-800';
+            case 'ready': return 'bg-green-100 text-green-800';
+            case 'delivered': return 'bg-blue-100 text-blue-800';
+            case 'cancelled': return 'bg-red-100 text-red-800';
             default: return 'bg-gray-100 text-gray-800';
         }
     };
@@ -538,7 +677,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                                 >
                                     <option value="">Todas las rutas</option>
-                                    {mockRoutes.filter(route => route.isActive).map((route) => (
+                                    {routes.filter(route => route.isActive).map((route) => (
                                         <option key={route.id} value={route.id}>
                                             {route.identificador} - {route.nombre}
                                         </option>
@@ -621,7 +760,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                         {order.clientName}
                                                     </div>
                                                     <div className="text-sm text-gray-500">
-                                                        {order.clientPhone}
+                                                        {/* Teléfono del cliente no disponible en el tipo Order */}
                                                     </div>
                                                 </div>
                                             </td>
@@ -648,9 +787,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                     onChange={(e) => handleUpdateStatus(order.id, e.target.value as Order['status'])}
                                                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border-none ${getStatusColor(order.status)}`}
                                                 >
-                                                    <option value="PENDIENTE">PENDIENTE</option>
-                                                    <option value="LISTO">LISTO</option>
-                                                    <option value="MODIFICAR">MODIFICAR</option>
+                                                    <option value="pending">Pendiente</option>
+                                                    <option value="ready">Listo</option>
+                                                    <option value="delivered">Entregado</option>
+                                                    <option value="cancelled">Cancelado</option>
                                                 </select>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -710,7 +850,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 <div>
                                     <p className="text-sm font-medium text-gray-600">Pedidos pendientes</p>
                                     <p className="text-2xl font-bold text-yellow-600">
-                                        {orders.filter(order => order.status === 'PENDIENTE').length}
+                                        {orders.filter(order => order.status === 'pending').length}
                                     </p>
                                 </div>
                                 <Calendar className="h-8 w-8 text-yellow-500" />
@@ -722,7 +862,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 <div>
                                     <p className="text-sm font-medium text-gray-600">Pedidos listos</p>
                                     <p className="text-2xl font-bold text-green-600">
-                                        {orders.filter(order => order.status === 'LISTO').length}
+                                        {orders.filter(order => order.status === 'ready').length}
                                     </p>
                                 </div>
                                 <Package className="h-8 w-8 text-green-500" />
@@ -734,7 +874,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 <div>
                                     <p className="text-sm font-medium text-gray-600">Ventas totales</p>
                                     <p className="text-2xl font-bold text-purple-600">
-                                        ${orders.filter(order => order.status === 'LISTO').reduce((sum, order) => sum + order.totalAmount, 0).toFixed(2)}
+                                        ${orders.filter(order => order.status === 'ready').reduce((sum, order) => sum + order.totalAmount, 0).toFixed(2)}
                                     </p>
                                 </div>
                                 <DollarSign className="h-8 w-8 text-purple-500" />
@@ -787,8 +927,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                         onClick={() => selectClient(client)}
                                                         className="w-full text-left px-3 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
                                                     >
-                                                        <div className="font-medium text-gray-900">{client.nombreCompleto}</div>
-                                                        <div className="text-sm text-gray-600">{client.institucionEducativa}</div>
+                                                        <div className="font-medium text-gray-900">{client.nombre}</div>
+                                                        <div className="text-sm text-gray-600">{client.direccion || 'Sin dirección'}</div>
                                                         <div className="text-xs text-gray-500">{client.telefono}</div>
                                                     </button>
                                                 ))}
@@ -803,10 +943,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                         </label>
                                         <input
                                             type="text"
-                                            value={formData.clientName}
-                                            onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
                                             placeholder="Nombre completo del cliente"
+                                            disabled
                                         />
                                     </div>
 
@@ -817,10 +956,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             </label>
                                             <input
                                                 type="tel"
-                                                value={formData.clientPhone}
-                                                onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
                                                 placeholder="0999999999"
+                                                disabled
                                             />
                                         </div>
 
@@ -830,10 +968,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             </label>
                                             <input
                                                 type="text"
-                                                value={formData.clientCity}
-                                                onChange={(e) => setFormData({ ...formData, clientCity: e.target.value })}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
                                                 placeholder="Ciudad"
+                                                disabled
                                             />
                                         </div>
                                     </div>
@@ -843,11 +980,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             Dirección *
                                         </label>
                                         <textarea
-                                            value={formData.clientAddress}
-                                            onChange={(e) => setFormData({ ...formData, clientAddress: e.target.value })}
                                             rows={2}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
                                             placeholder="Dirección completa"
+                                            disabled
                                         />
                                     </div>
 
@@ -857,13 +993,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                 Forma de pago *
                                             </label>
                                             <select
-                                                value={formData.paymentMethod}
-                                                onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as PaymentMethod })}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
+                                                disabled
                                             >
-                                                {paymentMethods.map(method => (
-                                                    <option key={method} value={method}>{method}</option>
-                                                ))}
+                                                <option value="">Seleccionar forma de pago...</option>
                                             </select>
                                         </div>
 
@@ -877,7 +1010,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                                             >
                                                 <option value="">Seleccionar ruta...</option>
-                                                {mockRoutes.filter(route => route.isActive).map(route => (
+                                                {routes.filter(route => route.isActive).map(route => (
                                                     <option key={route.id} value={route.id}>
                                                         {route.identificador} - {route.nombre}
                                                     </option>
@@ -931,7 +1064,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                         className="w-full text-left px-3 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
                                                     >
                                                         <div className="font-medium text-gray-900">{product.name}</div>
-                                                        <div className="text-sm text-gray-600">{product.category} - {product.variant}</div>
+                                                        <div className="text-sm text-gray-600">{product.categoryName} - {product.variant}</div>
                                                         <div className="text-xs text-gray-500">
                                                             Regular: ${product.priceRegular.toFixed(2)}
                                                             {product.pricePage && ` | PAGINA: $${product.pricePage.toFixed(2)}`}
@@ -951,7 +1084,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                         ) : (
                                             <div className="space-y-2 p-3">
                                                 {selectedItems.map((item) => {
-                                                    const product = mockProducts.find(p => p.id === item.productId);
+                                                    const product = products.find(p => p.id === item.productId);
                                                     return (
                                                         <div key={item.id} className="bg-gray-50 p-3 rounded-lg">
                                                             <div className="flex justify-between items-start">
@@ -1032,7 +1165,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 </button>
                                 <button
                                     onClick={editingOrder ? handleUpdateOrder : handleCreateOrder}
-                                    disabled={!formData.clientName.trim() || selectedItems.length === 0}
+                                    disabled={!formData.clientId || selectedItems.length === 0}
                                     className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Check className="h-4 w-4" />
@@ -1079,9 +1212,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 <div>
                                     <h3 className="font-semibold text-black mb-2">Información del Cliente</h3>
                                     <p className="text-gray-900"><strong>Nombre:</strong> {selectedOrder.clientName}</p>
-                                    <p className="text-gray-900"><strong>Teléfono:</strong> {selectedOrder.clientPhone}</p>
-                                    <p className="text-gray-900"><strong>Ciudad:</strong> {selectedOrder.clientCity}</p>
-                                    <p className="text-gray-900"><strong>Dirección:</strong> {selectedOrder.clientAddress}</p>
+                                    <p className="text-gray-900"><strong>Teléfono:</strong> No disponible</p>
+                                    <p className="text-gray-900"><strong>Ciudad:</strong> No disponible</p>
+                                    <p className="text-gray-900"><strong>Dirección:</strong> No disponible</p>
                                 </div>
 
                                 <div>
@@ -1089,7 +1222,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                     <p className="text-gray-900"><strong>Número:</strong> {selectedOrder.orderNumber}</p>
                                     <p className="text-gray-900"><strong>Fecha:</strong> {selectedOrder.orderDate.toLocaleDateString('es-ES')}</p>
                                     <p className="text-gray-900"><strong>Estado:</strong> {selectedOrder.status}</p>
-                                    <p className="text-gray-900"><strong>Forma de pago:</strong> {selectedOrder.paymentMethod}</p>
+                                    <p className="text-gray-900"><strong>Forma de pago:</strong> No disponible</p>
                                     {selectedOrder.routeName && (
                                         <p className="text-gray-900"><strong>Ruta:</strong> {selectedOrder.routeName}</p>
                                     )}
@@ -1109,7 +1242,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {selectedOrder.items.map((item, index) => (
+                                        {selectedOrder.items?.map((item, index) => (
                                             <tr key={index}>
                                                 <td className="border border-gray-300 px-3 py-2">
                                                     <div>
@@ -1193,7 +1326,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                             >
                                 <option value="">Seleccionar una ruta</option>
-                                {mockRoutes.filter(route => route.isActive).map((route) => (
+                                {routes.filter(route => route.isActive).map((route) => (
                                     <option key={route.id} value={route.id}>
                                         {route.identificador} - {route.nombre}
                                     </option>
@@ -1245,8 +1378,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                             <div key={client.id} className="border border-gray-200 rounded-lg p-4">
                                                                 <div className="flex items-center justify-between">
                                                                     <div>
-                                                                        <h4 className="font-medium text-gray-900">{index + 1}. {client.institucionEducativa}</h4>
-                                                                        <p className="text-sm text-gray-600">Contacto: {client.nombreCompleto}</p>
+                                                                        <h4 className="font-medium text-gray-900">{index + 1}. {client.nombre}</h4>
+                                                                        <p className="text-sm text-gray-600">Contacto: {client.nombre}</p>
                                                                         <p className="text-sm text-gray-600">Teléfono: {client.telefono}</p>
                                                                         <p className="text-sm text-gray-600">Dirección: {client.direccion}</p>
                                                                     </div>
@@ -1299,7 +1432,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                                 <div className="mt-2">
                                                                     <p className="text-sm font-medium text-gray-700">Productos:</p>
                                                                     <ul className="text-sm text-gray-600 list-disc list-inside">
-                                                                        {order.items.map((item, itemIndex) => (
+                                                                        {order.items?.map((item, itemIndex) => (
                                                                             <li key={itemIndex}>
                                                                                 {item.productName} - Cantidad: {item.quantity} - ${item.individualValue.toFixed(2)}
                                                                             </li>
@@ -1363,7 +1496,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             {(() => {
                                 const exportOrders = getFilteredOrdersForExport();
                                 const totalAmount = exportOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-                                const routeFilterInfo = routeFilter ? mockRoutes.find(r => r.id === routeFilter) : null;
+                                const routeFilterInfo = routeFilter ? routes.find(r => r.id === routeFilter) : null;
 
                                 return (
                                     <div className="space-y-6">
@@ -1396,13 +1529,13 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             <div className="text-center">
                                                 <p className="text-sm font-medium text-gray-600">Pedidos Pendientes</p>
                                                 <p className="text-2xl font-bold text-yellow-600">
-                                                    {exportOrders.filter(o => o.status === 'PENDIENTE').length}
+                                                    {exportOrders.filter(o => o.status === 'pending').length}
                                                 </p>
                                             </div>
                                             <div className="text-center">
                                                 <p className="text-sm font-medium text-gray-600">Pedidos Listos</p>
                                                 <p className="text-2xl font-bold text-gray-600">
-                                                    {exportOrders.filter(o => o.status === 'LISTO').length}
+                                                    {exportOrders.filter(o => o.status === 'ready').length}
                                                 </p>
                                             </div>
                                         </div>

@@ -9,6 +9,8 @@ export interface OrderItem {
   productVariant: string;
   quantity: number;
   unitPrice: number;
+  usePaginaPrice: boolean;
+  individualValue: number;
   totalPrice: number;
   createdAt: Date;
 }
@@ -26,6 +28,7 @@ export interface Order {
   status: 'pending' | 'ready' | 'delivered' | 'cancelled';
   totalAmount: number;
   notes?: string;
+  items?: OrderItem[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,5 +63,7 @@ export interface CreateOrderItemData {
   productVariant: string;
   quantity: number;
   unitPrice: number;
+  usePaginaPrice: boolean;
+  individualValue: number;
   totalPrice: number;
 } 

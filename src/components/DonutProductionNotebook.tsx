@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     ArrowLeft,
     Download,
@@ -8,8 +8,8 @@ import {
     BarChart3
 } from 'lucide-react';
 import { Order } from '@/types/order';
-import { mockOrders } from '@/data/mockOrders';
-import { mockRoutes } from '@/data/mockRoutes';
+import { Route } from '@/types/route';
+import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
 
 interface DonutProductionNotebookProps {
@@ -78,41 +78,117 @@ export default function DonutProductionNotebook({ onBack }: DonutProductionNoteb
     const [editableData, setEditableData] = useState<RouteDonutData[]>([]);
     const [editingCell, setEditingCell] = useState<{ routeId: string, category: string, field: string } | null>(null);
     const [editValue, setEditValue] = useState<string>('');
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [routes, setRoutes] = useState<Route[]>([]);
+    const [routeData, setRouteData] = useState<RouteDonutData[]>([]);
+    const [loading, setLoading] = useState(true);
     const printRef = useRef<HTMLDivElement>(null);
 
+    useEffect(() => {
+        fetchData();
+    }, [selectedDate]);
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            
+            // Fetch orders
+            const ordersData = await getOrdersForDate(selectedDate);
+            setOrders(ordersData);
+
+            // Fetch routes
+            const { data: routesData, error: routesError } = await supabase
+                .from('routes')
+                .select('*')
+                .eq('is_active', true);
+
+            if (routesError) throw routesError;
+            setRoutes(routesData || []);
+
+            // Calculate route data
+            const calculatedRouteData = await calculateRouteDonutData(ordersData);
+            setRouteData(calculatedRouteData);
+            setEditableData(calculatedRouteData);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Obtener pedidos del día seleccionado
-    const getOrdersForDate = (date: string) => {
+    const getOrdersForDate = async (date: string) => {
         const targetDate = new Date(date);
-        return mockOrders.filter(order => {
-            const orderDate = new Date(order.orderDate);
-            return orderDate.toDateString() === targetDate.toDateString();
-        });
+        const { data, error } = await supabase
+            .from('orders_with_details')
+            .select('*')
+            .gte('orderDate', targetDate.toISOString())
+            .lte('orderDate', new Date(targetDate.getTime() + 24 * 60 * 60 * 1000 - 1).toISOString());
+
+        if (error) {
+            console.error('Error fetching orders for date:', error);
+            return [];
+        }
+        return data || [];
     };
 
     // Calcular datos de donas por ruta
-    const calculateRouteDonutData = (orders: Order[]): RouteDonutData[] => {
+    const calculateRouteDonutData = async (orders: Order[]): Promise<RouteDonutData[]> => {
         const routeData: { [routeId: string]: RouteDonutData } = {};
 
         // Inicializar datos para todas las rutas
-        mockRoutes.forEach(route => {
+        routes.forEach(route => {
             routeData[route.id] = {
                 routeId: route.id,
                 routeName: route.nombre,
                 routeIdentificador: route.identificador,
-                donuts: { choc: 0, grag: 0, chocoCoco: 0, glace: 0, gragGlace: 0, glaceCoco: 0 },
-                rellenas: { chant: 0, manu: 0 },
-                miniDonuts: { choc: 0, grag: 0, choco: 0, glace: 0, gragGlace: 0, glaceCoco: 0 },
-                miniRellenas: { chant: 0, manu: 0 }
+                donuts: {
+                    choc: 0,
+                    grag: 0,
+                    chocoCoco: 0,
+                    glace: 0,
+                    gragGlace: 0,
+                    glaceCoco: 0
+                },
+                rellenas: {
+                    chant: 0,
+                    manu: 0
+                },
+                miniDonuts: {
+                    choc: 0,
+                    grag: 0,
+                    choco: 0,
+                    glace: 0,
+                    gragGlace: 0,
+                    glaceCoco: 0
+                },
+                miniRellenas: {
+                    chant: 0,
+                    manu: 0
+                }
             };
         });
 
         // Procesar pedidos
-        orders.forEach(order => {
-            if (!order.routeId) return;
+        for (const order of orders) {
+            if (!order.routeId) continue;
 
-            order.items.forEach(item => {
-                const category = item.productCategory.toLowerCase();
-                const variant = item.productVariant.toLowerCase();
+            // Obtener items del pedido
+            const { data: orderItems, error: itemsError } = await supabase
+                .from('order_items')
+                .select('*')
+                .eq('order_id', order.id);
+
+            if (itemsError) {
+                console.error('Error fetching order items:', itemsError);
+                continue;
+            }
+
+            if (!orderItems) continue;
+
+            orderItems.forEach(item => {
+                const category = item.product_category.toLowerCase();
+                const variant = item.product_variant.toLowerCase();
 
                 if (category === 'donut') {
                     if (variant.includes('choc') && variant.includes('coco')) {
@@ -158,7 +234,7 @@ export default function DonutProductionNotebook({ onBack }: DonutProductionNoteb
                     }
                 }
             });
-        });
+        }
 
         return Object.values(routeData);
     };
@@ -285,10 +361,20 @@ export default function DonutProductionNotebook({ onBack }: DonutProductionNoteb
         }
     };
 
-    const orders = getOrdersForDate(selectedDate);
-    const routeData = calculateRouteDonutData(orders);
+    const currentOrders = orders;
     const totals = calculateProductionTotals(routeData);
     const massProduction = calculateMassProduction(totals);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Cargando datos de producción...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Inicializar datos editables si están vacíos
     React.useEffect(() => {
@@ -393,7 +479,7 @@ export default function DonutProductionNotebook({ onBack }: DonutProductionNoteb
                             <div className="flex items-end">
                                 <div className="text-right">
                                     <p className="text-sm text-gray-600">Total de pedidos</p>
-                                    <p className="text-2xl font-bold text-purple-600">{orders.length}</p>
+                                    <p className="text-2xl font-bold text-purple-600">{currentOrders.length}</p>
                                 </div>
                             </div>
                         </div>
