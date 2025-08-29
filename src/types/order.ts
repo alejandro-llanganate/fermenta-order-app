@@ -2,67 +2,63 @@ export type PaymentMethod = 'Efectivo' | 'Transferencia' | 'Tarjeta de crédito'
 
 export interface OrderItem {
   id: string;
+  orderId: string;
   productId: string;
   productName: string;
   productCategory: string;
   productVariant: string;
   quantity: number;
   unitPrice: number;
-  usePaginaPrice: boolean;
-  individualValue: number; // quantity * unitPrice
+  totalPrice: number;
+  createdAt: Date;
 }
 
 export interface Order {
   id: string;
-  orderNumber: string; // Número consecutivo de pedido
-  
-  // Información del cliente
-  clientName: string;
-  clientPhone: string;
-  clientCity: string;
-  clientAddress: string;
-  
-  // Información del pedido
+  orderNumber: string;
+  clientId: string;
+  clientName?: string;
+  routeId?: string;
+  routeIdentifier?: string;
+  routeName?: string;
   orderDate: Date;
-  paymentMethod: PaymentMethod;
-  routeId?: string; // ID de la ruta
-  routeName?: string; // Nombre de la ruta para mostrar
-  
-  // Productos
-  items: OrderItem[];
-  
-  // Valores calculados
-  subtotal: number;
+  deliveryDate?: Date;
+  status: 'pending' | 'ready' | 'delivered' | 'cancelled';
   totalAmount: number;
-  
-  // Estado
-  status: 'PENDIENTE' | 'LISTO' | 'MODIFICAR';
-  isActive: boolean;
-  createdAt: Date;
-  
-  // Notas adicionales
   notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateOrderData {
-  clientName: string;
-  clientPhone: string;
-  clientCity: string;
-  clientAddress: string;
-  paymentMethod: PaymentMethod;
+  orderNumber: string;
+  clientId: string;
   routeId?: string;
-  items: Omit<OrderItem, 'id' | 'individualValue'>[];
+  orderDate: Date;
+  deliveryDate?: Date;
+  status?: 'pending' | 'ready' | 'delivered' | 'cancelled';
+  totalAmount: number;
   notes?: string;
 }
 
 export interface UpdateOrderData {
-  clientName?: string;
-  clientPhone?: string;
-  clientCity?: string;
-  clientAddress?: string;
-  paymentMethod?: PaymentMethod;
+  orderNumber?: string;
+  clientId?: string;
   routeId?: string;
-  items?: Omit<OrderItem, 'id' | 'individualValue'>[];
-  status?: 'PENDIENTE' | 'LISTO' | 'MODIFICAR';
+  orderDate?: Date;
+  deliveryDate?: Date;
+  status?: 'pending' | 'ready' | 'delivered' | 'cancelled';
+  totalAmount?: number;
   notes?: string;
+}
+
+export interface CreateOrderItemData {
+  orderId: string;
+  productId: string;
+  productName: string;
+  productCategory: string;
+  productVariant: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
 } 

@@ -13,14 +13,19 @@ export const supabase = createClient(
   supabaseAnonKey || 'placeholder-key'
 );
 
-// Custom auth types for register users
+// Custom auth types for register users and usuarios table
 export interface RegisterUser {
   id: string;
   username: string;
   cedula: string;
-  type: 'register' | 'admin';
+  type: 'register' | 'admin' | 'user';
   created_at: string;
   updated_at: string;
+  // Campos adicionales para usuarios de la tabla usuarios
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  role?: string;
 }
 
 export interface AuthResponse {

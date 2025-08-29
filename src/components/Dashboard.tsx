@@ -1,47 +1,86 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, ShoppingCart, LogOut, Clock, UserCheck, MapPin, ShoppingBag, BarChart3, DollarSign, BookOpen } from 'lucide-react';
+import { Users, ShoppingCart, LogOut, Clock, UserCheck, MapPin, ShoppingBag, BarChart3, DollarSign, BookOpen, FolderOpen } from 'lucide-react';
 import Logo from './Logo';
 import UsersManagement from './UsersManagement';
 import ClientsManagement from './ClientsManagement';
 import RoutesManagement from './RoutesManagement';
 import ProductsManagement from './ProductsManagement';
+import CategoryManagement from './CategoryManagement';
 import OrdersManagement from './OrdersManagement';
 import ReportsManagement from './ReportsManagement';
 import Notebooks from './Notebooks';
-import { weeklyProgressData } from '@/data/mockChartData';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { supabase } from '@/lib/supabase';
 
 interface DashboardProps {
     username: string;
     onLogout: () => void;
+    userData?: {
+        first_name: string;
+        last_name: string;
+        email: string;
+        role: string;
+        cedula: string;
+    };
 }
 
-export default function Dashboard({ username, onLogout }: DashboardProps) {
+export default function Dashboard({ username, onLogout, userData }: DashboardProps) {
     const [currentTime, setCurrentTime] = useState(new Date());
-    const [currentView, setCurrentView] = useState<'dashboard' | 'users' | 'orders' | 'clients' | 'routes' | 'products' | 'reports' | 'notebooks'>('dashboard');
+    const [currentView, setCurrentView] = useState<'dashboard' | 'users' | 'orders' | 'clients' | 'routes' | 'products' | 'categories' | 'reports' | 'notebooks'>('dashboard');
+    const [userRole, setUserRole] = useState<string>('user');
 
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(new Date());
         }, 1000);
 
+        // Get user role from Supabase
+        const getUserRole = async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data, error } = await supabase
+                        .from('register_users')
+                        .select('role')
+                        .eq('id', user.id)
+                        .single();
+
+                    if (!error && data) {
+                        setUserRole(data.role);
+                    }
+                }
+            } catch (err) {
+                console.error('Error getting user role:', err);
+            }
+        };
+
+        getUserRole();
+
         return () => clearInterval(timer);
     }, []);
 
+    const isAdmin = userRole === 'admin';
+
     const menuItems = [
-        {
+        // Solo mostrar gestión de usuarios para admins
+        ...(isAdmin ? [{
             label: 'Usuarios',
             icon: Users,
             color: 'bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800',
             onClick: () => setCurrentView('users')
-        },
+        }] : []),
         {
             label: 'Productos',
             icon: ShoppingBag,
             color: 'bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800',
             onClick: () => setCurrentView('products')
+        },
+        {
+            label: 'Categorías',
+            icon: FolderOpen,
+            color: 'bg-gradient-to-br from-pink-500 to-pink-700 hover:from-pink-600 hover:to-pink-800',
+            onClick: () => setCurrentView('categories')
         },
         {
             label: 'Pedidos',
@@ -55,12 +94,13 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
             color: 'bg-gradient-to-br from-indigo-500 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800',
             onClick: () => setCurrentView('clients')
         },
-        {
+        // Solo mostrar gestión de rutas para admins
+        ...(isAdmin ? [{
             label: 'Rutas',
             icon: MapPin,
             color: 'bg-gradient-to-br from-yellow-500 to-yellow-700 hover:from-yellow-600 hover:to-yellow-800',
             onClick: () => setCurrentView('routes')
-        },
+        }] : []),
         {
             label: 'Reportes',
             icon: BarChart3,
@@ -82,6 +122,10 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
 
     if (currentView === 'products') {
         return <ProductsManagement onBack={() => setCurrentView('dashboard')} />;
+    }
+
+    if (currentView === 'categories') {
+        return <CategoryManagement onBack={() => setCurrentView('dashboard')} />;
     }
 
     if (currentView === 'orders') {
@@ -139,7 +183,18 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
                                 <span>{currentTime.toLocaleTimeString('es-ES')}</span>
                             </div>
                             <div className="text-sm text-gray-900">
-                                <span className="font-medium">Usuario: {username}</span>
+                                {userData ? (
+                                    <div className="flex flex-col">
+                                        <span className="font-medium">
+                                            {userData.first_name} {userData.last_name}
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                            {userData.role} • {userData.cedula}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <span className="font-medium">Usuario: {username}</span>
+                                )}
                             </div>
                             <button
                                 onClick={onLogout}
@@ -161,8 +216,8 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Ventas Hoy</p>
-                                <p className="text-2xl font-bold text-green-600">$368.50</p>
-                                <p className="text-xs text-green-500">+12% vs ayer</p>
+                                <p className="text-2xl font-bold text-green-600">$0.00</p>
+                                <p className="text-xs text-gray-500">Sin datos disponibles</p>
                             </div>
                             <div className="p-3 bg-green-100 rounded-full">
                                 <DollarSign className="h-6 w-6 text-green-600" />
@@ -174,8 +229,8 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Pedidos Hoy</p>
-                                <p className="text-2xl font-bold text-blue-600">8</p>
-                                <p className="text-xs text-blue-500">6 entregados</p>
+                                <p className="text-2xl font-bold text-blue-600">0</p>
+                                <p className="text-xs text-gray-500">Sin pedidos registrados</p>
                             </div>
                             <div className="p-3 bg-blue-100 rounded-full">
                                 <ShoppingCart className="h-6 w-6 text-blue-600" />
@@ -187,8 +242,8 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Clientes Activos</p>
-                                <p className="text-2xl font-bold text-purple-600">38</p>
-                                <p className="text-xs text-purple-500">En 5 rutas</p>
+                                <p className="text-2xl font-bold text-purple-600">0</p>
+                                <p className="text-xs text-gray-500">Sin clientes registrados</p>
                             </div>
                             <div className="p-3 bg-purple-100 rounded-full">
                                 <UserCheck className="h-6 w-6 text-purple-600" />
@@ -199,9 +254,15 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600">Stock Bajo</p>
-                                <p className="text-2xl font-bold text-red-600">2</p>
-                                <p className="text-xs text-red-500">Requiere atención</p>
+                                <p className="text-sm font-medium text-gray-600">
+                                    {isAdmin ? 'Productos Activos' : 'Acceso'}
+                                </p>
+                                <p className="text-2xl font-bold text-red-600">
+                                    {isAdmin ? '0' : 'Limitado'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {isAdmin ? 'Sin productos registrados' : 'Usuario normal'}
+                                </p>
                             </div>
                             <div className="p-3 bg-red-100 rounded-full">
                                 <ShoppingBag className="h-6 w-6 text-red-600" />
@@ -210,52 +271,46 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
                     </div>
                 </div>
 
-                {/* Stock del día anterior */}
+                {/* Información del usuario */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Stock del Día Anterior</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Información del Usuario</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm font-medium text-gray-700">Donuts Choco</p>
-                            <p className="text-xl font-bold text-gray-900">45</p>
-                            <p className="text-xs text-green-600">Normal</p>
+                            <p className="text-sm font-medium text-gray-700">Rol</p>
+                            <p className="text-xl font-bold text-gray-900 capitalize">{userRole}</p>
+                            <p className="text-xs text-blue-600">
+                                {isAdmin ? 'Acceso completo' : 'Acceso limitado'}
+                            </p>
                         </div>
                         <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm font-medium text-gray-700">Rellenas</p>
-                            <p className="text-xl font-bold text-gray-900">15</p>
-                            <p className="text-xs text-red-600">Bajo</p>
+                            <p className="text-sm font-medium text-gray-700">Usuario</p>
+                            <p className="text-xl font-bold text-gray-900">{username}</p>
+                            <p className="text-xs text-gray-600">Conectado</p>
                         </div>
                         <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm font-medium text-gray-700">Pasteles</p>
-                            <p className="text-xl font-bold text-gray-900">8</p>
-                            <p className="text-xs text-green-600">Normal</p>
-                        </div>
-                        <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm font-medium text-gray-700">Pizzas</p>
-                            <p className="text-xl font-bold text-gray-900">0</p>
-                            <p className="text-xs text-red-600">Agotado</p>
-                        </div>
-                        <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm font-medium text-gray-700">Pan Hamburguesa</p>
-                            <p className="text-xl font-bold text-gray-900">125</p>
-                            <p className="text-xs text-green-600">Excelente</p>
-                        </div>
-                        <div className="text-center p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm font-medium text-gray-700">Muffins</p>
-                            <p className="text-xl font-bold text-gray-900">32</p>
-                            <p className="text-xs text-green-600">Normal</p>
+                            <p className="text-sm font-medium text-gray-700">Hora</p>
+                            <p className="text-xl font-bold text-gray-900">
+                                {currentTime.toLocaleTimeString('es-ES', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </p>
+                            <p className="text-xs text-gray-600">
+                                {currentTime.toLocaleDateString('es-ES')}
+                            </p>
                         </div>
                     </div>
                 </div>
 
                 {/* Menu Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {menuItems.map((item, index) => (
                         <button
                             key={index}
                             onClick={item.onClick}
-                            className={`${item.color} text-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105`}
+                            className={`${item.color} p-6 rounded-xl shadow-sm border border-gray-200 text-white transition-all duration-200 transform hover:scale-105 hover:shadow-lg`}
                         >
-                            <div className="flex flex-col items-center space-y-4">
+                            <div className="flex flex-col items-center space-y-3">
                                 <item.icon className="h-12 w-12" />
                                 <span className="text-lg font-semibold">{item.label}</span>
                             </div>
@@ -266,18 +321,9 @@ export default function Dashboard({ username, onLogout }: DashboardProps) {
                 {/* Progreso Semanal */}
                 <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Progreso de Ventas Semanal</h3>
-                    <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={weeklyProgressData}>
-                            <XAxis dataKey="day" />
-                            <YAxis hide />
-                            <Tooltip formatter={(value, name) => [
-                                name === 'ventas' ? `$${Number(value).toFixed(2)}` : value,
-                                name === 'ventas' ? 'Ventas' : name === 'meta' ? 'Meta' : 'Pedidos'
-                            ]} />
-                            <Line type="monotone" dataKey="ventas" stroke="#10B981" strokeWidth={3} dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }} />
-                            <Line type="monotone" dataKey="meta" stroke="#EF4444" strokeDasharray="5 5" strokeWidth={2} dot={false} />
-                        </LineChart>
-                    </ResponsiveContainer>
+                    {/* The LineChart component and its data were removed as per the edit hint. */}
+                    {/* This section will now be empty or contain a placeholder. */}
+                    <p className="text-center text-gray-500">Progreso de ventas semanal no disponible.</p>
                 </div>
 
                 {/* Quick Actions */}

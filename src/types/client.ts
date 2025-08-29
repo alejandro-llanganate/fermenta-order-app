@@ -1,33 +1,26 @@
 export interface Client {
   id: string;
-  institucionEducativa: string;
-  nombreCompleto: string;
-  telefono: string;
-  cedula: string;
-  email: string;
-  direccion: string;
-  routeId?: string; // ID de la ruta asignada
-  routeName?: string; // Nombre de la ruta para mostrar
+  nombre: string;
+  telefono?: string;
+  direccion?: string;
+  routeId?: string;
+  routeIdentifier?: string;
+  routeName?: string;
   isActive: boolean;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateClientData {
-  institucionEducativa: string;
-  nombreCompleto: string;
-  telefono: string;
-  cedula: string;
-  email: string;
-  direccion: string;
+  nombre: string;
+  telefono?: string;
+  direccion?: string;
   routeId?: string;
 }
 
 export interface UpdateClientData {
-  institucionEducativa?: string;
-  nombreCompleto?: string;
+  nombre?: string;
   telefono?: string;
-  cedula?: string;
-  email?: string;
   direccion?: string;
   routeId?: string;
   isActive?: boolean;

@@ -4,43 +4,122 @@
 export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
-import { User, CreditCard, Eye, EyeOff } from 'lucide-react';
+import { CreditCard, Eye, EyeOff } from 'lucide-react';
 import { ClipLoader } from 'react-spinners';
 import Image from 'next/image';
 import Logo from '@/components/Logo';
 import ContactModal from '@/components/ContactModal';
 import Dashboard from '@/components/Dashboard';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
   const [cedula, setCedula] = useState('');
   const [showCedula, setShowCedula] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { user, isLoading, signIn, signOut, isAuthenticated } = useAuth();
+  const { user, signOut, isAuthenticated } = useAuth();
+
+  const validateCedula = (cedula: string): boolean => {
+    if (cedula.length !== 10) return false;
+    if (!/^\d+$/.test(cedula)) return false;
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    const result = await signIn(username, cedula);
+    // Validar formato de cédula
+    if (!validateCedula(cedula)) {
+      setError('Cédula inválida. Debe tener 10 dígitos numéricos');
+      setIsLoading(false);
+      return;
+    }
 
-    if (!result.success) {
-      setError(result.error || 'Error de autenticación');
+    try {
+      // Buscar usuario por cédula en la tabla usuarios
+      const { data: users, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('cedula', cedula)
+        .eq('is_active', true)
+        .limit(1);
+
+      if (error) throw error;
+
+      if (!users || users.length === 0) {
+        setError('Cédula no encontrada o usuario inactivo');
+        setIsLoading(false);
+        return;
+      }
+
+      const user = users[0];
+
+      // Verificar que no sea administrador (los administradores van al panel admin)
+      if (user.role === 'Administrador') {
+        setError('Los administradores deben usar el panel administrativo');
+        setIsLoading(false);
+        return;
+      }
+
+      // Crear un objeto de usuario compatible con el sistema de autenticación
+      const authUser = {
+        id: user.id,
+        username: user.email,
+        cedula: user.cedula,
+        type: 'user',
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+        // Agregar datos completos del usuario para mostrar en el dashboard
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        role: user.role
+      };
+
+      // Almacenar en sessionStorage para persistencia
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('currentUser', JSON.stringify(authUser));
+      }
+
+      // Simular login exitoso - recargar la página para actualizar el estado
+      window.location.reload();
+    } catch (error) {
+      console.error('Error during login:', error);
+      setError('Error al verificar cédula');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleLogout = async () => {
     await signOut();
-    setUsername('');
     setCedula('');
+    // Limpiar sessionStorage
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('currentUser');
+    }
   };
 
   // Si está autenticado, mostrar el dashboard
   if (isAuthenticated && user) {
-    return <Dashboard username={user.username} onLogout={handleLogout} />;
+    const userData = user.first_name && user.last_name ? {
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email || user.username,
+      role: user.role || 'Usuario',
+      cedula: user.cedula
+    } : undefined;
+
+    return <Dashboard
+      username={user.username || user.cedula}
+      onLogout={handleLogout}
+      userData={userData}
+    />;
   }
 
   return (
@@ -71,27 +150,7 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* Campo Usuario */}
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre de Usuario
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors placeholder-gray-500 text-gray-900"
-                    placeholder="Ingresa tu nombre de usuario"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
+
 
               {/* Campo Cédula */}
               <div>

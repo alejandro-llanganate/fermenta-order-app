@@ -8,61 +8,50 @@ import { User, Lock, Eye, EyeOff, Shield, AlertTriangle, Settings, Users, BarCha
 import { ClipLoader } from 'react-spinners';
 import Image from 'next/image';
 import Logo from '@/components/Logo';
-import InsecureBrowserModal from '@/components/InsecureBrowserModal';
 import CompanyConfig from '@/components/CompanyConfig';
 import UsersManagement from '@/components/UsersManagement';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 export default function AdminPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState('');
-  const [isInsecureBrowser, setIsInsecureBrowser] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userCount, setUserCount] = useState(0);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
 
   const { user, isLoading, signIn, signOut, isAuthenticated } = useAuth();
 
-  // Efecto para mostrar modal de navegador inseguro después del login
+  // Función para cargar estadísticas del dashboard
+  const loadDashboardStats = async () => {
+    if (!isAuthenticated) return;
+
+    setIsLoadingStats(true);
+    try {
+      const { count, error } = await supabase
+        .from('usuarios')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) throw error;
+      setUserCount(count || 0);
+    } catch (error) {
+      console.error('Error loading user count:', error);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
+  // Efecto para cargar estadísticas cuando el usuario está autenticado
   useEffect(() => {
-    if (isAuthenticated && user && detectInsecureBrowser()) {
-      setIsModalOpen(true);
+    if (isAuthenticated && user) {
+      loadDashboardStats();
     }
   }, [isAuthenticated, user]);
 
-  // Función para detectar navegador inseguro
-  const detectInsecureBrowser = () => {
-    const userAgent = navigator.userAgent;
 
-    // Detectar navegadores modernos
-    const isChrome = /Chrome/.test(userAgent) && !/Edge/.test(userAgent);
-    const isFirefox = /Firefox/.test(userAgent);
-    const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
-    const isEdge = /Edge/.test(userAgent);
-
-    // Detectar navegadores antiguos o no soportados
-    const isOldBrowser = !isChrome && !isFirefox && !isSafari && !isEdge;
-
-    // Detectar si no es HTTPS (excepto localhost para desarrollo)
-    const isNotSecure = window.location.protocol !== 'https:' && window.location.hostname !== 'localhost';
-
-    // Detectar Internet Explorer (muy inseguro)
-    const isIE = /MSIE|Trident/.test(userAgent);
-
-    // Detectar versiones muy antiguas de Chrome (antes de 2018)
-    const chromeVersion = userAgent.match(/Chrome\/(\d+)/);
-    const isOldChrome = chromeVersion && parseInt(chromeVersion[1]) < 70;
-
-    // Detectar versiones muy antiguas de Firefox (antes de 2018)
-    const firefoxVersion = userAgent.match(/Firefox\/(\d+)/);
-    const isOldFirefox = firefoxVersion && parseInt(firefoxVersion[1]) < 60;
-
-    // Para propósitos de demostración, siempre mostrar el modal
-    // En producción, usarías: return isOldBrowser || isNotSecure || isIE || isOldChrome || isOldFirefox;
-    return true;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,12 +63,6 @@ export default function AdminPage() {
 
     if (!result.success) {
       setError(result.error || 'Error de autenticación');
-    } else {
-      // Si el login es exitoso, verificar si es navegador inseguro y mostrar modal
-      if (detectInsecureBrowser()) {
-        setIsInsecureBrowser(true);
-        setIsModalOpen(true);
-      }
     }
   };
 
@@ -92,6 +75,11 @@ export default function AdminPage() {
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setIsMobileMenuOpen(false); // Cerrar menú móvil al cambiar de tab
+
+    // Recargar estadísticas cuando se vuelve al dashboard
+    if (tab === 'dashboard' && isAuthenticated) {
+      loadDashboardStats();
+    }
   };
 
   // Si está autenticado, mostrar dashboard de admin
@@ -119,7 +107,7 @@ export default function AdminPage() {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                 >
                   {isMobileMenuOpen ? (
                     <X className="h-5 w-5 text-gray-600" />
@@ -130,7 +118,7 @@ export default function AdminPage() {
 
                 <button
                   onClick={handleLogout}
-                  className="bg-red-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base"
+                  className="bg-red-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base cursor-pointer"
                 >
                   <span className="hidden sm:inline">Cerrar Sesión</span>
                   <span className="sm:hidden">Salir</span>
@@ -147,7 +135,7 @@ export default function AdminPage() {
             <nav className="hidden lg:flex space-x-8">
               <button
                 onClick={() => handleTabChange('dashboard')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'dashboard'
+                className={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${activeTab === 'dashboard'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
@@ -159,7 +147,7 @@ export default function AdminPage() {
               </button>
               <button
                 onClick={() => handleTabChange('config')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'config'
+                className={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${activeTab === 'config'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
@@ -171,7 +159,7 @@ export default function AdminPage() {
               </button>
               <button
                 onClick={() => handleTabChange('users')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'users'
+                className={`py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${activeTab === 'users'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
@@ -188,9 +176,9 @@ export default function AdminPage() {
               <nav className="lg:hidden py-4 space-y-2">
                 <button
                   onClick={() => handleTabChange('dashboard')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-sm transition-colors ${activeTab === 'dashboard'
-                      ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                      : 'text-gray-600 hover:bg-gray-50'
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-sm transition-colors cursor-pointer ${activeTab === 'dashboard'
+                    ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                    : 'text-gray-600 hover:bg-gray-50'
                     }`}
                 >
                   <BarChart3 className="h-4 w-4" />
@@ -198,9 +186,9 @@ export default function AdminPage() {
                 </button>
                 <button
                   onClick={() => handleTabChange('config')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-sm transition-colors ${activeTab === 'config'
-                      ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                      : 'text-gray-600 hover:bg-gray-50'
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-sm transition-colors cursor-pointer ${activeTab === 'config'
+                    ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                    : 'text-gray-600 hover:bg-gray-50'
                     }`}
                 >
                   <Settings className="h-4 w-4" />
@@ -208,9 +196,9 @@ export default function AdminPage() {
                 </button>
                 <button
                   onClick={() => handleTabChange('users')}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-sm transition-colors ${activeTab === 'users'
-                      ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                      : 'text-gray-600 hover:bg-gray-50'
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-sm transition-colors cursor-pointer ${activeTab === 'users'
+                    ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                    : 'text-gray-600 hover:bg-gray-50'
                     }`}
                 >
                   <Users className="h-4 w-4" />
@@ -234,7 +222,13 @@ export default function AdminPage() {
                     </div>
                     <div className="ml-3 sm:ml-4">
                       <p className="text-xs sm:text-sm font-medium text-gray-600">Total Usuarios</p>
-                      <p className="text-xl sm:text-2xl font-bold text-gray-900">0</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">
+                        {isLoadingStats ? (
+                          <ClipLoader color="#3B82F6" size={20} />
+                        ) : (
+                          userCount
+                        )}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -380,7 +374,7 @@ export default function AdminPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
                     disabled={isLoading}
                   >
                     {showPassword ? (
@@ -396,7 +390,7 @@ export default function AdminPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-sm sm:text-base"
+                className="w-full bg-blue-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-sm sm:text-base cursor-pointer"
               >
                 {isLoading ? (
                   <>
@@ -447,11 +441,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Modal de Navegador Inseguro */}
-      <InsecureBrowserModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
     </div>
   );
 }

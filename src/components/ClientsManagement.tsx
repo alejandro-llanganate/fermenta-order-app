@@ -1,21 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
+    UserCheck,
     Plus,
     Search,
     ArrowLeft,
     Check,
     X,
-    UserCheck,
     UserX,
-    GraduationCap,
-    Phone,
-    MapPin as MapPinIcon
+    Filter,
+    Edit,
+    Trash2
 } from 'lucide-react';
 import { Client, CreateClientData } from '@/types/client';
-import { mockClients } from '@/data/mockClients';
-import { mockRoutes } from '@/data/mockRoutes';
+import { Route } from '@/types/route';
+import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
 
 interface ClientsManagementProps {
@@ -23,99 +23,188 @@ interface ClientsManagementProps {
 }
 
 export default function ClientsManagement({ onBack }: ClientsManagementProps) {
-    const [clients, setClients] = useState<Client[]>(mockClients);
+    const [clients, setClients] = useState<Client[]>([]);
+    const [routes, setRoutes] = useState<Route[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingClient, setEditingClient] = useState<Client | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const [formData, setFormData] = useState<CreateClientData>({
-        institucionEducativa: '',
-        nombreCompleto: '',
+        nombre: '',
         telefono: '',
-        cedula: '',
-        email: '',
         direccion: '',
         routeId: ''
     });
 
-    const handleCreateClient = () => {
-        const selectedRoute = mockRoutes.find(route => route.id === formData.routeId);
-        const newClient: Client = {
-            id: Date.now().toString(),
-            institucionEducativa: formData.institucionEducativa,
-            nombreCompleto: formData.nombreCompleto,
-            telefono: formData.telefono,
-            cedula: formData.cedula,
-            email: formData.email,
-            direccion: formData.direccion,
-            routeId: formData.routeId || undefined,
-            routeName: selectedRoute?.nombre,
-            isActive: true,
-            createdAt: new Date()
-        };
+    useEffect(() => {
+        fetchData();
+    }, []);
 
-        setClients([...clients, newClient]);
-        setShowCreateModal(false);
-        setFormData({
-            institucionEducativa: '',
-            nombreCompleto: '',
-            telefono: '',
-            cedula: '',
-            email: '',
-            direccion: '',
-            routeId: ''
-        });
-    };
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-    const handleUpdateClient = () => {
-        if (!editingClient) return;
+            // Fetch routes
+            const { data: routesData, error: routesError } = await supabase
+                .from('routes')
+                .select('*')
+                .eq('is_active', true)
+                .order('identificador');
 
-        const selectedRoute = mockRoutes.find(route => route.id === formData.routeId);
-        const updatedClients = clients.map(client =>
-            client.id === editingClient.id
-                ? {
-                    ...client,
-                    ...formData,
-                    routeId: formData.routeId || undefined,
-                    routeName: selectedRoute?.nombre
-                }
-                : client
-        );
+            if (routesError) throw routesError;
+            setRoutes(routesData || []);
 
-        setClients(updatedClients);
-        setEditingClient(null);
-        setFormData({
-            institucionEducativa: '',
-            nombreCompleto: '',
-            telefono: '',
-            cedula: '',
-            email: '',
-            direccion: '',
-            routeId: ''
-        });
-    };
+            // Fetch clients with route information
+            const { data: clientsData, error: clientsError } = await supabase
+                .from('clients_with_routes')
+                .select('*')
+                .order('nombre');
 
-    const handleDeleteClient = (clientId: string) => {
-        if (confirm('¿Está seguro de que desea eliminar este cliente? Esta acción no se puede deshacer.')) {
-            setClients(clients.filter(client => client.id !== clientId));
+            if (clientsError) throw clientsError;
+            setClients(clientsData || []);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+            setError('Error al cargar los datos: ' + (err as Error).message);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleToggleActive = (clientId: string) => {
-        setClients(clients.map(client =>
-            client.id === clientId
-                ? { ...client, isActive: !client.isActive }
-                : client
-        ));
+    const handleCreateClient = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('clients')
+                .insert([formData])
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Supabase error:', error);
+                throw error;
+            }
+
+            // Fetch the client with route information
+            const { data: clientWithRoute } = await supabase
+                .from('clients_with_routes')
+                .select('*')
+                .eq('id', data.id)
+                .single();
+
+            if (clientWithRoute) {
+                setClients([...clients, clientWithRoute]);
+            }
+
+            setShowCreateModal(false);
+            resetForm();
+        } catch (err) {
+            console.error('Error creating client:', err);
+            alert('Error al crear el cliente: ' + (err as Error).message);
+        }
+    };
+
+    const handleUpdateClient = async () => {
+        if (!editingClient) return;
+
+        try {
+            const { data, error } = await supabase
+                .from('clients')
+                .update(formData)
+                .eq('id', editingClient.id)
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Supabase error:', error);
+                throw error;
+            }
+
+            // Fetch the updated client with route information
+            const { data: clientWithRoute } = await supabase
+                .from('clients_with_routes')
+                .select('*')
+                .eq('id', editingClient.id)
+                .single();
+
+            if (clientWithRoute) {
+                setClients(clients.map(client =>
+                    client.id === editingClient.id ? clientWithRoute : client
+                ));
+            }
+
+            setEditingClient(null);
+            resetForm();
+        } catch (err) {
+            console.error('Error updating client:', err);
+            alert('Error al actualizar el cliente: ' + (err as Error).message);
+        }
+    };
+
+    const handleDeleteClient = async (clientId: string) => {
+        if (!confirm('¿Está seguro de que desea eliminar este cliente? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('clients')
+                .delete()
+                .eq('id', clientId);
+
+            if (error) {
+                console.error('Supabase error:', error);
+                throw error;
+            }
+
+            setClients(clients.filter(client => client.id !== clientId));
+        } catch (err) {
+            console.error('Error deleting client:', err);
+            alert('Error al eliminar el cliente: ' + (err as Error).message);
+        }
+    };
+
+    const handleToggleActive = async (clientId: string) => {
+        const client = clients.find(c => c.id === clientId);
+        if (!client) return;
+
+        try {
+            const { data, error } = await supabase
+                .from('clients')
+                .update({ is_active: !client.isActive })
+                .eq('id', clientId)
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Supabase error:', error);
+                throw error;
+            }
+
+            // Fetch the updated client with route information
+            const { data: clientWithRoute } = await supabase
+                .from('clients_with_routes')
+                .select('*')
+                .eq('id', clientId)
+                .single();
+
+            if (clientWithRoute) {
+                setClients(clients.map(c =>
+                    c.id === clientId ? clientWithRoute : c
+                ));
+            }
+        } catch (err) {
+            console.error('Error toggling client status:', err);
+            alert('Error al cambiar el estado del cliente: ' + (err as Error).message);
+        }
     };
 
     const filteredClients = clients.filter(client => {
-        const matchesSearch = client.institucionEducativa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            client.nombreCompleto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            client.telefono.includes(searchTerm) ||
-            client.direccion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (client.routeName && client.routeName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (client.routeId && mockRoutes.find(route => route.id === client.routeId)?.identificador.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesSearch = client.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (client.telefono && client.telefono.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (client.direccion && client.direccion.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (client.routeIdentifier && client.routeIdentifier.toLowerCase().includes(searchTerm.toLowerCase()));
 
         return matchesSearch;
     });
@@ -123,28 +212,26 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
     const openEditModal = (client: Client) => {
         setEditingClient(client);
         setFormData({
-            institucionEducativa: client.institucionEducativa,
-            nombreCompleto: client.nombreCompleto,
-            telefono: client.telefono,
-            cedula: client.cedula,
-            email: client.email,
-            direccion: client.direccion,
+            nombre: client.nombre,
+            telefono: client.telefono || '',
+            direccion: client.direccion || '',
             routeId: client.routeId || ''
+        });
+    };
+
+    const resetForm = () => {
+        setFormData({
+            nombre: '',
+            telefono: '',
+            direccion: '',
+            routeId: ''
         });
     };
 
     const closeModal = () => {
         setShowCreateModal(false);
         setEditingClient(null);
-        setFormData({
-            institucionEducativa: '',
-            nombreCompleto: '',
-            telefono: '',
-            cedula: '',
-            email: '',
-            direccion: '',
-            routeId: ''
-        });
+        resetForm();
     };
 
     const handleModalBackdropClick = (e: React.MouseEvent) => {
@@ -152,6 +239,17 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
             closeModal();
         }
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Cargando clientes...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex flex-col">
@@ -167,8 +265,8 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                 <ArrowLeft className="h-5 w-5" />
                             </button>
                             <div className="flex items-center space-x-3">
-                                <GraduationCap className="h-8 w-8 text-orange-500" />
-                                <h1 className="text-2xl font-bold text-gray-900">Gestión de clientes educativos</h1>
+                                <UserCheck className="h-8 w-8 text-orange-500" />
+                                <h1 className="text-2xl font-bold text-gray-900">Gestión de clientes</h1>
                             </div>
                         </div>
                         <button
@@ -180,13 +278,32 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                         </button>
                     </div>
 
+                    {/* Error Display */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                            <div className="flex items-center">
+                                <div className="flex-shrink-0">
+                                    <X className="h-5 w-5 text-red-400" />
+                                </div>
+                                <div className="ml-3">
+                                    <h3 className="text-sm font-medium text-red-800">
+                                        Error
+                                    </h3>
+                                    <div className="mt-2 text-sm text-red-700">
+                                        {error}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Search */}
                     <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Buscar por institución, nombre, teléfono, dirección o ruta..."
+                                placeholder="Buscar clientes..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
@@ -201,13 +318,7 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Ruta
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Institución educativa
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Contacto
+                                            Cliente
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Teléfono
@@ -216,78 +327,56 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                             Dirección
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Estado actual
+                                            Ruta
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Estado
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Opciones disponibles
+                                            Opciones
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {filteredClients.map((client) => (
                                         <tr key={client.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {client.routeName ? (
-                                                    <div className="flex items-center space-x-1">
-                                                        <MapPinIcon className="h-4 w-4 text-orange-400" />
-                                                        <span className="font-medium text-orange-600">{client.routeName}</span>
-                                                        <button
-                                                            onClick={() => {
-                                                                const routeIdentifier = mockRoutes.find(route => route.id === client.routeId)?.identificador;
-                                                                if (routeIdentifier) {
-                                                                    setSearchTerm(routeIdentifier);
-                                                                    // Scroll to top of the table
-                                                                    const tableElement = document.querySelector('.overflow-x-auto');
-                                                                    if (tableElement) {
-                                                                        tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                                    }
-                                                                }
-                                                            }}
-                                                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-medium"
-                                                            title="Hacer clic para buscar rápidamente esta ruta"
-                                                        >
-                                                            ({mockRoutes.find(route => route.id === client.routeId)?.identificador})
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-gray-400 text-xs">Sin asignar</span>
-                                                )}
-                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
                                                     <div className="flex-shrink-0 h-10 w-10">
-                                                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                                            <GraduationCap className="h-5 w-5 text-blue-600" />
+                                                        <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
+                                                            <UserCheck className="h-5 w-5 text-orange-600" />
                                                         </div>
                                                     </div>
                                                     <div className="ml-4">
                                                         <div className="text-sm font-medium text-gray-900">
-                                                            {client.institucionEducativa}
+                                                            {client.nombre}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {client.nombreCompleto}
+                                                {client.telefono || 'No especificado'}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                <div className="flex items-center space-x-1">
-                                                    <Phone className="h-4 w-4 text-gray-400" />
-                                                    <span>{client.telefono}</span>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-900">
+                                                    {client.direccion || 'No especificada'}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                                                <div className="flex items-center space-x-1">
-                                                    <MapPinIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                                                    <span className="truncate" title={client.direccion}>{client.direccion}</span>
-                                                </div>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {client.routeIdentifier ? (
+                                                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                        {client.routeIdentifier}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-sm text-gray-500">Sin ruta</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${client.isActive
                                                     ? 'bg-green-100 text-green-800'
                                                     : 'bg-red-100 text-red-800'
                                                     }`}>
-                                                    {client.isActive ? 'Cliente activo' : 'Cliente inactivo'}
+                                                    {client.isActive ? 'Activo' : 'Inactivo'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -302,16 +391,16 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                                     <button
                                                         onClick={() => openEditModal(client)}
                                                         className="text-blue-600 hover:text-blue-900 px-3 py-1 rounded text-xs font-medium border border-blue-200 hover:bg-blue-50"
-                                                        title="Editar información del cliente"
+                                                        title="Editar cliente"
                                                     >
-                                                        Editar
+                                                        <Edit className="h-4 w-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteClient(client.id)}
                                                         className="text-red-600 hover:text-red-900 px-3 py-1 rounded text-xs font-medium border border-red-200 hover:bg-red-50"
                                                         title="Eliminar cliente"
                                                     >
-                                                        Eliminar
+                                                        <Trash2 className="h-4 w-4" />
                                                     </button>
                                                 </div>
                                             </td>
@@ -322,147 +411,15 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                         </div>
                     </div>
 
-                    {/* Create/Edit Modal */}
-                    {(showCreateModal || editingClient) && (
-                        <div
-                            className="fixed inset-0 bg-white bg-opacity-90 backdrop-blur-sm overflow-y-auto h-full w-full z-50"
-                            onClick={handleModalBackdropClick}
-                        >
-                            <div className="relative top-20 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white">
-                                <div className="mt-3">
-                                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                        {editingClient ? 'Modificar información del cliente educativo' : 'Registrar nuevo cliente educativo'}
-                                    </h3>
-
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Nombre de la institución educativa *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={formData.institucionEducativa}
-                                                onChange={(e) => setFormData({ ...formData, institucionEducativa: e.target.value })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
-                                                placeholder="Ejemplo: Unidad Educativa Nacional Quito"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Nombre y apellido del contacto *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={formData.nombreCompleto}
-                                                onChange={(e) => setFormData({ ...formData, nombreCompleto: e.target.value })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
-                                                placeholder="Ejemplo: María Elena González Pérez"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Teléfono de contacto *
-                                            </label>
-                                            <input
-                                                type="tel"
-                                                value={formData.telefono}
-                                                onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
-                                                placeholder="Ejemplo: 0998765432"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Cédula *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={formData.cedula}
-                                                onChange={(e) => setFormData({ ...formData, cedula: e.target.value })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
-                                                placeholder="Ejemplo: 1723456789"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Correo electrónico *
-                                            </label>
-                                            <input
-                                                type="email"
-                                                value={formData.email}
-                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
-                                                placeholder="Ejemplo: contacto@institucion.edu.ec"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Dirección de la institución *
-                                            </label>
-                                            <textarea
-                                                value={formData.direccion}
-                                                onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                                                rows={3}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
-                                                placeholder="Ejemplo: Av. 10 de Agosto N24-15 y Cordero, Quito"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Ruta asignada
-                                            </label>
-                                            <select
-                                                value={formData.routeId}
-                                                onChange={(e) => setFormData({ ...formData, routeId: e.target.value })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
-                                            >
-                                                <option value="">Seleccionar una ruta</option>
-                                                {mockRoutes.filter(route => route.isActive).map((route) => (
-                                                    <option key={route.id} value={route.id}>
-                                                        {route.identificador} - {route.nombre}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex justify-end space-x-3 mt-6">
-                                        <button
-                                            onClick={closeModal}
-                                            className="flex items-center space-x-2 px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-                                        >
-                                            <X className="h-4 w-4" />
-                                            <span>Cancelar</span>
-                                        </button>
-                                        <button
-                                            onClick={editingClient ? handleUpdateClient : handleCreateClient}
-                                            disabled={!formData.institucionEducativa.trim() || !formData.nombreCompleto.trim() || !formData.telefono.trim() || !formData.cedula.trim() || !formData.email.trim() || !formData.direccion.trim()}
-                                            className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <Check className="h-4 w-4" />
-                                            <span>{editingClient ? 'Guardar cambios' : 'Registrar cliente'}</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     {/* Statistics */}
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Total de clientes</p>
+                                    <p className="text-sm font-medium text-gray-600">Total clientes</p>
                                     <p className="text-2xl font-bold text-gray-900">{clients.length}</p>
                                 </div>
-                                <GraduationCap className="h-8 w-8 text-blue-500" />
+                                <UserCheck className="h-8 w-8 text-orange-500" />
                             </div>
                         </div>
 
@@ -493,21 +450,103 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                            <div className="flex items-center justify-between">
+            {/* Create/Edit Modal */}
+            {(showCreateModal || editingClient) && (
+                <div
+                    className="fixed inset-0 bg-white bg-opacity-90 backdrop-blur-sm overflow-y-auto h-full w-full z-50"
+                    onClick={handleModalBackdropClick}
+                >
+                    <div className="relative top-20 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white">
+                        <div className="mt-3">
+                            <h3 className="text-lg font-medium text-gray-900 mb-4">
+                                {editingClient ? 'Modificar cliente' : 'Registrar nuevo cliente'}
+                            </h3>
+
+                            <div className="space-y-4">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Con ruta asignada</p>
-                                    <p className="text-2xl font-bold text-orange-600">
-                                        {clients.filter(client => client.routeId).length}
-                                    </p>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Nombre del cliente *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.nombre}
+                                        onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
+                                        placeholder="Ejemplo: Juan Pérez"
+                                    />
                                 </div>
-                                <MapPinIcon className="h-8 w-8 text-orange-500" />
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Teléfono
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={formData.telefono}
+                                        onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
+                                        placeholder="Ejemplo: 1234567890"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Dirección
+                                    </label>
+                                    <textarea
+                                        value={formData.direccion}
+                                        onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                                        rows={3}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
+                                        placeholder="Ejemplo: Calle Principal 123"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Ruta
+                                    </label>
+                                    <select
+                                        value={formData.routeId}
+                                        onChange={(e) => setFormData({ ...formData, routeId: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
+                                    >
+                                        <option value="">Seleccionar ruta (opcional)</option>
+                                        {routes.map(route => (
+                                            <option key={route.id} value={route.id}>
+                                                {route.identificador} - {route.nombre}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end space-x-3 mt-6">
+                                <button
+                                    onClick={closeModal}
+                                    className="flex items-center space-x-2 px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                                >
+                                    <X className="h-4 w-4" />
+                                    <span>Cancelar</span>
+                                </button>
+                                <button
+                                    onClick={editingClient ? handleUpdateClient : handleCreateClient}
+                                    disabled={!formData.nombre.trim()}
+                                    className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Check className="h-4 w-4" />
+                                    <span>{editingClient ? 'Guardar cambios' : 'Registrar cliente'}</span>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
+
             <Footer />
         </div>
     );

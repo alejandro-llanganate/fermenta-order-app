@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     ShoppingBag,
     Plus,
@@ -11,11 +11,12 @@ import {
     UserCheck,
     UserX,
     Filter,
-    DollarSign
+    DollarSign,
+    Upload,
+    Image as ImageIcon
 } from 'lucide-react';
-import { Product, CreateProductData, ProductCategory, ProductVariant } from '@/types/product';
-import { mockProducts } from '@/data/mockProducts';
-import { mockOrders } from '@/data/mockOrders';
+import { Product, CreateProductData, ProductCategory } from '@/types/product';
+import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
 
 interface ProductsManagementProps {
@@ -23,108 +24,209 @@ interface ProductsManagementProps {
 }
 
 export default function ProductsManagement({ onBack }: ProductsManagementProps) {
-    const [products, setProducts] = useState<Product[]>(mockProducts);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [categories, setCategories] = useState<ProductCategory[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
     const [selectedProductForExport, setSelectedProductForExport] = useState<string>('');
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-    const [filterCategory, setFilterCategory] = useState<ProductCategory | 'Todos'>('Todos');
+    const [filterCategory, setFilterCategory] = useState<string>('Todos');
+    const [loading, setLoading] = useState(true);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     const [formData, setFormData] = useState<CreateProductData>({
         name: '',
-        category: 'Donut',
-        variant: 'choco',
+        categoryId: '',
+        variant: '',
         priceRegular: 0,
         pricePage: undefined,
-        description: ''
+        description: '',
+        imageUrl: ''
     });
 
-    const categories: ProductCategory[] = [
-        'Donut', 'Rellenas', 'Mini donut', 'Mini rellenas', 'Orejas', 'Pizzas',
-        'Pan choco', 'Melvas', 'Muffins', 'Panes', 'Pasteles chocolate', 'Pasteles de naranja'
-    ];
+    useEffect(() => {
+        fetchData();
+    }, []);
 
-    const getVariantsByCategory = (category: ProductCategory): ProductVariant[] => {
-        switch (category) {
-            case 'Donut':
-            case 'Mini donut':
-                return ['choco', 'choco grajeas', 'choco coco', 'glase', 'glase grajeas', 'glase coco'] as ProductVariant[];
-            case 'Rellenas':
-            case 'Mini rellenas':
-                return ['chantilly', 'manjar'] as ProductVariant[];
-            case 'Orejas':
-                return ['orejas', 'mini orejas'] as ProductVariant[];
-            case 'Pizzas':
-                return ['cuadrada', 'redonda', 'mini'] as ProductVariant[];
-            case 'Pan choco':
-                return ['panes', 'mini panes'] as ProductVariant[];
-            case 'Melvas':
-                return ['melvas', 'mini melvas'] as ProductVariant[];
-            case 'Muffins':
-                return ['normales', 'manjar'] as ProductVariant[];
-            case 'Panes':
-                return ['hamburguesa', 'mini hamburguesa', 'hot dog', 'mini hot dog', 'gusano', 'mini gusano'] as ProductVariant[];
-            case 'Pasteles chocolate':
-            case 'Pasteles de naranja':
-                return ['normales', 'choco grajeas', 'sin cortar (s/c)', 'x12', 'x14', 'decorados'] as ProductVariant[];
-            default:
-                return ['normales'] as ProductVariant[];
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+
+            // Fetch categories
+            const { data: categoriesData, error: categoriesError } = await supabase
+                .from('product_categories')
+                .select('*')
+                .eq('is_active', true)
+                .order('name');
+
+            if (categoriesError) throw categoriesError;
+            setCategories(categoriesData || []);
+
+            // Fetch products with category information
+            const { data: productsData, error: productsError } = await supabase
+                .from('products_with_categories')
+                .select('*')
+                .order('category_name, name');
+
+            if (productsError) throw productsError;
+            setProducts(productsData || []);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+            alert('Error al cargar los datos');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleCreateProduct = () => {
-        const newProduct: Product = {
-            id: Date.now().toString(),
-            name: formData.name,
-            category: formData.category,
-            variant: formData.variant,
-            priceRegular: formData.priceRegular,
-            pricePage: formData.pricePage,
-            description: formData.description,
-            isActive: true,
-            createdAt: new Date()
-        };
+    const handleImageUpload = async (file: File) => {
+        try {
+            setUploadingImage(true);
 
-        setProducts([...products, newProduct]);
-        setShowCreateModal(false);
-        resetForm();
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `product-images/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('product-images')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('product-images')
+                .getPublicUrl(filePath);
+
+            setFormData({ ...formData, imageUrl: publicUrl });
+        } catch (err) {
+            console.error('Error uploading image:', err);
+            alert('Error al subir la imagen');
+        } finally {
+            setUploadingImage(false);
+        }
     };
 
-    const handleUpdateProduct = () => {
+    const handleCreateProduct = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .insert([formData])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            // Fetch the product with category information
+            const { data: productWithCategory } = await supabase
+                .from('products_with_categories')
+                .select('*')
+                .eq('id', data.id)
+                .single();
+
+            if (productWithCategory) {
+                setProducts([...products, productWithCategory]);
+            }
+
+            setShowCreateModal(false);
+            resetForm();
+        } catch (err) {
+            console.error('Error creating product:', err);
+            alert('Error al crear el producto');
+        }
+    };
+
+    const handleUpdateProduct = async () => {
         if (!editingProduct) return;
 
-        const updatedProducts = products.map(product =>
-            product.id === editingProduct.id
-                ? { ...product, ...formData }
-                : product
-        );
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .update(formData)
+                .eq('id', editingProduct.id)
+                .select()
+                .single();
 
-        setProducts(updatedProducts);
-        setEditingProduct(null);
-        resetForm();
-    };
+            if (error) throw error;
 
-    const handleDeleteProduct = (productId: string) => {
-        if (confirm('¿Está seguro de que desea eliminar este producto? Esta acción no se puede deshacer.')) {
-            setProducts(products.filter(product => product.id !== productId));
+            // Fetch the updated product with category information
+            const { data: productWithCategory } = await supabase
+                .from('products_with_categories')
+                .select('*')
+                .eq('id', editingProduct.id)
+                .single();
+
+            if (productWithCategory) {
+                setProducts(products.map(product =>
+                    product.id === editingProduct.id ? productWithCategory : product
+                ));
+            }
+
+            setEditingProduct(null);
+            resetForm();
+        } catch (err) {
+            console.error('Error updating product:', err);
+            alert('Error al actualizar el producto');
         }
     };
 
-    const handleToggleActive = (productId: string) => {
-        setProducts(products.map(product =>
-            product.id === productId
-                ? { ...product, isActive: !product.isActive }
-                : product
-        ));
+    const handleDeleteProduct = async (productId: string) => {
+        if (!confirm('¿Está seguro de que desea eliminar este producto? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', productId);
+
+            if (error) throw error;
+
+            setProducts(products.filter(product => product.id !== productId));
+        } catch (err) {
+            console.error('Error deleting product:', err);
+            alert('Error al eliminar el producto');
+        }
+    };
+
+    const handleToggleActive = async (productId: string) => {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .update({ is_active: !product.isActive })
+                .eq('id', productId)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            // Fetch the updated product with category information
+            const { data: productWithCategory } = await supabase
+                .from('products_with_categories')
+                .select('*')
+                .eq('id', productId)
+                .single();
+
+            if (productWithCategory) {
+                setProducts(products.map(p =>
+                    p.id === productId ? productWithCategory : p
+                ));
+            }
+        } catch (err) {
+            console.error('Error toggling product status:', err);
+            alert('Error al cambiar el estado del producto');
+        }
     };
 
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.categoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.variant.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesCategory = filterCategory === 'Todos' || product.category === filterCategory;
+        const matchesCategory = filterCategory === 'Todos' || product.categoryId === filterCategory;
 
         return matchesSearch && matchesCategory;
     });
@@ -133,22 +235,24 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
         setEditingProduct(product);
         setFormData({
             name: product.name,
-            category: product.category,
+            categoryId: product.categoryId,
             variant: product.variant,
             priceRegular: product.priceRegular,
             pricePage: product.pricePage,
-            description: product.description || ''
+            description: product.description || '',
+            imageUrl: product.imageUrl || ''
         });
     };
 
     const resetForm = () => {
         setFormData({
             name: '',
-            category: 'Donut',
-            variant: 'choco',
+            categoryId: '',
+            variant: '',
             priceRegular: 0,
             pricePage: undefined,
-            description: ''
+            description: '',
+            imageUrl: ''
         });
     };
 
@@ -168,74 +272,20 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
         return price ? `$${price.toFixed(2)}` : 'N/A';
     };
 
-    const getCategoryIcon = (_category: ProductCategory) => {
+    const getCategoryIcon = (_category: string) => {
         return <ShoppingBag className="h-5 w-5 text-orange-600" />;
     };
 
-    // Funciones para exportación por producto
-    const openExportModal = () => {
-        setShowExportModal(true);
-    };
-
-    const generateProductExportPDF = async () => {
-        if (!selectedProductForExport) return;
-
-        try {
-            // Importar dinámicamente para evitar errores de SSR
-            const jsPDF = (await import('jspdf')).default;
-            const html2canvas = (await import('html2canvas')).default;
-
-            const exportRef = document.getElementById('product-export-content');
-            if (!exportRef) return;
-
-            const canvas = await html2canvas(exportRef, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
-            });
-
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-
-            const imgWidth = 210;
-            const pageHeight = 295;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let heightLeft = imgHeight;
-
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            const product = products.find(p => p.id === selectedProductForExport);
-            const productName = product ? `${product.name}-${product.category}-${product.variant}` : 'producto';
-            pdf.save(`Reporte-Pedidos-${productName}-${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`);
-        } catch (error) {
-            console.error('Error generando PDF de exportación por producto:', error);
-            alert('Error al generar el PDF de exportación. Por favor, inténtalo de nuevo.');
-        }
-    };
-
-    // Obtener pedidos por producto
-    const getOrdersByProduct = (productId: string) => {
-        const product = products.find(p => p.id === productId);
-        if (!product) return [];
-
-        return mockOrders.filter(order =>
-            order.items.some(item =>
-                item.productName === product.name &&
-                item.productCategory === product.category &&
-                item.productVariant === product.variant
-            )
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Cargando productos...</p>
+                </div>
+            </div>
         );
-    };
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex flex-col">
@@ -263,13 +313,6 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                 <Plus className="h-4 w-4" />
                                 <span>Agregar nuevo producto</span>
                             </button>
-                            <button
-                                onClick={openExportModal}
-                                className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                            >
-                                <DollarSign className="h-4 w-4" />
-                                <span>Exportar por producto</span>
-                            </button>
                         </div>
                     </div>
 
@@ -293,12 +336,12 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                     <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <select
                                         value={filterCategory}
-                                        onChange={(e) => setFilterCategory(e.target.value as ProductCategory | 'Todos')}
+                                        onChange={(e) => setFilterCategory(e.target.value)}
                                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                                     >
                                         <option value="Todos">Todas las categorías</option>
                                         {categories.map(category => (
-                                            <option key={category} value={category}>{category}</option>
+                                            <option key={category.id} value={category.id}>{category.name}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -341,9 +384,17 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
                                                     <div className="flex-shrink-0 h-10 w-10">
-                                                        <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
-                                                            {getCategoryIcon(product.category)}
-                                                        </div>
+                                                        {product.imageUrl ? (
+                                                            <img
+                                                                src={product.imageUrl}
+                                                                alt={product.name}
+                                                                className="h-10 w-10 rounded-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
+                                                                {getCategoryIcon(product.categoryName)}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <div className="ml-4">
                                                         <div className="text-sm font-medium text-gray-900">
@@ -357,7 +408,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                    {product.category}
+                                                    {product.categoryName}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -450,20 +501,13 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                                 Categoría *
                                             </label>
                                             <select
-                                                value={formData.category}
-                                                onChange={(e) => {
-                                                    const newCategory = e.target.value as ProductCategory;
-                                                    const variants = getVariantsByCategory(newCategory);
-                                                    setFormData({
-                                                        ...formData,
-                                                        category: newCategory,
-                                                        variant: variants[0]
-                                                    });
-                                                }}
+                                                value={formData.categoryId}
+                                                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                                             >
+                                                <option value="">Seleccionar categoría</option>
                                                 {categories.map(category => (
-                                                    <option key={category} value={category}>{category}</option>
+                                                    <option key={category.id} value={category.id}>{category.name}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -472,15 +516,13 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Variante *
                                             </label>
-                                            <select
+                                            <input
+                                                type="text"
                                                 value={formData.variant}
-                                                onChange={(e) => setFormData({ ...formData, variant: e.target.value as ProductVariant })}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
-                                            >
-                                                {getVariantsByCategory(formData.category).map(variant => (
-                                                    <option key={variant} value={variant}>{variant}</option>
-                                                ))}
-                                            </select>
+                                                onChange={(e) => setFormData({ ...formData, variant: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
+                                                placeholder="Ejemplo: Chocolate"
+                                            />
                                         </div>
 
                                         <div>
@@ -513,6 +555,41 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                             />
                                         </div>
 
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Imagen (opcional)
+                                            </label>
+                                            <div className="flex items-center space-x-2">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            handleImageUpload(file);
+                                                        }
+                                                    }}
+                                                    className="hidden"
+                                                    id="image-upload"
+                                                />
+                                                <label
+                                                    htmlFor="image-upload"
+                                                    className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+                                                >
+                                                    <Upload className="h-4 w-4 text-gray-500" />
+                                                    <span className="text-sm text-gray-700">
+                                                        {uploadingImage ? 'Subiendo...' : 'Subir imagen'}
+                                                    </span>
+                                                </label>
+                                                {formData.imageUrl && (
+                                                    <div className="flex items-center space-x-2">
+                                                        <ImageIcon className="h-4 w-4 text-green-500" />
+                                                        <span className="text-xs text-green-600">Imagen cargada</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Descripción
@@ -537,7 +614,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                         </button>
                                         <button
                                             onClick={editingProduct ? handleUpdateProduct : handleCreateProduct}
-                                            disabled={!formData.name.trim() || formData.priceRegular <= 0}
+                                            disabled={!formData.name.trim() || !formData.categoryId || !formData.variant.trim() || formData.priceRegular <= 0}
                                             className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Check className="h-4 w-4" />
@@ -590,7 +667,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                 <div>
                                     <p className="text-sm font-medium text-gray-600">Precio promedio</p>
                                     <p className="text-2xl font-bold text-purple-600">
-                                        ${(products.reduce((sum, p) => sum + p.priceRegular, 0) / products.length).toFixed(2)}
+                                        ${products.length > 0 ? (products.reduce((sum, p) => sum + p.priceRegular, 0) / products.length).toFixed(2) : '0.00'}
                                     </p>
                                 </div>
                                 <DollarSign className="h-8 w-8 text-purple-500" />
@@ -599,204 +676,6 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                     </div>
                 </div>
             </div>
-
-            {/* Modal de Exportación por Producto */}
-            {showExportModal && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                    onClick={handleModalBackdropClick}
-                >
-                    <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-gray-200">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-xl font-semibold text-gray-900">Exportar Pedidos por Producto</h2>
-                                <div className="flex items-center space-x-3">
-                                    <button
-                                        onClick={generateProductExportPDF}
-                                        disabled={!selectedProductForExport}
-                                        className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <DollarSign className="h-4 w-4" />
-                                        <span>Generar PDF</span>
-                                    </button>
-                                    <button
-                                        onClick={() => setShowExportModal(false)}
-                                        className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-                                    >
-                                        Cerrar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Selector de Producto */}
-                        <div className="p-6 border-b border-gray-200">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Seleccionar Producto
-                            </label>
-                            <select
-                                value={selectedProductForExport}
-                                onChange={(e) => setSelectedProductForExport(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                            >
-                                <option value="">Seleccionar un producto</option>
-                                {products.filter(product => product.isActive).map((product) => (
-                                    <option key={product.id} value={product.id}>
-                                        {product.name} - {product.category} - {product.variant}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Contenido de Exportación */}
-                        {selectedProductForExport && (
-                            <div id="product-export-content" className="p-6">
-                                {(() => {
-                                    const product = products.find(p => p.id === selectedProductForExport);
-                                    const productOrders = getOrdersByProduct(selectedProductForExport);
-                                    const totalQuantity = productOrders.reduce((sum, order) => {
-                                        return sum + order.items.reduce((itemSum, item) => {
-                                            if (item.productName === product?.name &&
-                                                item.productCategory === product?.category &&
-                                                item.productVariant === product?.variant) {
-                                                return itemSum + item.quantity;
-                                            }
-                                            return itemSum;
-                                        }, 0);
-                                    }, 0);
-                                    const totalValue = productOrders.reduce((sum, order) => {
-                                        return sum + order.items.reduce((itemSum, item) => {
-                                            if (item.productName === product?.name &&
-                                                item.productCategory === product?.category &&
-                                                item.productVariant === product?.variant) {
-                                                return itemSum + item.individualValue;
-                                            }
-                                            return itemSum;
-                                        }, 0);
-                                    }, 0);
-
-                                    if (!product) return <p className="text-gray-500">Producto no encontrado</p>;
-
-                                    return (
-                                        <div className="space-y-6">
-                                            {/* Header del Reporte */}
-                                            <div className="text-center border-b border-gray-200 pb-4">
-                                                <h1 className="text-2xl font-bold text-black">Mega Donut</h1>
-                                                <h2 className="text-xl font-semibold text-gray-800">Reporte de Pedidos por Producto</h2>
-                                                <p className="text-sm text-gray-500">
-                                                    Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
-                                                </p>
-                                            </div>
-
-                                            {/* Información del Producto */}
-                                            <div className="bg-gray-50 p-4 rounded-lg">
-                                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Información del Producto</h3>
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-600">Nombre</p>
-                                                        <p className="text-lg font-semibold text-gray-900">{product.name}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-600">Categoría</p>
-                                                        <p className="text-lg font-semibold text-gray-900">{product.category}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-600">Variante</p>
-                                                        <p className="text-lg font-semibold text-gray-900">{product.variant}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-600">Precio Regular</p>
-                                                        <p className="text-lg font-semibold text-green-600">${product.priceRegular.toFixed(2)}</p>
-                                                    </div>
-                                                    {product.pricePage && (
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-600">Precio PAGINA</p>
-                                                            <p className="text-lg font-semibold text-orange-600">${product.pricePage.toFixed(2)}</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Resumen */}
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-blue-50 p-4 rounded-lg">
-                                                <div className="text-center">
-                                                    <p className="text-sm font-medium text-gray-600">Total de Pedidos</p>
-                                                    <p className="text-2xl font-bold text-blue-600">{productOrders.length}</p>
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className="text-sm font-medium text-gray-600">Cantidad Total</p>
-                                                    <p className="text-2xl font-bold text-green-600">{totalQuantity}</p>
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className="text-sm font-medium text-gray-600">Valor Total</p>
-                                                    <p className="text-2xl font-bold text-purple-600">${totalValue.toFixed(2)}</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Tabla de Pedidos */}
-                                            <div>
-                                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Detalle de Pedidos</h3>
-                                                <div className="overflow-x-auto">
-                                                    <table className="min-w-full border border-gray-300">
-                                                        <thead>
-                                                            <tr className="bg-gray-100">
-                                                                <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold">Número</th>
-                                                                <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold">Cliente</th>
-                                                                <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold">Fecha</th>
-                                                                <th className="border border-gray-300 px-3 py-2 text-center text-black font-semibold">Cantidad</th>
-                                                                <th className="border border-gray-300 px-3 py-2 text-right text-black font-semibold">Precio Unit.</th>
-                                                                <th className="border border-gray-300 px-3 py-2 text-right text-black font-semibold">Total</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {productOrders.map((order, index) => {
-                                                                const productItems = order.items.filter(item =>
-                                                                    item.productName === product.name &&
-                                                                    item.productCategory === product.category &&
-                                                                    item.productVariant === product.variant
-                                                                );
-
-                                                                return productItems.map((item, itemIndex) => (
-                                                                    <tr key={`${order.id}-${itemIndex}`} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                                                        <td className="border border-gray-300 px-3 py-2 text-black">{order.orderNumber}</td>
-                                                                        <td className="border border-gray-300 px-3 py-2 text-black">{order.clientName}</td>
-                                                                        <td className="border border-gray-300 px-3 py-2 text-black">{order.orderDate.toLocaleDateString('es-ES')}</td>
-                                                                        <td className="border border-gray-300 px-3 py-2 text-center text-black">{item.quantity}</td>
-                                                                        <td className="border border-gray-300 px-3 py-2 text-right text-black">${item.unitPrice.toFixed(2)}</td>
-                                                                        <td className="border border-gray-300 px-3 py-2 text-right font-medium text-black">${item.individualValue.toFixed(2)}</td>
-                                                                    </tr>
-                                                                ));
-                                                            })}
-                                                        </tbody>
-                                                        <tfoot>
-                                                            <tr className="bg-gray-100">
-                                                                <td colSpan={3} className="border border-gray-300 px-3 py-2 text-right font-bold text-black">TOTALES:</td>
-                                                                <td className="border border-gray-300 px-3 py-2 text-center font-bold text-black">{totalQuantity}</td>
-                                                                <td className="border border-gray-300 px-3 py-2 text-right font-bold text-black">-</td>
-                                                                <td className="border border-gray-300 px-3 py-2 text-right font-bold text-lg text-black">${totalValue.toFixed(2)}</td>
-                                                            </tr>
-                                                        </tfoot>
-                                                    </table>
-                                                </div>
-                                            </div>
-
-                                            {/* Footer */}
-                                            <div className="mt-8 pt-4 border-t border-gray-300">
-                                                <p className="text-center text-sm text-gray-800 font-medium">
-                                                    Reporte generado para Mega Donut<br />
-                                                    {productOrders.length} pedidos con {product.name}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    );
-                                })()}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
 
             <Footer />
         </div>

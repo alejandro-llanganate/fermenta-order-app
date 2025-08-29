@@ -86,7 +86,12 @@ export const authService = {
     if (!userStr) return null;
     
     try {
-      return JSON.parse(userStr) as RegisterUser;
+      const user = JSON.parse(userStr);
+      // Verificar si es un usuario de la tabla usuarios o register_users
+      if (user.type === 'user' || user.type === 'admin' || user.type === 'register') {
+        return user as RegisterUser;
+      }
+      return null;
     } catch {
       return null;
     }
