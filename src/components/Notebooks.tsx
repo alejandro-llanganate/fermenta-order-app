@@ -14,6 +14,7 @@ import {
 import ProductNotebook from './ProductNotebook';
 import DonutProductionNotebook from './DonutProductionNotebook';
 import RouteNotebook from './RouteNotebook';
+import CategoryNotebook from './CategoryNotebook';
 import Footer from './Footer';
 
 interface NotebooksProps {
@@ -39,6 +40,10 @@ export default function Notebooks({ onBack }: NotebooksProps) {
 
     if (currentSubModule === 'by-routes') {
         return <RouteNotebook onBack={handleBackToMain} />;
+    }
+
+    if (currentSubModule === 'by-categories') {
+        return <CategoryNotebook onBack={handleBackToMain} />;
     }
 
     return (
