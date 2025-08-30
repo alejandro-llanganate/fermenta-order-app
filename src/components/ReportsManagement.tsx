@@ -5,14 +5,13 @@ import {
     BarChart3,
     ArrowLeft,
     Download,
+    FileText,
     Calendar,
-    DollarSign,
-    TrendingUp,
-    Users,
-    Package
+    Filter
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
+import Swal from 'sweetalert2';
 
 interface ReportsManagementProps {
     onBack: () => void;
@@ -29,42 +28,42 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
             id: 'sales',
             title: 'Reporte de Ventas',
             description: 'Análisis completo de ventas por período, productos y rutas',
-            icon: DollarSign,
+            icon: FileText,
             color: 'bg-gradient-to-br from-green-500 to-green-700'
         },
         {
             id: 'production',
             title: 'Reporte de Producción',
             description: 'Comparativo planificado vs real, eficiencia y costos',
-            icon: Package,
+            icon: FileText,
             color: 'bg-gradient-to-br from-blue-500 to-blue-700'
         },
         {
             id: 'inventory',
             title: 'Reporte de Inventario',
             description: 'Stock actual, productos con bajo inventario y valorización',
-            icon: Package,
+            icon: FileText,
             color: 'bg-gradient-to-br from-purple-500 to-purple-700'
         },
         {
             id: 'routes',
             title: 'Reporte por Rutas',
             description: 'Rendimiento por ruta, clientes activos y productos top',
-            icon: Users,
+            icon: FileText,
             color: 'bg-gradient-to-br from-yellow-500 to-yellow-700'
         },
         {
             id: 'products',
             title: 'Reporte de Productos',
             description: 'Análisis detallado por categoría y línea de productos',
-            icon: Package,
+            icon: FileText,
             color: 'bg-gradient-to-br from-red-500 to-red-700'
         },
         {
             id: 'comparative',
             title: 'Reporte Comparativo',
             description: 'Comparaciones entre períodos y análisis de tendencias',
-            icon: TrendingUp,
+            icon: FileText,
             color: 'bg-gradient-to-br from-indigo-500 to-indigo-700'
         }
     ];
@@ -74,11 +73,21 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
     };
 
     const exportToPDF = () => {
-        alert('Funcionalidad de exportación a PDF - En desarrollo');
+        Swal.fire({
+            title: 'Exportar a PDF',
+            text: 'Funcionalidad de exportación a PDF - En desarrollo',
+            icon: 'info',
+            confirmButtonText: 'OK'
+        });
     };
 
     const exportToExcel = () => {
-        alert('Funcionalidad de exportación a Excel - En desarrollo');
+        Swal.fire({
+            title: 'Exportar a Excel',
+            text: 'Funcionalidad de exportación a Excel - En desarrollo',
+            icon: 'info',
+            confirmButtonText: 'OK'
+        });
     };
 
     const formatCurrency = (amount: number) => {
@@ -140,7 +149,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
-                                            <DollarSign className="h-8 w-8 text-green-600" />
+                                            <FileText className="h-8 w-8 text-green-600" />
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Ventas Totales</p>
@@ -154,7 +163,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
-                                            <Package className="h-8 w-8 text-blue-600" />
+                                            <FileText className="h-8 w-8 text-blue-600" />
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Total Pedidos</p>
@@ -425,7 +434,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
-                                            <TrendingUp className="h-8 w-8 text-green-600" />
+                                            <FileText className="h-8 w-8 text-green-600" />
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Eficiencia</p>
@@ -439,7 +448,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
-                                            <DollarSign className="h-8 w-8 text-blue-600" />
+                                            <FileText className="h-8 w-8 text-blue-600" />
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Costo Total</p>
@@ -453,7 +462,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
-                                            <Package className="h-8 w-8 text-purple-600" />
+                                            <FileText className="h-8 w-8 text-purple-600" />
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Productos</p>
@@ -545,7 +554,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
-                                            <Package className="h-8 w-8 text-blue-600" />
+                                            <FileText className="h-8 w-8 text-blue-600" />
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Valor Total</p>
@@ -559,7 +568,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
-                                            <Package className="h-8 w-8 text-red-600" />
+                                            <FileText className="h-8 w-8 text-red-600" />
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Stock Bajo</p>
@@ -573,7 +582,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                                     <div className="flex items-center">
                                         <div className="flex-shrink-0">
-                                            <Package className="h-8 w-8 text-green-600" />
+                                            <FileText className="h-8 w-8 text-green-600" />
                                         </div>
                                         <div className="ml-4">
                                             <p className="text-sm font-medium text-gray-500">Total Productos</p>
@@ -723,7 +732,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
 
                     {(selectedReportType === 'products' || selectedReportType === 'comparative') && (
                         <div className="bg-white p-8 rounded-lg shadow-sm border text-center">
-                            <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                            <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                             <h3 className="text-lg font-medium text-gray-900 mb-2">
                                 Reporte en Desarrollo
                             </h3>

@@ -57,7 +57,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                                 <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                                     <button
                                         type="button"
-                                        className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                                        className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 cursor-pointer"
                                         onClick={onClose}
                                     >
                                         <span className="sr-only">Cerrar</span>
@@ -101,7 +101,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                                     <button
                                         type="button"
-                                        className="inline-flex w-full justify-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto"
+                                        className="inline-flex w-full justify-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 sm:ml-3 sm:w-auto cursor-pointer"
                                         onClick={onClose}
                                     >
                                         Entendido

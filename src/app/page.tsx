@@ -174,7 +174,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowCedula(!showCedula)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
                     disabled={isLoading}
                   >
                     {showCedula ? (
@@ -207,7 +207,7 @@ export default function LoginPage() {
             <div className="mt-6 text-center space-y-2">
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="text-sm text-orange-600 hover:text-orange-700 font-medium block"
+                className="text-sm text-orange-600 hover:text-orange-700 font-medium block cursor-pointer"
                 disabled={isLoading}
               >
                 ¿Olvidaste tu contraseña?

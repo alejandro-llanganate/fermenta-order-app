@@ -8,15 +8,14 @@ import {
     ArrowLeft,
     Check,
     X,
-    UserCheck,
-    UserX,
-    Filter,
     Edit,
-    Trash2
+    Trash2,
+    Filter
 } from 'lucide-react';
 import { Route, CreateRouteData } from '@/types/route';
 import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
+import Swal from 'sweetalert2';
 
 interface RoutesManagementProps {
     onBack: () => void;
@@ -29,11 +28,28 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
     const [editingRoute, setEditingRoute] = useState<Route | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
+    const [selectAll, setSelectAll] = useState(false);
+
+    // Estados para ordenamiento
+    const [sortField, setSortField] = useState<string>('identificador');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     const [formData, setFormData] = useState<CreateRouteData>({
         identificador: '',
         nombre: '',
         descripcion: ''
+    });
+
+    // Función helper para mapear rutas de la base de datos al formato TypeScript
+    const mapRouteFromDB = (route: any): Route => ({
+        id: route.id,
+        identificador: route.identificador,
+        nombre: route.nombre,
+        descripcion: route.descripcion,
+        isActive: Boolean(route.is_active), // Convertir is_active a isActive
+        createdAt: new Date(route.created_at),
+        updatedAt: new Date(route.updated_at)
     });
 
     useEffect(() => {
@@ -55,7 +71,13 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
                 throw error;
             }
 
-            setRoutes(data || []);
+            console.log('Routes fetched:', data);
+
+            // Mapear los datos de la base de datos al formato TypeScript
+            const mappedRoutes = (data || []).map(mapRouteFromDB);
+
+            console.log('Mapped routes:', mappedRoutes);
+            setRoutes(mappedRoutes);
         } catch (err) {
             console.error('Error fetching routes:', err);
             setError('Error al cargar las rutas: ' + (err as Error).message);
@@ -77,12 +99,20 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
                 throw error;
             }
 
-            setRoutes([...routes, data]);
+            // Mapear la nueva ruta al formato TypeScript
+            const mappedRoute = mapRouteFromDB(data);
+            setRoutes([...routes, mappedRoute]);
             setShowCreateModal(false);
             resetForm();
         } catch (err) {
             console.error('Error creating route:', err);
-            alert('Error al crear la ruta: ' + (err as Error).message);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al crear la ruta',
+                text: (err as Error).message,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Aceptar'
+            });
         }
     };
 
@@ -102,22 +132,38 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
                 throw error;
             }
 
+            // Mapear la ruta actualizada al formato TypeScript
+            const mappedRoute = mapRouteFromDB(data);
             setRoutes(routes.map(route =>
-                route.id === editingRoute.id ? data : route
+                route.id === editingRoute.id ? mappedRoute : route
             ));
             setEditingRoute(null);
             resetForm();
         } catch (err) {
             console.error('Error updating route:', err);
-            alert('Error al actualizar la ruta: ' + (err as Error).message);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al actualizar la ruta',
+                text: (err as Error).message,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Aceptar'
+            });
         }
     };
 
     const handleDeleteRoute = async (routeId: string) => {
-        if (!confirm('¿Está seguro de que desea eliminar esta ruta? Esta acción no se puede deshacer.')) {
-            return;
-        }
+        const result = await Swal.fire({
+            title: '¿Está seguro?',
+            text: 'Esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
 
+        if (result.isConfirmed) {
         try {
             const { error } = await supabase
                 .from('routes')
@@ -130,9 +176,23 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
             }
 
             setRoutes(routes.filter(route => route.id !== routeId));
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Ruta eliminada',
+                    text: 'La ruta ha sido eliminada.',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'Aceptar'
+                });
         } catch (err) {
             console.error('Error deleting route:', err);
-            alert('Error al eliminar la ruta: ' + (err as Error).message);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al eliminar la ruta',
+                    text: (err as Error).message,
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'Aceptar'
+                });
+            }
         }
     };
 
@@ -153,12 +213,20 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
                 throw error;
             }
 
+            // Mapear la ruta actualizada al formato TypeScript
+            const mappedRoute = mapRouteFromDB(data);
             setRoutes(routes.map(r =>
-                r.id === routeId ? data : r
+                r.id === routeId ? mappedRoute : r
             ));
         } catch (err) {
             console.error('Error toggling route status:', err);
-            alert('Error al cambiar el estado de la ruta: ' + (err as Error).message);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al cambiar el estado de la ruta',
+                text: (err as Error).message,
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Aceptar'
+            });
         }
     };
 
@@ -167,6 +235,115 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
         route.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (route.descripcion && route.descripcion.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
+    // Función para ordenar rutas
+    const sortedRoutes = [...filteredRoutes].sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
+
+        switch (sortField) {
+            case 'identificador':
+                aValue = a.identificador.toLowerCase();
+                bValue = b.identificador.toLowerCase();
+                break;
+            case 'nombre':
+                aValue = a.nombre.toLowerCase();
+                bValue = b.nombre.toLowerCase();
+                break;
+            case 'isActive':
+                aValue = a.isActive;
+                bValue = b.isActive;
+                break;
+            default:
+                aValue = a.identificador.toLowerCase();
+                bValue = b.identificador.toLowerCase();
+        }
+
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    // Función para manejar el ordenamiento
+    const handleSort = (field: string) => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
+    // Función para obtener el icono de ordenamiento
+    const getSortIcon = (field: string) => {
+        if (sortField !== field) return null;
+        return sortDirection === 'asc' ? '↑' : '↓';
+    };
+
+    // Funciones para selección múltiple
+    const handleSelectRoute = (routeId: string) => {
+        setSelectedRoutes(prev =>
+            prev.includes(routeId)
+                ? prev.filter(id => id !== routeId)
+                : [...prev, routeId]
+        );
+    };
+
+    const handleSelectAll = () => {
+        if (selectAll) {
+            setSelectedRoutes([]);
+        } else {
+            setSelectedRoutes(sortedRoutes.map(route => route.id));
+        }
+        setSelectAll(!selectAll);
+    };
+
+    // Función para eliminar múltiples rutas
+    const handleBulkDelete = async () => {
+        if (selectedRoutes.length === 0) return;
+
+        const result = await Swal.fire({
+            title: '¿Está seguro?',
+            text: `Esta acción eliminará ${selectedRoutes.length} ruta(s) y no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const { error } = await supabase
+                    .from('routes')
+                    .delete()
+                    .in('id', selectedRoutes);
+
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
+
+                setRoutes(routes.filter(r => !selectedRoutes.includes(r.id)));
+                setSelectedRoutes([]);
+                setSelectAll(false);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Rutas eliminadas',
+                    text: `${selectedRoutes.length} ruta(s) han sido eliminadas exitosamente.`,
+                });
+            } catch (err) {
+                console.error('Error deleting routes:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al eliminar las rutas',
+                    text: (err as Error).message,
+                });
+            }
+        }
+    };
 
     const openEditModal = (route: Route) => {
         setEditingRoute(route);
@@ -213,7 +390,7 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
             <div className="flex-1 p-6">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 space-y-4 lg:space-y-0">
                         <div className="flex items-center space-x-4">
                             <button
                                 onClick={onBack}
@@ -222,16 +399,16 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
                                 <ArrowLeft className="h-5 w-5" />
                             </button>
                             <div className="flex items-center space-x-3">
-                                <MapPin className="h-8 w-8 text-orange-500" />
-                                <h1 className="text-2xl font-bold text-gray-900">Gestión de rutas</h1>
+                                <MapPin className="h-6 w-6 lg:h-8 lg:w-8 text-orange-500" />
+                                <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Gestión de rutas</h1>
                             </div>
                         </div>
                         <button
                             onClick={() => setShowCreateModal(true)}
-                            className="flex items-center space-x-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                            className="flex items-center justify-center lg:justify-start space-x-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors w-full lg:w-auto"
                         >
                             <Plus className="h-4 w-4" />
-                            <span>Agregar nueva ruta</span>
+                            <span className="text-sm lg:text-base">Agregar nueva ruta</span>
                         </button>
                     </div>
 
@@ -263,28 +440,150 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
                                 placeholder="Buscar rutas..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600 text-sm lg:text-base"
                             />
                         </div>
                     </div>
 
+                    {/* Bulk Actions */}
+                    {selectedRoutes.length > 0 && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                                <div className="flex items-center">
+                                    <span className="text-sm font-medium text-blue-800">
+                                        {selectedRoutes.length} ruta(s) seleccionada(s)
+                                    </span>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2 lg:space-x-3">
+                                    <button
+                                        onClick={handleBulkDelete}
+                                        className="flex items-center space-x-1 lg:space-x-2 bg-red-500 text-white px-2 lg:px-3 py-1.5 rounded-md hover:bg-red-600 transition-colors text-xs lg:text-sm"
+                                    >
+                                        <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
+                                        <span>Eliminar</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Routes Table */}
                     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                        <div className="overflow-x-auto">
+                        {/* Mobile view - Cards */}
+                        <div className="lg:hidden">
+                            {sortedRoutes.map((route) => (
+                                <div key={route.id} className={`border-b border-gray-200 p-4 ${selectedRoutes.includes(route.id) ? 'bg-blue-50' : ''}`}>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center space-x-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedRoutes.includes(route.id)}
+                                                onChange={() => handleSelectRoute(route.id)}
+                                                className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 focus:ring-2 cursor-pointer"
+                                            />
+                                            <div className="flex items-center">
+                                                <div className="flex-shrink-0 h-8 w-8">
+                                                    <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                                        <MapPin className="h-4 w-4 text-orange-600" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <button
+                                                onClick={() => handleToggleActive(route.id)}
+                                                className="text-gray-600 hover:text-gray-900 p-1"
+                                                title={route.isActive ? 'Desactivar ruta' : 'Activar ruta'}
+                                            >
+                                                {route.isActive ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                                            </button>
+                                            <button
+                                                onClick={() => openEditModal(route)}
+                                                className="text-blue-600 hover:text-blue-900 p-1"
+                                                title="Editar ruta"
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteRoute(route.id)}
+                                                className="text-red-600 hover:text-red-900 p-1"
+                                                title="Eliminar ruta"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <h3 className="text-sm font-medium text-gray-900">{route.identificador}</h3>
+                                            <p className="text-sm text-gray-600">{route.nombre}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600">
+                                                {route.descripcion || 'Sin descripción'}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${route.isActive
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-red-100 text-red-800'
+                                                }`}>
+                                                {route.isActive ? 'Activa' : 'Inactiva'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop view - Table */}
+                        <div className="hidden lg:block overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Ruta
+                                            <input
+                                                type="checkbox"
+                                                checked={selectAll}
+                                                onChange={handleSelectAll}
+                                                className="w-5 h-5 rounded border-gray-300 text-orange-600 focus:ring-orange-500 focus:ring-2 cursor-pointer hover:border-orange-400 transition-colors"
+                                            />
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Nombre
+                                        <th
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleSort('identificador')}
+                                        >
+                                            <div className="flex items-center space-x-1">
+                                                <span>Ruta</span>
+                                                {getSortIcon('identificador') && (
+                                                    <span className="text-orange-500">{getSortIcon('identificador')}</span>
+                                                )}
+                                            </div>
+                                        </th>
+                                        <th
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleSort('nombre')}
+                                        >
+                                            <div className="flex items-center space-x-1">
+                                                <span>Nombre</span>
+                                                {getSortIcon('nombre') && (
+                                                    <span className="text-orange-500">{getSortIcon('nombre')}</span>
+                                                )}
+                                            </div>
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Descripción
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Estado
+                                        <th
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                                            onClick={() => handleSort('isActive')}
+                                        >
+                                            <div className="flex items-center space-x-1">
+                                                <span>Estado</span>
+                                                {getSortIcon('isActive') && (
+                                                    <span className="text-orange-500">{getSortIcon('isActive')}</span>
+                                                )}
+                                            </div>
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Opciones
@@ -292,8 +591,16 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {filteredRoutes.map((route) => (
-                                        <tr key={route.id} className="hover:bg-gray-50">
+                                    {sortedRoutes.map((route) => (
+                                        <tr key={route.id} className={`hover:bg-gray-50 ${selectedRoutes.includes(route.id) ? 'bg-blue-50' : ''}`}>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedRoutes.includes(route.id)}
+                                                    onChange={() => handleSelectRoute(route.id)}
+                                                    className="w-5 h-5 rounded border-gray-300 text-orange-600 focus:ring-orange-500 focus:ring-2 cursor-pointer hover:border-orange-400 transition-colors"
+                                                />
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
                                                     <div className="flex-shrink-0 h-10 w-10">
@@ -327,27 +634,30 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex items-center justify-end space-x-3">
+                                                <div className="flex items-center justify-end space-x-2">
                                                     <button
                                                         onClick={() => handleToggleActive(route.id)}
-                                                        className="text-gray-400 hover:text-gray-600 p-1 rounded"
+                                                        className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 px-2 py-1 rounded text-xs font-medium border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
                                                         title={route.isActive ? 'Desactivar ruta' : 'Activar ruta'}
                                                     >
-                                                        {route.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                                                        {route.isActive ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                                                        <span>{route.isActive ? 'Desactivar' : 'Activar'}</span>
                                                     </button>
                                                     <button
                                                         onClick={() => openEditModal(route)}
-                                                        className="text-blue-600 hover:text-blue-900 px-3 py-1 rounded text-xs font-medium border border-blue-200 hover:bg-blue-50"
+                                                        className="flex items-center space-x-1 text-blue-600 hover:text-blue-900 px-2 py-1 rounded text-xs font-medium border border-blue-200 hover:bg-blue-50 transition-colors cursor-pointer"
                                                         title="Editar ruta"
                                                     >
-                                                        <Edit className="h-4 w-4" />
+                                                        <Edit className="h-3 w-3" />
+                                                        <span>Editar</span>
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteRoute(route.id)}
-                                                        className="text-red-600 hover:text-red-900 px-3 py-1 rounded text-xs font-medium border border-red-200 hover:bg-red-50"
+                                                        className="flex items-center space-x-1 text-red-600 hover:text-red-900 px-2 py-1 rounded text-xs font-medium border border-red-200 hover:bg-red-50 transition-colors cursor-pointer"
                                                         title="Eliminar ruta"
                                                     >
-                                                        <Trash2 className="h-4 w-4" />
+                                                        <Trash2 className="h-3 w-3" />
+                                                        <span>Eliminar</span>
                                                     </button>
                                                 </div>
                                             </td>
@@ -359,41 +669,41 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
                     </div>
 
                     {/* Statistics */}
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+                        <div className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border border-gray-200">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Total rutas</p>
-                                    <p className="text-2xl font-bold text-gray-900">{routes.length}</p>
+                                    <p className="text-xs lg:text-sm font-medium text-gray-600">Total rutas</p>
+                                    <p className="text-lg lg:text-2xl font-bold text-gray-900">{routes.length}</p>
                                 </div>
-                                <MapPin className="h-8 w-8 text-orange-500" />
+                                <MapPin className="h-6 w-6 lg:h-8 lg:w-8 text-orange-500" />
                             </div>
                         </div>
 
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border border-gray-200">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Rutas activas</p>
-                                    <p className="text-2xl font-bold text-green-600">
+                                    <p className="text-xs lg:text-sm font-medium text-gray-600">Rutas activas</p>
+                                    <p className="text-lg lg:text-2xl font-bold text-green-600">
                                         {routes.filter(route => route.isActive).length}
                                     </p>
                                 </div>
-                                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                    <div className="w-3 h-3 bg-white rounded-full"></div>
+                                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                    <div className="w-2 h-2 lg:w-3 lg:h-3 bg-white rounded-full"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border border-gray-200">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-gray-600">Rutas inactivas</p>
-                                    <p className="text-2xl font-bold text-red-600">
+                                    <p className="text-xs lg:text-sm font-medium text-gray-600">Rutas inactivas</p>
+                                    <p className="text-lg lg:text-2xl font-bold text-red-600">
                                         {routes.filter(route => !route.isActive).length}
                                     </p>
                                 </div>
-                                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-                                    <div className="w-3 h-3 bg-white rounded-full"></div>
+                                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-red-500 rounded-full flex items-center justify-center">
+                                    <div className="w-2 h-2 lg:w-3 lg:h-3 bg-white rounded-full"></div>
                                 </div>
                             </div>
                         </div>
@@ -442,7 +752,7 @@ export default function RoutesManagement({ onBack }: RoutesManagementProps) {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Descripción
+                                        Descripción (opcional)
                                     </label>
                                     <textarea
                                         value={formData.descripcion}

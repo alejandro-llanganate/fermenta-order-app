@@ -11,6 +11,7 @@ import { Order } from '@/types/order';
 import { Route } from '@/types/route';
 import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
+import Swal from 'sweetalert2';
 
 interface DonutProductionNotebookProps {
     onBack: () => void;
@@ -91,7 +92,7 @@ export default function DonutProductionNotebook({ onBack }: DonutProductionNoteb
     const fetchData = async () => {
         try {
             setLoading(true);
-            
+
             // Fetch orders
             const ordersData = await getOrdersForDate(selectedDate);
             setOrders(ordersData);
@@ -357,7 +358,13 @@ export default function DonutProductionNotebook({ onBack }: DonutProductionNoteb
             pdf.save(`Produccion-Donas-${selectedDate}.pdf`);
         } catch (error) {
             console.error('Error generando PDF:', error);
-            alert('Error al generar el PDF. Por favor, inténtalo de nuevo.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al generar el PDF',
+                text: 'Por favor, inténtalo de nuevo.',
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Aceptar'
+            });
         }
     };
 

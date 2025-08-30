@@ -13,6 +13,7 @@ import { Product } from '@/types/product';
 import { Route } from '@/types/route';
 import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
+import Swal from 'sweetalert2';
 
 interface DonutProductionProps {
     onBack: () => void;
@@ -249,7 +250,13 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
             pdf.save(`Produccion-Donas-${selectedDate}.pdf`);
         } catch (error) {
             console.error('Error generando PDF:', error);
-            alert('Error al generar el PDF. Por favor, inténtalo de nuevo.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al generar el PDF',
+                text: 'Por favor, inténtalo de nuevo.',
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Aceptar'
+            });
         }
     };
 
@@ -260,7 +267,7 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
     const fetchData = async () => {
         try {
             setLoading(true);
-            
+
             // Fetch orders
             const ordersData = await getOrdersForDate(selectedDate);
             setOrders(ordersData);
@@ -462,10 +469,10 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
                                     <table className="w-full border-collapse border border-gray-300">
                                         <tbody>
                                             {Object.entries(productionTotals?.donas.sabores || {}).map(([sabor, cantidad]) => (
-                                            <tr key={sabor}>
-                                                <td className="border border-gray-300 px-3 py-2 font-medium text-black">{sabor.toUpperCase()}</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{cantidad}</td>
-                                            </tr>
+                                                <tr key={sabor}>
+                                                    <td className="border border-gray-300 px-3 py-2 font-medium text-black">{sabor.toUpperCase()}</td>
+                                                    <td className="border border-gray-300 px-3 py-2 text-center text-black">{cantidad}</td>
+                                                </tr>
                                             ))}
                                         </tbody>
                                     </table>
@@ -477,10 +484,10 @@ export default function DonutProduction({ onBack }: DonutProductionProps) {
                                     <table className="w-full border-collapse border border-gray-300">
                                         <tbody>
                                             {Object.entries(productionTotals?.miniDonas.sabores || {}).map(([sabor, cantidad]) => (
-                                            <tr key={sabor}>
-                                                <td className="border border-gray-300 px-3 py-2 font-medium text-black">{sabor.toUpperCase()}</td>
-                                                <td className="border border-gray-300 px-3 py-2 text-center text-black">{cantidad}</td>
-                                            </tr>
+                                                <tr key={sabor}>
+                                                    <td className="border border-gray-300 px-3 py-2 font-medium text-black">{sabor.toUpperCase()}</td>
+                                                    <td className="border border-gray-300 px-3 py-2 text-center text-black">{cantidad}</td>
+                                                </tr>
                                             ))}
                                         </tbody>
                                     </table>

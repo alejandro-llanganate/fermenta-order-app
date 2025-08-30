@@ -13,6 +13,7 @@ import { Product } from '@/types/product';
 import { Route } from '@/types/route';
 import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
+import Swal from 'sweetalert2';
 
 interface RoutePrintSheetProps {
     onBack: () => void;
@@ -143,7 +144,13 @@ export default function RoutePrintSheet({ onBack }: RoutePrintSheetProps) {
             pdf.save(`Hoja-Ruta-${routeName}-${selectedDate}.pdf`);
         } catch (error) {
             console.error('Error generando PDF:', error);
-            alert('Error al generar el PDF. Por favor, inténtalo de nuevo.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al generar el PDF',
+                text: 'Por favor, inténtalo de nuevo.',
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Aceptar'
+            });
         }
     };
 

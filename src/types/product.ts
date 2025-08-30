@@ -36,11 +36,9 @@ export interface Product {
 export interface CreateProductData {
   name: string;
   categoryId: string;
-  variant: string;
-  priceRegular: number;
-  pricePage?: number;
+  price: number;
   description?: string;
-  imageUrl?: string;
+  imageBase64?: string;
 }
 
 export interface UpdateProductData {

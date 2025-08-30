@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, User, Mail, Hash, UserCheck, UserX } from 'lucide-react';
 import { ClipLoader } from 'react-spinners';
 import { supabase } from '@/lib/supabase';
+import Swal from 'sweetalert2';
 
 interface Usuario {
   id: string;
@@ -183,45 +184,68 @@ export default function UsersManagement() {
   };
 
   const handleDelete = async (userId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
-      return;
-    }
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'No podrás revertir esta acción.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+    });
 
-    try {
-      const { error } = await supabase
-        .from('usuarios')
-        .delete()
-        .eq('id', userId);
+    if (result.isConfirmed) {
+      try {
+        const { error } = await supabase
+          .from('usuarios')
+          .delete()
+          .eq('id', userId);
 
-      if (error) throw error;
-      setMessage('Usuario eliminado exitosamente');
-      setMessageType('success');
-      loadUsers();
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      setMessage('Error al eliminar usuario');
-      setMessageType('error');
+        if (error) throw error;
+        Swal.fire('Eliminado', 'El usuario ha sido eliminado.', 'success');
+        loadUsers();
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        Swal.fire('Error', 'Error al eliminar usuario.', 'error');
+      }
     }
   };
 
   const toggleUserStatus = async (user: Usuario) => {
-    try {
-      const { error } = await supabase
-        .from('usuarios')
-        .update({
-          is_active: !user.is_active,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
+    const newStatus = !user.is_active;
+    const title = newStatus ? 'Activar' : 'Desactivar';
+    const text = newStatus ? '¿Estás seguro de que quieres activar este usuario?' : '¿Estás seguro de que quieres desactivar este usuario?';
+    const icon = newStatus ? 'question' : 'warning';
 
-      if (error) throw error;
-      setMessage(`Usuario ${user.is_active ? 'desactivado' : 'activado'} exitosamente`);
-      setMessageType('success');
-      loadUsers();
-    } catch (error) {
-      console.error('Error toggling user status:', error);
-      setMessage('Error al cambiar estado del usuario');
-      setMessageType('error');
+    const result = await Swal.fire({
+      title: `${title} Usuario`,
+      text: text,
+      icon: icon,
+      showCancelButton: true,
+      confirmButtonColor: newStatus ? '#28a745' : '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: `${title}`,
+      cancelButtonText: 'Cancelar',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const { error } = await supabase
+          .from('usuarios')
+          .update({
+            is_active: newStatus,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+
+        if (error) throw error;
+        Swal.fire(newStatus ? 'Activado' : 'Desactivado', `${user.first_name} ${user.last_name} ha sido ${newStatus ? 'activado' : 'desactivado'}.`, 'success');
+        loadUsers();
+      } catch (error) {
+        console.error('Error toggling user status:', error);
+        Swal.fire('Error', 'Error al cambiar estado del usuario.', 'error');
+      }
     }
   };
 

@@ -294,7 +294,7 @@ export default function CompanyConfig() {
                                     />
                                     <button
                                         onClick={removeLogo}
-                                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                        className="text-red-600 hover:text-red-800 text-sm font-medium cursor-pointer"
                                     >
                                         Remover Logo
                                     </button>

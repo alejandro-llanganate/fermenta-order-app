@@ -11,6 +11,7 @@ import CategoryManagement from './CategoryManagement';
 import OrdersManagement from './OrdersManagement';
 import ReportsManagement from './ReportsManagement';
 import Notebooks from './Notebooks';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
 interface DashboardProps {
@@ -26,41 +27,88 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ username, onLogout, userData }: DashboardProps) {
+    const { isAdmin } = useAuth();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [currentView, setCurrentView] = useState<'dashboard' | 'users' | 'orders' | 'clients' | 'routes' | 'products' | 'categories' | 'reports' | 'notebooks'>('dashboard');
-    const [userRole, setUserRole] = useState<string>('user');
+
+    // Estados para estadísticas
+    const [stats, setStats] = useState({
+        activeClients: 0,
+        totalOrders: 0,
+        activeProducts: 0,
+        totalSales: 0
+    });
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(new Date());
         }, 1000);
 
-        // Get user role from Supabase
-        const getUserRole = async () => {
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    const { data, error } = await supabase
-                        .from('register_users')
-                        .select('role')
-                        .eq('id', user.id)
-                        .single();
-
-                    if (!error && data) {
-                        setUserRole(data.role);
-                    }
-                }
-            } catch (err) {
-                console.error('Error getting user role:', err);
-            }
-        };
-
-        getUserRole();
-
         return () => clearInterval(timer);
     }, []);
 
-    const isAdmin = userRole === 'admin';
+    // Función para obtener estadísticas
+    const fetchStats = async () => {
+        try {
+            setLoading(true);
+
+            // Obtener clientes activos
+            const { data: clientsData, error: clientsError } = await supabase
+                .from('clients')
+                .select('id, is_active')
+                .eq('is_active', true);
+
+            if (clientsError) {
+                console.error('Error fetching clients:', clientsError);
+            }
+
+            // Obtener pedidos del día
+            const today = new Date();
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+            const { data: ordersData, error: ordersError } = await supabase
+                .from('orders')
+                .select('id, total_amount')
+                .gte('created_at', startOfDay.toISOString())
+                .lte('created_at', endOfDay.toISOString());
+
+            if (ordersError) {
+                console.error('Error fetching orders:', ordersError);
+            }
+
+            // Obtener productos activos
+            const { data: productsData, error: productsError } = await supabase
+                .from('products')
+                .select('id, is_active')
+                .eq('is_active', true);
+
+            if (productsError) {
+                console.error('Error fetching products:', productsError);
+            }
+
+            // Calcular total de ventas del día
+            const totalSales = ordersData?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0;
+
+            setStats({
+                activeClients: clientsData?.length || 0,
+                totalOrders: ordersData?.length || 0,
+                activeProducts: productsData?.length || 0,
+                totalSales: totalSales
+            });
+
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Cargar estadísticas al montar el componente
+    useEffect(() => {
+        fetchStats();
+    }, []);
 
     const menuItems = [
         // Solo mostrar gestión de usuarios para admins
@@ -71,16 +119,28 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
             onClick: () => setCurrentView('users')
         }] : []),
         {
+            label: 'Categorías',
+            icon: FolderOpen,
+            color: 'bg-gradient-to-br from-pink-500 to-pink-700 hover:from-pink-600 hover:to-pink-800',
+            onClick: () => setCurrentView('categories')
+        },
+        {
             label: 'Productos',
             icon: ShoppingBag,
             color: 'bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800',
             onClick: () => setCurrentView('products')
         },
         {
-            label: 'Categorías',
-            icon: FolderOpen,
-            color: 'bg-gradient-to-br from-pink-500 to-pink-700 hover:from-pink-600 hover:to-pink-800',
-            onClick: () => setCurrentView('categories')
+            label: 'Rutas',
+            icon: MapPin,
+            color: 'bg-gradient-to-br from-yellow-500 to-yellow-700 hover:from-yellow-600 hover:to-yellow-800',
+            onClick: () => setCurrentView('routes')
+        },
+        {
+            label: 'Clientes',
+            icon: UserCheck,
+            color: 'bg-gradient-to-br from-indigo-500 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800',
+            onClick: () => setCurrentView('clients')
         },
         {
             label: 'Pedidos',
@@ -89,29 +149,16 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
             onClick: () => setCurrentView('orders')
         },
         {
-            label: 'Clientes',
-            icon: UserCheck,
-            color: 'bg-gradient-to-br from-indigo-500 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800',
-            onClick: () => setCurrentView('clients')
+            label: 'Cuadernos',
+            icon: BookOpen,
+            color: 'bg-gradient-to-br from-teal-500 to-teal-700 hover:from-teal-600 hover:to-teal-800',
+            onClick: () => setCurrentView('notebooks')
         },
-        // Solo mostrar gestión de rutas para admins
-        ...(isAdmin ? [{
-            label: 'Rutas',
-            icon: MapPin,
-            color: 'bg-gradient-to-br from-yellow-500 to-yellow-700 hover:from-yellow-600 hover:to-yellow-800',
-            onClick: () => setCurrentView('routes')
-        }] : []),
         {
             label: 'Reportes',
             icon: BarChart3,
             color: 'bg-gradient-to-br from-orange-500 to-orange-700 hover:from-orange-600 hover:to-orange-800',
             onClick: () => setCurrentView('reports')
-        },
-        {
-            label: 'Cuadernos',
-            icon: BookOpen,
-            color: 'bg-gradient-to-br from-teal-500 to-teal-700 hover:from-teal-600 hover:to-teal-800',
-            onClick: () => setCurrentView('notebooks')
         }
     ];
 
@@ -198,7 +245,7 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                             </div>
                             <button
                                 onClick={onLogout}
-                                className="flex items-center space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
+                                className="flex items-center space-x-2 text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors cursor-pointer"
                             >
                                 <LogOut className="h-4 w-4" />
                                 <span>Salir sesión</span>
@@ -216,8 +263,21 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Ventas Hoy</p>
-                                <p className="text-2xl font-bold text-green-600">$0.00</p>
-                                <p className="text-xs text-gray-500">Sin datos disponibles</p>
+                                {loading ? (
+                                    <div className="animate-pulse">
+                                        <div className="h-8 bg-gray-200 rounded w-20 mb-1"></div>
+                                        <div className="h-3 bg-gray-200 rounded w-24"></div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-2xl font-bold text-green-600">
+                                            ${stats.totalSales.toFixed(2)}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {stats.totalSales > 0 ? 'Ventas del día' : 'Sin ventas hoy'}
+                                        </p>
+                                    </>
+                                )}
                             </div>
                             <div className="p-3 bg-green-100 rounded-full">
                                 <DollarSign className="h-6 w-6 text-green-600" />
@@ -229,8 +289,19 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Pedidos Hoy</p>
-                                <p className="text-2xl font-bold text-blue-600">0</p>
-                                <p className="text-xs text-gray-500">Sin pedidos registrados</p>
+                                {loading ? (
+                                    <div className="animate-pulse">
+                                        <div className="h-8 bg-gray-200 rounded w-12 mb-1"></div>
+                                        <div className="h-3 bg-gray-200 rounded w-24"></div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-2xl font-bold text-blue-600">{stats.totalOrders}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {stats.totalOrders > 0 ? 'Pedidos del día' : 'Sin pedidos hoy'}
+                                        </p>
+                                    </>
+                                )}
                             </div>
                             <div className="p-3 bg-blue-100 rounded-full">
                                 <ShoppingCart className="h-6 w-6 text-blue-600" />
@@ -242,8 +313,19 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Clientes Activos</p>
-                                <p className="text-2xl font-bold text-purple-600">0</p>
-                                <p className="text-xs text-gray-500">Sin clientes registrados</p>
+                                {loading ? (
+                                    <div className="animate-pulse">
+                                        <div className="h-8 bg-gray-200 rounded w-12 mb-1"></div>
+                                        <div className="h-3 bg-gray-200 rounded w-24"></div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-2xl font-bold text-purple-600">{stats.activeClients}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {stats.activeClients > 0 ? 'Clientes activos' : 'Sin clientes activos'}
+                                        </p>
+                                    </>
+                                )}
                             </div>
                             <div className="p-3 bg-purple-100 rounded-full">
                                 <UserCheck className="h-6 w-6 text-purple-600" />
@@ -254,15 +336,22 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600">
-                                    {isAdmin ? 'Productos Activos' : 'Acceso'}
-                                </p>
-                                <p className="text-2xl font-bold text-red-600">
-                                    {isAdmin ? '0' : 'Limitado'}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    {isAdmin ? 'Sin productos registrados' : 'Usuario normal'}
-                                </p>
+                                <p className="text-sm font-medium text-gray-600">Productos Activos</p>
+                                {loading ? (
+                                    <div className="animate-pulse">
+                                        <div className="h-8 bg-gray-200 rounded w-12 mb-1"></div>
+                                        <div className="h-3 bg-gray-200 rounded w-24"></div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-2xl font-bold text-red-600">
+                                            {stats.activeProducts}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {stats.activeProducts > 0 ? 'Productos activos' : 'Sin productos activos'}
+                                        </p>
+                                    </>
+                                )}
                             </div>
                             <div className="p-3 bg-red-100 rounded-full">
                                 <ShoppingBag className="h-6 w-6 text-red-600" />
@@ -277,7 +366,7 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="text-center p-3 bg-gray-50 rounded-lg">
                             <p className="text-sm font-medium text-gray-700">Rol</p>
-                            <p className="text-xl font-bold text-gray-900 capitalize">{userRole}</p>
+                            <p className="text-xl font-bold text-gray-900 capitalize">{isAdmin ? 'Administrador' : 'Usuario'}</p>
                             <p className="text-xs text-blue-600">
                                 {isAdmin ? 'Acceso completo' : 'Acceso limitado'}
                             </p>
@@ -308,11 +397,16 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                         <button
                             key={index}
                             onClick={item.onClick}
-                            className={`${item.color} p-6 rounded-xl shadow-sm border border-gray-200 text-white transition-all duration-200 transform hover:scale-105 hover:shadow-lg`}
+                            className={`${item.color} p-6 rounded-xl shadow-sm border border-gray-200 text-white transition-all duration-200 transform hover:scale-105 hover:shadow-lg cursor-pointer relative ${item.label === 'Cuadernos' ? 'ring-4 ring-yellow-300 ring-opacity-50' : ''}`}
                         >
                             <div className="flex flex-col items-center space-y-3">
                                 <item.icon className="h-12 w-12" />
                                 <span className="text-lg font-semibold">{item.label}</span>
+                                {item.label === 'Cuadernos' && (
+                                    <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">
+                                        MÁS USADO
+                                    </div>
+                                )}
                             </div>
                         </button>
                     ))}
@@ -332,21 +426,21 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <button
                             onClick={() => setCurrentView('orders')}
-                            className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                            className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                         >
                             <h4 className="font-medium text-gray-900">Nuevo pedido</h4>
                             <p className="text-sm text-gray-600">Crear un pedido rápidamente</p>
                         </button>
                         <button
                             onClick={() => setCurrentView('reports')}
-                            className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                            className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                         >
                             <h4 className="font-medium text-gray-900">Ver reporte diario</h4>
                             <p className="text-sm text-gray-600">Consultar ventas del día</p>
                         </button>
                         <button
                             onClick={() => setCurrentView('products')}
-                            className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                            className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                         >
                             <h4 className="font-medium text-gray-900">Gestionar inventario</h4>
                             <p className="text-sm text-gray-600">Actualizar stock de productos</p>
