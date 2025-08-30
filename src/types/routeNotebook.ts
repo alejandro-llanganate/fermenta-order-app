@@ -37,10 +37,15 @@ export interface Order {
     clientName: string;
     routeId: string;
     routeName: string;
+    routeIdentifier: string;
     orderDate: Date;
+    deliveryDate?: Date;
     status: string;
     totalAmount: number;
+    notes?: string;
+    paymentMethod?: string;
     items: OrderItem[];
+    itemsCount: number;
 }
 
 export interface OrderItem {

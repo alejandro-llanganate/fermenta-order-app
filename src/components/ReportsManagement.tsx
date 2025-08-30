@@ -819,11 +819,16 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {reportTypes.map((reportType) => {
                         const IconComponent = reportType.icon;
+                        const isDisabled = true; // Temporalmente deshabilitado hasta tener 5 días de datos
+
                         return (
                             <div
                                 key={reportType.id}
-                                className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
-                                onClick={() => generateReport(reportType.id)}
+                                className={`bg-white rounded-lg shadow-sm border transition-all ${isDisabled
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:shadow-md cursor-pointer'
+                                    }`}
+                                onClick={isDisabled ? undefined : () => generateReport(reportType.id)}
                             >
                                 <div className="p-6">
                                     <div className={`w-12 h-12 ${reportType.color} rounded-lg flex items-center justify-center mb-4`}>
@@ -836,15 +841,51 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         {reportType.description}
                                     </p>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-sm text-orange-600 font-medium">
-                                            Generar reporte
-                                        </span>
-                                        {/* <Eye className="h-4 w-4 text-orange-600" /> */}
+                                        {isDisabled ? (
+                                            <div className="flex items-center space-x-2">
+                                                <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                                </svg>
+                                                <span className="text-sm text-gray-500 font-medium">
+                                                    Próximamente
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-sm text-orange-600 font-medium">
+                                                Generar reporte
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         );
                     })}
+                </div>
+
+                {/* Información sobre reportes */}
+                <div className="mt-8 bg-yellow-50 rounded-lg shadow-sm p-6 border border-yellow-200">
+                    <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0">
+                            <svg className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-yellow-900 mb-2">Reportes Temporalmente Deshabilitados</h3>
+                            <p className="text-yellow-800 text-sm leading-relaxed">
+                                Todos los reportes están <strong>temporalmente deshabilitados</strong> hasta que tengas al menos
+                                <strong>5 días de datos</strong> en el sistema. Esto nos permite generar análisis más precisos
+                                y tendencias significativas.
+                            </p>
+                            <div className="mt-3 p-3 bg-yellow-100 rounded-md">
+                                <p className="text-yellow-700 text-xs">
+                                    <strong>Alternativa:</strong> Mientras tanto, puedes usar el módulo de
+                                    <strong>Cuadernos</strong> (Por Rutas, Por Categorías y Totales Parciales)
+                                    que están disponibles inmediatamente con los datos que tengas.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Resumen rápido con gráficos */}

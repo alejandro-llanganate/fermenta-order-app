@@ -9,34 +9,34 @@ import {
     Download,
     MapPin,
     Tag,
-    BarChart3
+    BarChart3,
+    Route,
+    Package
 } from 'lucide-react';
-import ProductNotebook from './ProductNotebook';
-import DonutProductionNotebook from './DonutProductionNotebook';
+
 import RouteNotebook from './RouteNotebook';
 import CategoryNotebook from './CategoryNotebook';
+import PartialTotalsNotebook from './PartialTotalsNotebook';
 import Footer from './Footer';
 
 interface NotebooksProps {
     onBack: () => void;
 }
 
-type SubModule = 'main' | 'product' | 'donut-production' | 'by-routes' | 'by-categories' | 'partial-totals';
+type SubModule = 'main' | 'by-routes' | 'by-categories' | 'partial-totals';
 
 export default function Notebooks({ onBack }: NotebooksProps) {
-    const [currentSubModule, setCurrentSubModule] = useState<SubModule>('main');
+    const [currentSubModule, setCurrentSubModule] = useState<SubModule | null>(null);
 
-    const handleBackToMain = () => {
-        setCurrentSubModule('main');
+    const handleSubModuleClick = (subModule: SubModule) => {
+        setCurrentSubModule(subModule);
     };
 
-    if (currentSubModule === 'product') {
-        return <ProductNotebook onBack={handleBackToMain} />;
-    }
+    const handleBackToMain = () => {
+        setCurrentSubModule(null);
+    };
 
-    if (currentSubModule === 'donut-production') {
-        return <DonutProductionNotebook onBack={handleBackToMain} />;
-    }
+
 
     if (currentSubModule === 'by-routes') {
         return <RouteNotebook onBack={handleBackToMain} />;
@@ -44,6 +44,10 @@ export default function Notebooks({ onBack }: NotebooksProps) {
 
     if (currentSubModule === 'by-categories') {
         return <CategoryNotebook onBack={handleBackToMain} />;
+    }
+
+    if (currentSubModule === 'partial-totals') {
+        return <PartialTotalsNotebook onBack={handleBackToMain} />;
     }
 
     return (
@@ -71,7 +75,7 @@ export default function Notebooks({ onBack }: NotebooksProps) {
                         {/* Cuaderno por Rutas */}
                         <div
                             className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => setCurrentSubModule('by-routes')}
+                            onClick={() => handleSubModuleClick('by-routes')}
                         >
                             <div className="flex items-center space-x-4 mb-4">
                                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -94,7 +98,7 @@ export default function Notebooks({ onBack }: NotebooksProps) {
                         {/* Cuaderno por Categorías de Productos */}
                         <div
                             className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => setCurrentSubModule('by-categories')}
+                            onClick={() => handleSubModuleClick('by-categories')}
                         >
                             <div className="flex items-center space-x-4 mb-4">
                                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -117,7 +121,7 @@ export default function Notebooks({ onBack }: NotebooksProps) {
                         {/* Cuaderno de Totales Parciales */}
                         <div
                             className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => setCurrentSubModule('partial-totals')}
+                            onClick={() => handleSubModuleClick('partial-totals')}
                         >
                             <div className="flex items-center space-x-4 mb-4">
                                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -136,56 +140,12 @@ export default function Notebooks({ onBack }: NotebooksProps) {
                                 <ArrowLeft className="h-4 w-4 ml-1 rotate-180" />
                             </div>
                         </div>
-
-                        {/* Cuaderno por Producto (Existente) */}
-                        <div
-                            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => setCurrentSubModule('product')}
-                        >
-                            <div className="flex items-center space-x-4 mb-4">
-                                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                                    <FileText className="h-6 w-6 text-orange-600" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-900">Cuaderno por Producto</h3>
-                                    <p className="text-sm text-gray-600">Reportes consolidados por producto</p>
-                                </div>
-                            </div>
-                            <p className="text-gray-700 text-sm mb-4">
-                                Genera cuadernos de pedidos organizados por producto, con fecha global y distribución por rutas.
-                            </p>
-                            <div className="flex items-center text-orange-600 text-sm font-medium">
-                                <span>Acceder</span>
-                                <ArrowLeft className="h-4 w-4 ml-1 rotate-180" />
-                            </div>
-                        </div>
-
-                        {/* Cuaderno de Producción de Donas (Existente) */}
-                        <div
-                            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => setCurrentSubModule('donut-production')}
-                        >
-                            <div className="flex items-center space-x-4 mb-4">
-                                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                                    <Calculator className="h-6 w-6 text-red-600" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-900">Producción de Donas</h3>
-                                    <p className="text-sm text-gray-600">Reporte detallado por rutas y sabores</p>
-                                </div>
-                            </div>
-                            <p className="text-gray-700 text-sm mb-4">
-                                Genera reportes de producción de donas con cálculos de tablas, unidades y sabores por ruta.
-                            </p>
-                            <div className="flex items-center text-red-600 text-sm font-medium">
-                                <span>Acceder</span>
-                                <ArrowLeft className="h-4 w-4 ml-1 rotate-180" />
-                            </div>
-                        </div>
                     </div>
 
+
+
                     {/* Descripción del módulo */}
-                    <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
+                    <div className="mt-6 bg-white rounded-lg shadow-sm p-6">
                         <h2 className="text-lg font-semibold text-gray-900 mb-3">Acerca de Cuadernos</h2>
                         <p className="text-gray-700 text-sm leading-relaxed">
                             El módulo de Cuadernos te permite generar reportes consolidados de pedidos y producción
