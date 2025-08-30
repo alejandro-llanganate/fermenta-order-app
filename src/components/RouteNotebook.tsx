@@ -179,6 +179,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                     console.log('📦 Items encontrados para orden', order.order_number, ':', itemsData?.length || 0);
 
                     const items = (itemsData || []).map(item => ({
+                        id: item.id,
                         productId: item.product_id,
                         productName: item.product_name,
                         productCategory: item.product_category,
