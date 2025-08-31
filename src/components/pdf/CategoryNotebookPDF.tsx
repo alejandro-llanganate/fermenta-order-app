@@ -16,36 +16,37 @@ const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 10,
+        padding: 8,
         fontFamily: 'Helvetica',
+        fontSize: 11,
     },
     header: {
         textAlign: 'center',
-        marginBottom: 10,
+        marginBottom: 8,
         borderBottom: '1 solid #e5e7eb',
-        paddingBottom: 5,
+        paddingBottom: 4,
     },
     title: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 4,
+        marginBottom: 3,
         color: '#000000',
     },
     subtitle: {
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: 'bold',
-        marginBottom: 3,
+        marginBottom: 2,
         color: '#374151',
     },
     date: {
-        fontSize: 10,
+        fontSize: 11,
         color: '#6b7280',
         marginBottom: 2,
     },
     category: {
-        fontSize: 10,
+        fontSize: 11,
         color: '#6b7280',
-        marginBottom: 6,
+        marginBottom: 5,
     },
     section: {
         marginBottom: 8,
@@ -69,14 +70,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         borderBottomWidth: 1,
         borderBottomColor: '#d1d5db',
-        minHeight: 18,
+        minHeight: 22,
     },
     tableHeader: {
         backgroundColor: '#f9fafb',
     },
     tableCell: {
-        padding: 1,
-        fontSize: 6,
+        padding: 2,
+        fontSize: 9,
         textAlign: 'center',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -84,8 +85,8 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     tableCellHeader: {
-        padding: 1,
-        fontSize: 5,
+        padding: 2,
+        fontSize: 8,
         fontWeight: 'bold',
         textAlign: 'center',
         borderRightWidth: 1,
@@ -94,71 +95,71 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     clientCell: {
-        padding: 1,
-        fontSize: 6,
+        padding: 2,
+        fontSize: 9,
         textAlign: 'left',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
-        flex: 1,
+        flex: 2,
         backgroundColor: '#f3f4f6',
         color: '#000000',
     },
     productTotals: {
         backgroundColor: '#dbeafe',
-        padding: 4,
-        marginBottom: 6,
+        padding: 3,
+        marginBottom: 5,
         borderRadius: 3,
     },
     productTotalsTitle: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 'bold',
-        marginBottom: 4,
+        marginBottom: 3,
         color: '#1e40af',
     },
     productTotalsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 3,
+        gap: 2,
     },
     productTotalItem: {
         backgroundColor: '#ffffff',
         padding: 2,
         borderRadius: 3,
         border: '1 solid #bfdbfe',
-        minWidth: 45,
+        minWidth: 50,
         alignItems: 'center',
     },
     productName: {
-        fontSize: 6,
+        fontSize: 8,
         fontWeight: 'bold',
         color: '#1e40af',
         textAlign: 'center',
         marginBottom: 1,
     },
     productQuantity: {
-        fontSize: 8,
+        fontSize: 10,
         fontWeight: 'bold',
         color: '#1e40af',
     },
     routeTitle: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 'bold',
         backgroundColor: '#f3f4f6',
         padding: 3,
-        marginBottom: 4,
+        marginBottom: 3,
         color: '#374151',
     },
     // Estilos para el footer de página
     pageFooter: {
         position: 'absolute',
-        bottom: 10,
-        left: 10,
-        right: 10,
+        bottom: 8,
+        left: 8,
+        right: 8,
         textAlign: 'center',
-        fontSize: 8,
+        fontSize: 9,
         color: '#6b7280',
         borderTop: '1 solid #e5e7eb',
-        paddingTop: 5,
+        paddingTop: 4,
     },
 });
 
@@ -304,11 +305,11 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
         const maxPageHeight = 180; // Altura máxima aproximada para A5 (en mm)
 
         // Altura estimada de elementos
-        const headerHeight = 40;
-        const productTotalsHeight = 30;
-        const routeHeaderHeight = 15;
-        const tableRowHeight = 8;
-        const tableHeaderHeight = 10;
+        const headerHeight = 35;
+        const productTotalsHeight = 25;
+        const routeHeaderHeight = 12;
+        const tableRowHeight = 10;
+        const tableHeaderHeight = 8;
 
         // Agregar header y totales a la primera página
         if (clientsByRoute.length > 0) {
