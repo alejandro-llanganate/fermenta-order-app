@@ -263,7 +263,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                 </View>
 
                                 {/* Filas de clientes */}
-                                {clients.map((client) => (
+                                {clients.map((client: Client) => (
                                     <View key={client.id} style={styles.tableRow}>
                                         <Text style={styles.clientCell}>
                                             {client.nombre}
