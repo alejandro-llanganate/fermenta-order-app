@@ -37,8 +37,8 @@ export interface Product {
 export interface CreateProductData {
   name: string;
   categoryId: string;
-  price: number;
-  specialPrice?: number;
+  price: number | string;
+  specialPrice?: number | string;
   description?: string;
   imageBase64?: string;
 }

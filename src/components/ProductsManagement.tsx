@@ -138,13 +138,17 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
 
     const handleCreateProduct = async () => {
         try {
+            // Convertir precios a números antes de enviar
+            const priceRegular = typeof formData.price === 'string' ? parseFloat(formData.price) || 0 : formData.price;
+            const specialPrice = typeof formData.specialPrice === 'string' ? parseFloat(formData.specialPrice) || null : formData.specialPrice;
+
             // Preparar datos para la base de datos
             const productData = {
                 name: formData.name,
                 category_id: formData.categoryId,
                 variant: 'General', // Variante por defecto
-                price_regular: formData.price,
-                special_price: formData.specialPrice || null,
+                price_regular: priceRegular,
+                special_price: specialPrice,
                 description: formData.description || null,
                 image_url: formData.imageBase64 || null
             };
@@ -212,12 +216,16 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
         if (!editingProduct) return;
 
         try {
+            // Convertir precios a números antes de enviar
+            const priceRegular = typeof formData.price === 'string' ? parseFloat(formData.price) || 0 : formData.price;
+            const specialPrice = typeof formData.specialPrice === 'string' ? parseFloat(formData.specialPrice) || null : formData.specialPrice;
+
             // Preparar datos para la base de datos
             const productData = {
                 name: formData.name,
                 category_id: formData.categoryId,
-                price_regular: formData.price,
-                special_price: formData.specialPrice || null,
+                price_regular: priceRegular,
+                special_price: specialPrice,
                 description: formData.description || null,
                 image_url: formData.imageBase64 || null
             };
@@ -254,6 +262,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                     variant: productWithCategory.variant || 'General',
                     priceRegular: productWithCategory.price_regular,
                     pricePage: productWithCategory.price_page,
+                    specialPrice: productWithCategory.special_price || undefined,
                     description: productWithCategory.description,
                     imageUrl: productWithCategory.image_url,
                     isActive: productWithCategory.is_active,
@@ -444,7 +453,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
             name: product.name,
             categoryId: product.categoryId,
             price: product.priceRegular,
-            specialPrice: product.specialPrice,
+            specialPrice: product.specialPrice !== null && product.specialPrice !== undefined ? product.specialPrice : undefined,
             description: product.description || '',
             imageBase64: product.imageUrl || ''
         });
@@ -473,9 +482,15 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
         }
     };
 
-    const formatPrice = (price: number | undefined | null) => {
+    const formatPrice = (price: number | undefined | null, allowMoreDecimals: boolean = false) => {
         if (price === null || price === undefined || isNaN(price)) {
             return 'N/A';
+        }
+        // Para precios especiales, permitir hasta 4 decimales si es necesario
+        if (allowMoreDecimals) {
+            const priceStr = Number(price).toString();
+            const decimalPlaces = priceStr.includes('.') ? priceStr.split('.')[1].length : 0;
+            return `$${Number(price).toFixed(Math.min(decimalPlaces, 4))}`;
         }
         return `$${Number(price).toFixed(2)}`;
     };
@@ -548,7 +563,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                         <div class="flex items-center justify-between">
                             <span class="text-sm font-medium text-gray-600">Precio Especial:</span>
                             <span class="text-lg font-semibold ${product.specialPrice ? 'text-orange-600' : 'text-gray-400'}">
-                                ${product.specialPrice ? `$${formatPrice(product.specialPrice)}` : 'No definido'}
+                                ${product.specialPrice ? `$${formatPrice(product.specialPrice, true)}` : 'No definido'}
                             </span>
                         </div>
                         <div class="flex items-center justify-between">
@@ -920,7 +935,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                                             <>
                                                                 <DollarSign className="h-4 w-4 text-orange-600" />
                                                                 <span className="text-sm font-medium text-orange-600">
-                                                                    {formatPrice(product.specialPrice)}
+                                                                    {formatPrice(product.specialPrice, true)}
                                                                 </span>
                                                             </>
                                                         ) : (
@@ -1015,16 +1030,28 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                                 value={formData.price === 0 ? '' : formData.price.toString()}
                                                 onChange={(e) => {
                                                     const value = e.target.value;
-                                                    // Permitir solo números, punto decimal y comas
-                                                    const cleanValue = value.replace(/[^0-9.,]/g, '');
-                                                    // Convertir comas a puntos
-                                                    const normalizedValue = cleanValue.replace(',', '.');
-                                                    // Parsear el valor
-                                                    const parsedValue = parseFloat(normalizedValue) || 0;
-                                                    setFormData({ ...formData, price: parsedValue });
+                                                    // Permitir cualquier texto, solo validar al guardar
+                                                    setFormData({ ...formData, price: value === '' ? 0 : value });
+                                                }}
+                                                onBlur={(e) => {
+                                                    // Solo validar cuando el usuario termina de escribir
+                                                    const value = e.target.value;
+                                                    if (value && value.trim() !== '') {
+                                                        // Limpiar y convertir el valor
+                                                        const cleanValue = value.replace(/[^0-9.,]/g, '');
+                                                        const normalizedValue = cleanValue.replace(',', '.');
+                                                        const parsedValue = parseFloat(normalizedValue);
+
+                                                        if (!isNaN(parsedValue) && parsedValue >= 0) {
+                                                            setFormData({ ...formData, price: parsedValue });
+                                                        } else {
+                                                            // Si no es válido, poner 0
+                                                            setFormData({ ...formData, price: 0 });
+                                                        }
+                                                    }
                                                 }}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
-                                                placeholder="0.00"
+                                                placeholder="Escribe cualquier precio"
                                             />
                                         </div>
 
@@ -1034,25 +1061,31 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                             </label>
                                             <input
                                                 type="text"
-                                                value={formData.specialPrice !== undefined && formData.specialPrice !== null ? formData.specialPrice.toFixed(2) : ''}
+                                                value={formData.specialPrice !== undefined && formData.specialPrice !== null && formData.specialPrice !== '' ? formData.specialPrice.toString() : ''}
                                                 onChange={(e) => {
                                                     const value = e.target.value;
-                                                    if (!value || value.trim() === '') {
-                                                        setFormData({ ...formData, specialPrice: undefined });
-                                                        return;
-                                                    }
-                                                    // Permitir solo números, punto decimal y comas
-                                                    const cleanValue = value.replace(/[^0-9.,]/g, '');
-                                                    // Convertir comas a puntos
-                                                    const normalizedValue = cleanValue.replace(',', '.');
-                                                    // Parsear el valor
-                                                    const parsedValue = parseFloat(normalizedValue);
-                                                    if (!isNaN(parsedValue) && parsedValue >= 0) {
-                                                        setFormData({ ...formData, specialPrice: parsedValue });
+                                                    // Permitir cualquier texto, solo validar al guardar
+                                                    setFormData({ ...formData, specialPrice: value === '' ? undefined : value });
+                                                }}
+                                                onBlur={(e) => {
+                                                    // Solo validar cuando el usuario termina de escribir
+                                                    const value = e.target.value;
+                                                    if (value && value.trim() !== '') {
+                                                        // Limpiar y convertir el valor
+                                                        const cleanValue = value.replace(/[^0-9.,]/g, '');
+                                                        const normalizedValue = cleanValue.replace(',', '.');
+                                                        const parsedValue = parseFloat(normalizedValue);
+
+                                                        if (!isNaN(parsedValue) && parsedValue >= 0) {
+                                                            setFormData({ ...formData, specialPrice: parsedValue });
+                                                        } else {
+                                                            // Si no es válido, limpiar el campo
+                                                            setFormData({ ...formData, specialPrice: undefined });
+                                                        }
                                                     }
                                                 }}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
-                                                placeholder="0.00 (opcional)"
+                                                placeholder="Escribe cualquier precio (opcional)"
                                             />
                                         </div>
 
@@ -1115,7 +1148,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                         </button>
                                         <button
                                             onClick={editingProduct ? handleUpdateProduct : handleCreateProduct}
-                                            disabled={!formData.name.trim() || !formData.categoryId || formData.price <= 0}
+                                            disabled={!formData.name.trim() || !formData.categoryId || (typeof formData.price === 'number' ? formData.price <= 0 : !formData.price || parseFloat(formData.price.toString()) <= 0)}
                                             className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Check className="h-4 w-4" />

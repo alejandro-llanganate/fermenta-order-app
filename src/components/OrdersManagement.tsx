@@ -422,7 +422,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 </div>
                                 <div class="text-center p-3 border rounded-lg bg-orange-50">
                                     <p class="font-bold text-orange-600">Precio Especial</p>
-                                    <p class="text-lg">$${product.specialPrice.toFixed(2)}</p>
+                                    <p class="text-lg">$${product.specialPrice.toString()}</p>
                                 </div>
                             </div>
                         </div>
@@ -559,7 +559,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                         ${selectedItems.map(item => `
                             <div class="flex justify-between text-sm">
                                 <span>${item.product.name} x ${item.quantity}${item.usesSpecialPrice ? ' (Precio Especial)' : ''}</span>
-                                <span>$${item.totalPrice.toFixed(2)}</span>
+                                <span>$${item.usesSpecialPrice ? item.totalPrice.toString() : item.totalPrice.toFixed(2)}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -568,7 +568,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 <div class="border-t pt-2">
                     <div class="flex justify-between font-bold text-lg">
                         <span>Total:</span>
-                        <span>$${subtotal.toFixed(2)}</span>
+                        <span>$${selectedItems.some(item => item.usesSpecialPrice) ? subtotal.toString() : subtotal.toFixed(2)}</span>
                     </div>
                 </div>
             </div>
@@ -1762,7 +1762,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                 {selectedItems.map((item) => (
                                                     <div key={item.product.id} className="flex justify-between text-sm">
                                                         <span className="text-blue-800">{item.product.name} x {item.quantity}</span>
-                                                        <span className="text-blue-700 font-medium">${item.totalPrice.toFixed(2)}</span>
+                                                        <span className="text-blue-700 font-medium">${item.usesSpecialPrice ? item.totalPrice.toString() : item.totalPrice.toFixed(2)}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -1823,12 +1823,12 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                             </div>
                                                             <div className="text-right">
                                                                 <div className="text-xs sm:text-sm text-gray-600">
-                                                                    ${item.unitPrice.toFixed(2)} c/u
+                                                                    ${item.usesSpecialPrice ? item.unitPrice.toString() : item.unitPrice.toFixed(2)} c/u
                                                                     {item.usesSpecialPrice && (
                                                                         <span className="ml-1 text-orange-600 font-medium">(Especial)</span>
                                                                     )}
                                                                 </div>
-                                                                <div className="font-medium text-green-600 text-sm sm:text-base">${item.totalPrice.toFixed(2)}</div>
+                                                                <div className="font-medium text-green-600 text-sm sm:text-base">${item.usesSpecialPrice ? item.totalPrice.toString() : item.totalPrice.toFixed(2)}</div>
                                                             </div>
                                                             <button
                                                                 onClick={() => removeProduct(item.product.id)}
@@ -1844,7 +1844,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             <div className="p-3 sm:p-4 bg-orange-50 rounded-lg">
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-base sm:text-lg font-semibold text-gray-900">Total:</span>
-                                                    <span className="text-lg sm:text-xl font-bold text-orange-600">${calculateSubtotal().toFixed(2)}</span>
+                                                    <span className="text-lg sm:text-xl font-bold text-orange-600">${selectedItems.some(item => item.usesSpecialPrice) ? calculateSubtotal().toString() : calculateSubtotal().toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         </div>
