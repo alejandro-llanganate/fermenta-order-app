@@ -274,6 +274,8 @@ CREATE TABLE IF NOT EXISTS clients (
 CREATE INDEX IF NOT EXISTS idx_clients_nombre ON clients(nombre);
 CREATE INDEX IF NOT EXISTS idx_clients_route_id ON clients(route_id);
 CREATE INDEX IF NOT EXISTS idx_clients_active ON clients(is_active);
+CREATE INDEX IF NOT EXISTS idx_clients_cedula ON clients(cedula);
+CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email);
 
 -- Enable RLS for clients
 ALTER TABLE clients ENABLE ROW LEVEL SECURITY;

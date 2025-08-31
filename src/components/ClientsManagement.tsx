@@ -129,9 +129,19 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
 
     const handleCreateClient = async () => {
         try {
+            // Map formData to database column names
+            const insertData = {
+                nombre: formData.nombre,
+                telefono: formData.telefono,
+                direccion: formData.direccion,
+                cedula: formData.cedula,
+                email: formData.email,
+                route_id: formData.routeId // Map routeId to route_id
+            };
+
             const { data, error } = await supabase
                 .from('clients')
-                .insert([formData])
+                .insert([insertData])
                 .select()
                 .single();
 
@@ -188,9 +198,19 @@ export default function ClientsManagement({ onBack }: ClientsManagementProps) {
         if (!editingClient) return;
 
         try {
+            // Map formData to database column names
+            const updateData = {
+                nombre: formData.nombre,
+                telefono: formData.telefono,
+                direccion: formData.direccion,
+                cedula: formData.cedula,
+                email: formData.email,
+                route_id: formData.routeId // Map routeId to route_id
+            };
+
             const { data, error } = await supabase
                 .from('clients')
-                .update(formData)
+                .update(updateData)
                 .eq('id', editingClient.id)
                 .select()
                 .single();
