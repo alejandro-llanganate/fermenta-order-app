@@ -49,6 +49,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
         name: '',
         categoryId: '',
         price: 0,
+        specialPrice: undefined,
         description: '',
         imageBase64: ''
     });
@@ -1033,10 +1034,10 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                             </label>
                                             <input
                                                 type="text"
-                                                value={formData.specialPrice ? formData.specialPrice.toString() : ''}
+                                                value={formData.specialPrice !== undefined && formData.specialPrice !== null ? formData.specialPrice.toFixed(2) : ''}
                                                 onChange={(e) => {
                                                     const value = e.target.value;
-                                                    if (!value) {
+                                                    if (!value || value.trim() === '') {
                                                         setFormData({ ...formData, specialPrice: undefined });
                                                         return;
                                                     }
@@ -1046,7 +1047,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                                     const normalizedValue = cleanValue.replace(',', '.');
                                                     // Parsear el valor
                                                     const parsedValue = parseFloat(normalizedValue);
-                                                    if (!isNaN(parsedValue)) {
+                                                    if (!isNaN(parsedValue) && parsedValue >= 0) {
                                                         setFormData({ ...formData, specialPrice: parsedValue });
                                                     }
                                                 }}
