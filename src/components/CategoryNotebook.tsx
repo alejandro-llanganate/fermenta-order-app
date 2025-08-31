@@ -8,6 +8,8 @@ import CategoryNotebookTable from './CategoryNotebookTable';
 import CategoryNotebookPreview from './CategoryNotebookPreview';
 import Footer from './Footer';
 import { Route, Client, Product, ProductCategory, Order, OrderItem } from '@/types/routeNotebook';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import CategoryNotebookPDF from './pdf/CategoryNotebookPDF';
 
 interface CategoryNotebookProps {
     onBack: () => void;
@@ -24,6 +26,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
     const [showPreview, setShowPreview] = useState(false);
     const [editingCell, setEditingCell] = useState<{ clientId: string; productId: string } | null>(null);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const printRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -133,7 +136,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
 
             const ordersWithItems = await Promise.all(
                 (ordersData || []).map(async (order) => {
-                    console.log('🔍 Obteniendo items para orden:', order.id, order.order_number);
+
 
                     const { data: itemsData, error: itemsError } = await supabase
                         .from('order_items')
@@ -145,7 +148,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                         return null;
                     }
 
-                    console.log('📦 Items encontrados para orden', order.order_number, ':', itemsData?.length);
+
 
                     const items = (itemsData || []).map(item => ({
                         id: item.id,
@@ -171,27 +174,14 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                         items: items
                     };
 
-                    console.log('✅ Orden transformada:', {
-                        id: transformedOrder.id,
-                        orderNumber: transformedOrder.orderNumber,
-                        clientName: transformedOrder.clientName,
-                        routeName: transformedOrder.routeName,
-                        itemsCount: transformedOrder.items.length,
-                        totalAmount: transformedOrder.totalAmount
-                    });
+
 
                     return transformedOrder;
                 })
             );
 
             const validOrders = ordersWithItems.filter(order => order !== null) as Order[];
-            console.log('🎯 Total de órdenes válidas:', validOrders.length);
-            console.log('🎯 Órdenes finales:', validOrders.map(o => ({
-                orderNumber: o.orderNumber,
-                clientName: o.clientName,
-                routeName: o.routeName,
-                itemsCount: o.items.length
-            })));
+
 
             setOrders(validOrders);
         } catch (error) {
@@ -236,13 +226,11 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                 orderClientIds.includes(client.id) && client.isActive
             );
 
-            console.log(`👥 Clientes con productos de categoría ${categoryId}:`, categoryClients.length, categoryClients.map(c => c.nombre));
             return categoryClients;
         }
 
         // Si no se especifica categoría, mostrar todos los clientes activos
         const activeClients = clients.filter(client => client.isActive);
-        console.log(`👥 Todos los clientes activos:`, activeClients.length, activeClients.map(c => c.nombre));
         return activeClients;
     };
 
@@ -253,9 +241,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
             return sum + productItems.reduce((itemSum, item) => itemSum + item.quantity, 0);
         }, 0);
 
-        if (quantity > 0) {
-            console.log(`🔢 Cantidad para cliente ${clientId} y producto ${productId}:`, quantity);
-        }
+
 
         return quantity;
     };
@@ -313,7 +299,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
             setIsUpdating(true);
             setEditingCell({ clientId, productId });
 
-            console.log(`🔄 Cambiando cantidad para cliente ${clientId}, producto ${productId}: ${newQuantity}`);
+
 
             // Buscar si ya existe una orden para este cliente en la fecha seleccionada
             const existingOrder = orders.find(order =>
@@ -471,54 +457,10 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
         }
     };
 
-    const generatePDF = async () => {
-        if (!printRef.current) return;
-
-        try {
-            const jsPDF = (await import('jspdf')).default;
-            const html2canvas = (await import('html2canvas')).default;
-
-            const canvas = await html2canvas(printRef.current, {
-                scale: 1.2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                allowTaint: true,
-                foreignObjectRendering: false,
-                logging: false,
-                removeContainer: true,
-                width: printRef.current.offsetWidth,
-                height: printRef.current.offsetHeight
-            });
-
-            const imgData = canvas.toDataURL('image/png', 1.0);
-            const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
-
-            const imgWidth = 297; // A4 landscape width
-            const pageHeight = 210; // A4 landscape height
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let heightLeft = imgHeight;
-
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            const categoryName = selectedCategory || 'Todas las Categorías';
-            const fileName = `Mega-Donut-Categorias-${categoryName}-${selectedDate.toLocaleDateString('es-ES')}.pdf`;
-            pdf.save(fileName);
-
-            // Mostrar mensaje de confirmación
-            console.log(`✅ PDF generado exitosamente: ${fileName}`);
-        } catch (error) {
-            console.error('❌ Error generating PDF:', error);
-        }
+    const generatePDF = () => {
+        // La generación de PDF ahora se maneja con PDFDownloadLink
+        // Esta función se mantiene para compatibilidad con el botón
+        console.log('🔄 PDF se generará automáticamente al hacer clic en el enlace de descarga');
     };
 
     const productCategories = getProductCategories();
@@ -537,6 +479,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                         productCategories={productCategories}
                         orders={orders}
                         isUpdating={isUpdating}
+                        isGeneratingPDF={isGeneratingPDF}
                         setShowPreview={setShowPreview}
                     />
 
@@ -562,6 +505,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                 showPreview={showPreview}
                 setShowPreview={setShowPreview}
                 generatePDF={generatePDF}
+                isGeneratingPDF={isGeneratingPDF}
                 selectedDate={selectedDate}
                 selectedCategory={selectedCategory}
                 productCategories={productCategories}

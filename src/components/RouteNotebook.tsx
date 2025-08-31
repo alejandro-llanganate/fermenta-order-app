@@ -8,6 +8,8 @@ import RouteNotebookControls from './RouteNotebookControls';
 import RouteNotebookTable from './RouteNotebookTable';
 import RouteNotebookPreview from './RouteNotebookPreview';
 import { Route, Client, Product, ProductCategory, Order, OrderItem } from '@/types/routeNotebook';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import RouteNotebookPDF from './pdf/RouteNotebookPDF';
 
 interface RouteNotebookProps {
     onBack: () => void;
@@ -24,6 +26,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     const [showPreview, setShowPreview] = useState(false);
     const [editingCell, setEditingCell] = useState<{ clientId: string; productId: string } | null>(null);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const printRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -506,54 +509,10 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
         }
     };
 
-    const generatePDF = async () => {
-        if (!printRef.current) return;
-
-        try {
-            const jsPDF = (await import('jspdf')).default;
-            const html2canvas = (await import('html2canvas')).default;
-
-            const canvas = await html2canvas(printRef.current, {
-                scale: 1.2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                allowTaint: true,
-                foreignObjectRendering: false,
-                logging: false,
-                removeContainer: true,
-                width: printRef.current.offsetWidth,
-                height: printRef.current.offsetHeight
-            });
-
-            const imgData = canvas.toDataURL('image/png', 1.0);
-            const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
-
-            const imgWidth = 297; // A4 landscape width
-            const pageHeight = 210; // A4 landscape height
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let heightLeft = imgHeight;
-
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            const routeName = selectedRoute ? routes.find(r => r.id === selectedRoute)?.nombre : 'Todas las Rutas';
-            const fileName = `Mega-Donut-Pedidos-${routeName}-${selectedDate.toLocaleDateString('es-ES')}.pdf`;
-            pdf.save(fileName);
-
-            // Mostrar mensaje de confirmación
-            console.log(`✅ PDF generado exitosamente: ${fileName}`);
-        } catch (error) {
-            console.error('❌ Error generating PDF:', error);
-        }
+    const generatePDF = () => {
+        // La generación de PDF ahora se maneja con PDFDownloadLink
+        // Esta función se mantiene para compatibilidad con el botón
+        console.log('🔄 PDF se generará automáticamente al hacer clic en el enlace de descarga');
     };
 
 

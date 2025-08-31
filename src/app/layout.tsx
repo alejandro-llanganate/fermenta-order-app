@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import "sweetalert2/dist/sweetalert2.min.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,6 +19,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <head>
+        <Script
+          src="https://cdn.jsdelivr.net/npm/sweetalert2@11"
+          strategy="beforeInteractive"
+        />
+      </head>
       <body className={inter.className}>
         <AuthProvider>
           {children}

@@ -1,5 +1,7 @@
 import { Printer } from 'lucide-react';
 import { Route, Client, Product, ProductCategory } from '@/types/routeNotebook';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import RouteNotebookPDF from './pdf/RouteNotebookPDF';
 
 interface RouteNotebookPreviewProps {
     showPreview: boolean;
@@ -41,13 +43,30 @@ export default function RouteNotebookPreview({
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-semibold text-gray-900">Vista Previa - MEGA DONUT PEDIDOS Y ENTREGAS</h2>
                         <div className="flex items-center space-x-3">
-                            <button
-                                onClick={generatePDF}
+                            <PDFDownloadLink
+                                document={
+                                    <RouteNotebookPDF
+                                        selectedDate={selectedDate}
+                                        selectedRoute={selectedRoute}
+                                        productCategories={productCategories}
+                                        routes={routes}
+                                        getClientsWithOrders={getClientsWithOrders}
+                                        getQuantityForClientAndProduct={getQuantityForClientAndProduct}
+                                        getTotalForClient={getTotalForClient}
+                                        getTotalForProduct={getTotalForProduct}
+                                        getTotalForRoute={getTotalForRoute}
+                                    />
+                                }
+                                fileName={`Mega-Donut-Rutas-${selectedRoute ? routes.find(r => r.id === selectedRoute)?.nombre : 'Todas'}-${selectedDate.toLocaleDateString('es-ES')}.pdf`}
                                 className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
                             >
-                                <Printer className="h-4 w-4" />
-                                <span>Generar PDF</span>
-                            </button>
+                                {({ loading }) => (
+                                    <>
+                                        <Printer className="h-4 w-4" />
+                                        <span>{loading ? 'Generando PDF...' : 'Descargar PDF'}</span>
+                                    </>
+                                )}
+                            </PDFDownloadLink>
                             <button
                                 onClick={() => setShowPreview(false)}
                                 className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"

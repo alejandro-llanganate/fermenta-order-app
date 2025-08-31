@@ -9,6 +9,7 @@ interface CategoryNotebookControlsProps {
     productCategories: ProductCategory[];
     orders: any[]; // Should be Order[]
     isUpdating: boolean;
+    isGeneratingPDF: boolean;
     setShowPreview: (show: boolean) => void;
 }
 
@@ -20,6 +21,7 @@ export default function CategoryNotebookControls({
     productCategories,
     orders,
     isUpdating,
+    isGeneratingPDF,
     setShowPreview
 }: CategoryNotebookControlsProps) {
     return (
@@ -82,11 +84,13 @@ export default function CategoryNotebookControls({
                     </button>
                 </div>
 
-                {/* Loading Indicator */}
-                {isUpdating && (
+                {/* Loading Indicators */}
+                {(isUpdating || isGeneratingPDF) && (
                     <div className="flex items-center space-x-2 text-green-600">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                        <span className="text-sm">Actualizando...</span>
+                        <span className="text-sm">
+                            {isGeneratingPDF ? 'Generando PDF...' : 'Actualizando...'}
+                        </span>
                     </div>
                 )}
             </div>
