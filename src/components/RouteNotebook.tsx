@@ -10,6 +10,7 @@ import RouteNotebookPreview from './RouteNotebookPreview';
 import { Route, Client, Product, ProductCategory, Order, OrderItem } from '@/types/routeNotebook';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RouteNotebookPDF from './pdf/RouteNotebookPDF';
+import ColumnOrderModal from './ColumnOrderModal';
 
 interface RouteNotebookProps {
     onBack: () => void;
@@ -21,12 +22,14 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     const [products, setProducts] = useState<Product[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [dateFilterType, setDateFilterType] = useState<'registration' | 'delivery'>('registration');
     const [selectedRoute, setSelectedRoute] = useState<string>('');
     const [loading, setLoading] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [editingCell, setEditingCell] = useState<{ clientId: string; productId: string } | null>(null);
     const [isUpdating, setIsUpdating] = useState(false);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+    const [showColumnOrderModal, setShowColumnOrderModal] = useState(false);
     const printRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -35,10 +38,12 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
     useEffect(() => {
         if (selectedDate) {
-            console.log('🔄 useEffect triggered - fetching orders for date:', selectedDate.toISOString().split('T')[0]);
+            console.log('🔄 useEffect triggered - fetching orders for', dateFilterType, 'date:', selectedDate.toISOString().split('T')[0]);
             fetchOrdersByDate();
         }
-    }, [selectedDate]);
+    }, [selectedDate, dateFilterType]);
+
+
 
     const fetchData = async () => {
         try {
@@ -131,10 +136,9 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
             const endDate = new Date(selectedDate);
             endDate.setHours(23, 59, 59, 999);
 
-            console.log('🔍 Buscando órdenes para fecha:', selectedDate.toISOString().split('T')[0]);
-            console.log('📅 Rango de búsqueda:', startDate.toISOString(), 'a', endDate.toISOString());
+            console.log('🔍 Buscando órdenes para', dateFilterType, 'fecha:', selectedDate.toISOString().split('T')[0]);
 
-            // Fetch orders for the selected date
+            // Fetch orders for the selected date based on filter type
             const { data: ordersData, error: ordersError } = await supabase
                 .from('orders')
                 .select(`
@@ -152,8 +156,8 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         is_active
                     )
                 `)
-                .gte('order_date', startDate.toISOString().split('T')[0])
-                .lte('order_date', endDate.toISOString().split('T')[0])
+                .gte(dateFilterType === 'registration' ? 'order_date' : 'delivery_date', startDate.toISOString().split('T')[0])
+                .lte(dateFilterType === 'registration' ? 'order_date' : 'delivery_date', endDate.toISOString().split('T')[0])
                 .order('created_at', { ascending: false });
 
             if (ordersError) {
@@ -249,39 +253,101 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
         }));
     };
 
+    // Función para obtener solo categorías y productos que tienen valores
+    const getActiveProductCategories = (): ProductCategory[] => {
+        const categoriesMap = new Map<string, Product[]>();
+        const activeProducts = new Set<string>();
+
+        // Obtener todos los productos que tienen cantidades > 0
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                if (item.quantity > 0) {
+                    activeProducts.add(item.productId);
+                }
+            });
+        });
+
+        // Filtrar productos activos y agrupar por categoría
+        products.forEach(product => {
+            if (activeProducts.has(product.id)) {
+                if (!categoriesMap.has(product.categoryName)) {
+                    categoriesMap.set(product.categoryName, []);
+                }
+                categoriesMap.get(product.categoryName)!.push(product);
+            }
+        });
+
+        const activeCategories = Array.from(categoriesMap.entries()).map(([name, products]) => ({
+            name,
+            products
+        }));
+
+        // console.log('📦 Categorías activas:', activeCategories.length, activeCategories.map(c => c.name));
+        // console.log('📦 Productos activos:', activeProducts.size);
+
+        return activeCategories;
+    };
+
+    // Función para obtener TODAS las categorías del sistema
+    const getAllProductCategories = (): ProductCategory[] => {
+        const categoriesMap = new Map<string, Product[]>();
+
+        // Agrupar todos los productos por categoría
+        products.forEach(product => {
+            if (!categoriesMap.has(product.categoryName)) {
+                categoriesMap.set(product.categoryName, []);
+            }
+            categoriesMap.get(product.categoryName)!.push(product);
+        });
+
+        const allCategories = Array.from(categoriesMap.entries()).map(([name, products]) => ({
+            name,
+            products
+        }));
+
+        return allCategories;
+    };
+
+
+
+    // Función para obtener categorías ordenadas según configuración
+    const getOrderedProductCategories = (): ProductCategory[] => {
+        const activeCategories = getActiveProductCategories();
+
+        // Por ahora, usar solo el orden por defecto
+        // En el futuro, aquí se aplicará el orden guardado en settings
+        return activeCategories;
+    };
+
     // Función helper para generar array unificado de productos
     const getUnifiedProductArray = (): Product[] => {
-        return getProductCategories().flatMap(category => category.products);
+        return getActiveProductCategories().flatMap(category => category.products);
     };
 
     const getClientsWithOrders = (routeId?: string): Client[] => {
-        // Si se especifica una ruta, mostrar todos los clientes activos de esa ruta
+        // Solo mostrar clientes que tienen pedidos
         if (routeId) {
-            // Obtener todos los clientes activos que tienen esta ruta asignada
-            const routeClients = clients.filter(client => client.routeId === routeId && client.isActive);
-
-            // También incluir clientes que tienen órdenes en esta ruta pero pueden no tener routeId asignado
+            // Obtener órdenes de la ruta específica
             const routeOrders = orders.filter(order => order.routeId === routeId);
             const orderClientIds = [...new Set(routeOrders.map(order => order.clientId))];
-            const orderClients = clients.filter(client =>
-                orderClientIds.includes(client.id) &&
-                client.isActive &&
-                !routeClients.find(rc => rc.id === client.id)
+
+            // Filtrar solo clientes que tienen órdenes en esta ruta
+            const clientsWithOrders = clients.filter(client =>
+                orderClientIds.includes(client.id) && client.isActive
             );
 
-            const allRouteClients = [...routeClients, ...orderClients];
-
-            console.log(`👥 Clientes activos en ruta ${routeId}:`, allRouteClients.length, allRouteClients.map(c => c.nombre));
-            console.log(`📋 Clientes con routeId asignado:`, routeClients.length, routeClients.map(c => c.nombre));
-            console.log(`📋 Clientes con órdenes en ruta:`, orderClients.length, orderClients.map(c => c.nombre));
-
-            return allRouteClients;
+            // console.log(`👥 Clientes con pedidos en ruta ${routeId}:`, clientsWithOrders.length, clientsWithOrders.map(c => c.nombre));
+            return clientsWithOrders;
         }
 
-        // Si no se especifica ruta, mostrar todos los clientes activos
-        const activeClients = clients.filter(client => client.isActive);
-        console.log(`👥 Todos los clientes activos:`, activeClients.length, activeClients.map(c => c.nombre));
-        return activeClients;
+        // Si no se especifica ruta, mostrar todos los clientes que tienen pedidos
+        const allOrderClientIds = [...new Set(orders.map(order => order.clientId))];
+        const clientsWithOrders = clients.filter(client =>
+            allOrderClientIds.includes(client.id) && client.isActive
+        );
+
+        // console.log(`👥 Todos los clientes con pedidos:`, clientsWithOrders.length, clientsWithOrders.map(c => c.nombre));
+        return clientsWithOrders;
     };
 
     const getOrderItemsForClient = (clientId: string): OrderItem[] => {
@@ -306,7 +372,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
         }, 0);
 
         if (quantity > 0) {
-            console.log(`🔢 Cantidad para cliente ${clientId} y producto ${productId}:`, quantity);
+            // console.log(`🔢 Cantidad para cliente ${clientId} y producto ${productId}:`, quantity);
         }
 
         return quantity;
@@ -345,179 +411,26 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     };
 
     const handleQuantityChange = async (clientId: string, productId: string, newQuantity: number) => {
-        try {
-            setIsUpdating(true);
-            setEditingCell({ clientId, productId });
-
-            console.log(`🔄 Cambiando cantidad para cliente ${clientId}, producto ${productId}: ${newQuantity}`);
-
-            // Buscar si ya existe una orden para este cliente en la fecha seleccionada
-            const existingOrder = orders.find(order =>
-                order.clientId === clientId &&
-                order.orderDate.toISOString().split('T')[0] === selectedDate.toISOString().split('T')[0]
-            );
-
-            const product = products.find(p => p.id === productId);
-            const client = clients.find(c => c.id === clientId);
-
-            if (!product || !client) {
-                console.error('❌ Producto o cliente no encontrado');
-                return;
-            }
-
-            if (existingOrder) {
-                // Actualizar orden existente
-                await updateExistingOrder(existingOrder, productId, newQuantity, product);
-            } else if (newQuantity > 0) {
-                // Crear nueva orden solo si la cantidad es mayor a 0
-                await createNewOrder(clientId, productId, newQuantity, product, client);
-            }
-
-            // Recargar datos
-            await fetchOrdersByDate();
-
-        } catch (error) {
-            console.error('❌ Error al cambiar cantidad:', error);
-        } finally {
-            setIsUpdating(false);
-            setEditingCell(null);
-        }
+        // Función deshabilitada - no se permite edición en cuadernos por rutas
+        console.log('⚠️ Edición deshabilitada en cuadernos por rutas');
     };
 
-    const updateExistingOrder = async (order: Order, productId: string, newQuantity: number, product: Product) => {
-        try {
-            // Buscar si el producto ya existe en la orden
-            const existingItem = order.items.find(item => item.productId === productId);
-
-            if (existingItem) {
-                if (newQuantity === 0) {
-                    // Eliminar item si la cantidad es 0
-                    const { error } = await supabase
-                        .from('order_items')
-                        .delete()
-                        .eq('id', existingItem.id);
-
-                    if (error) throw error;
-                } else {
-                    // Actualizar cantidad
-                    const newTotalPrice = newQuantity * existingItem.unitPrice;
-                    const { error } = await supabase
-                        .from('order_items')
-                        .update({
-                            quantity: newQuantity,
-                            total_price: newTotalPrice
-                        })
-                        .eq('id', existingItem.id);
-
-                    if (error) throw error;
-                }
-            } else if (newQuantity > 0) {
-                // Agregar nuevo item
-                const { error } = await supabase
-                    .from('order_items')
-                    .insert({
-                        order_id: order.id,
-                        product_id: productId,
-                        product_name: product.name,
-                        product_category: product.categoryName,
-                        product_variant: product.variant,
-                        quantity: newQuantity,
-                        unit_price: product.priceRegular,
-                        total_price: newQuantity * product.priceRegular
-                    });
-
-                if (error) throw error;
-            }
-
-            // Recalcular total de la orden
-            await recalculateOrderTotal(order.id);
-
-        } catch (error) {
-            console.error('❌ Error actualizando orden:', error);
-            throw error;
-        }
+    const handleDefineColumnOrder = () => {
+        setShowColumnOrderModal(true);
     };
 
-    const createNewOrder = async (clientId: string, productId: string, quantity: number, product: Product, client: Client) => {
-        try {
-            // Crear nueva orden
-            const { data: orderData, error: orderError } = await supabase
-                .from('orders')
-                .insert({
-                    order_number: `PED-${selectedDate.toISOString().split('T')[0].replace(/-/g, '')}-${Date.now()}`,
-                    client_id: clientId,
-                    route_id: client.routeId,
-                    order_date: selectedDate.toISOString().split('T')[0],
-                    delivery_date: selectedDate.toISOString().split('T')[0],
-                    status: 'pending',
-                    total_amount: quantity * product.priceRegular,
-                    payment_method: 'Efectivo',
-                    notes: 'Pedido creado desde cuaderno de rutas'
-                })
-                .select()
-                .single();
-
-            if (orderError) throw orderError;
-
-            // Crear item de la orden
-            const { error: itemError } = await supabase
-                .from('order_items')
-                .insert({
-                    order_id: orderData.id,
-                    product_id: productId,
-                    product_name: product.name,
-                    product_category: product.categoryName,
-                    product_variant: product.variant,
-                    quantity: quantity,
-                    unit_price: product.priceRegular,
-                    total_price: quantity * product.priceRegular
-                });
-
-            if (itemError) throw itemError;
-
-            console.log('✅ Nueva orden creada:', orderData.order_number);
-
-        } catch (error) {
-            console.error('❌ Error creando nueva orden:', error);
-            throw error;
-        }
+    const handleColumnOrderUpdated = () => {
+        // Por ahora, solo recargar datos
+        fetchData();
     };
 
-    const recalculateOrderTotal = async (orderId: string) => {
-        try {
-            // Obtener todos los items de la orden
-            const { data: items, error } = await supabase
-                .from('order_items')
-                .select('total_price')
-                .eq('order_id', orderId);
 
-            if (error) throw error;
-
-            // Calcular nuevo total
-            const newTotal = items.reduce((sum, item) => sum + parseFloat(item.total_price), 0);
-
-            // Actualizar total de la orden
-            const { error: updateError } = await supabase
-                .from('orders')
-                .update({ total_amount: newTotal })
-                .eq('id', orderId);
-
-            if (updateError) throw updateError;
-
-        } catch (error) {
-            console.error('❌ Error recalculando total:', error);
-        }
-    };
 
     const generatePDF = () => {
         // La generación de PDF ahora se maneja con PDFDownloadLink
         // Esta función se mantiene para compatibilidad con el botón
         console.log('🔄 PDF se generará automáticamente al hacer clic en el enlace de descarga');
     };
-
-
-
-    const productCategories = getProductCategories();
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex flex-col">
@@ -528,6 +441,8 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                     <RouteNotebookControls
                         selectedDate={selectedDate}
                         setSelectedDate={setSelectedDate}
+                        dateFilterType={dateFilterType}
+                        setDateFilterType={setDateFilterType}
                         selectedRoute={selectedRoute}
                         setSelectedRoute={setSelectedRoute}
                         routes={routes}
@@ -541,7 +456,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         selectedRoute={selectedRoute}
                         setSelectedRoute={setSelectedRoute}
                         loading={loading}
-                        productCategories={productCategories}
+                        productCategories={getOrderedProductCategories()}
                         unifiedProducts={getUnifiedProductArray()}
                         getClientsWithOrders={getClientsWithOrders}
                         getQuantityForClientAndProduct={getQuantityForClientAndProduct}
@@ -551,6 +466,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         handleQuantityChange={handleQuantityChange}
                         editingCell={editingCell}
                         isUpdating={isUpdating}
+                        onDefineColumnOrder={handleDefineColumnOrder}
                     />
                 </div>
             </div>
@@ -560,15 +476,24 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                 setShowPreview={setShowPreview}
                 generatePDF={generatePDF}
                 selectedDate={selectedDate}
+                dateFilterType={dateFilterType}
                 selectedRoute={selectedRoute}
                 routes={routes}
-                productCategories={productCategories}
+                productCategories={getOrderedProductCategories()}
                 getClientsWithOrders={getClientsWithOrders}
                 getQuantityForClientAndProduct={getQuantityForClientAndProduct}
                 getTotalForClient={getTotalForClient}
                 getTotalForProduct={getTotalForProduct}
                 getTotalForRoute={getTotalForRoute}
                 printRef={printRef}
+            />
+
+            <ColumnOrderModal
+                isOpen={showColumnOrderModal}
+                onClose={() => setShowColumnOrderModal(false)}
+                productCategories={getActiveProductCategories()}
+                onOrderUpdated={handleColumnOrderUpdated}
+                allProductCategories={getAllProductCategories()}
             />
 
             <Footer />

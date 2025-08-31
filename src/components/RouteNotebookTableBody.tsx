@@ -1,4 +1,3 @@
-import { Plus } from 'lucide-react';
 import { Route, Client, ProductCategory, Product } from '@/types/routeNotebook';
 
 interface RouteNotebookTableBodyProps {
@@ -78,36 +77,18 @@ export default function RouteNotebookTableBody({
                             </td>
                             {unifiedProducts.map((product) => {
                                 const quantity = getQuantityForClientAndProduct(client.id, product.id);
-                                const isEditing = editingCell?.clientId === client.id && editingCell?.productId === product.id;
 
                                 return (
                                     <td key={product.id} className="px-2 py-3 text-sm text-gray-900 text-center border-l border-gray-200">
                                         {quantity > 0 ? (
-                                            <input
-                                                type="number"
-                                                value={quantity}
-                                                onChange={(e) => handleQuantityChange(client.id, product.id, parseInt(e.target.value) || 0)}
-                                                className={`w-12 px-1 py-1 border rounded-md text-center ${isEditing ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
-                                                disabled={isUpdating}
-                                            />
+                                            <span className="text-black font-medium">{quantity}</span>
                                         ) : (
-                                            <button
-                                                onClick={() => handleQuantityChange(client.id, product.id, 1)}
-                                                disabled={isUpdating}
-                                                className={`text-blue-500 hover:text-blue-700 ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            >
-                                                <Plus className="h-4 w-4" />
-                                            </button>
+                                            <span className="text-gray-400">-</span>
                                         )}
                                     </td>
                                 );
                             })}
-                            <td className="px-3 py-3 text-sm font-medium text-gray-900 text-center border-l border-gray-200">
-                                <div className="flex flex-col">
-                                    <span className="font-bold">{clientTotal.quantity}</span>
-                                    <span className="text-xs text-gray-500">${clientTotal.amount.toFixed(2)}</span>
-                                </div>
-                            </td>
+
                         </tr>
                     );
                 });
@@ -126,16 +107,7 @@ export default function RouteNotebookTableBody({
                         </td>
                     );
                 })}
-                <td className="px-3 py-3 text-sm font-bold text-gray-900 text-center border-l border-gray-200">
-                    <div className="flex flex-col">
-                        <span className="font-bold">
-                            {getFilteredTotalForAllRoutes().quantity}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                            ${getFilteredTotalForAllRoutes().amount.toFixed(2)}
-                        </span>
-                    </div>
-                </td>
+
             </tr>
         </>
     );

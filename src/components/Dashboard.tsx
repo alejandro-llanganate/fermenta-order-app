@@ -35,8 +35,10 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
     const [stats, setStats] = useState({
         activeClients: 0,
         totalOrders: 0,
+        ordersRegisteredToday: 0,
         activeProducts: 0,
-        totalSales: 0
+        totalSales: 0,
+        salesRegisteredToday: 0
     });
     const [loading, setLoading] = useState(true);
 
@@ -63,19 +65,31 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                 console.error('Error fetching clients:', clientsError);
             }
 
-            // Obtener pedidos del día
+            // Obtener pedidos que se entregarán hoy (basado en delivery_date)
             const today = new Date();
-            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+            const todayString = today.toISOString().split('T')[0]; // Formato YYYY-MM-DD
 
             const { data: ordersData, error: ordersError } = await supabase
                 .from('orders')
-                .select('id, total_amount')
-                .gte('created_at', startOfDay.toISOString())
-                .lte('created_at', endOfDay.toISOString());
+                .select('id, total_amount, delivery_date')
+                .eq('delivery_date', todayString);
 
             if (ordersError) {
                 console.error('Error fetching orders:', ordersError);
+            }
+
+            // Obtener pedidos registrados hoy (basado en created_at)
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+            const { data: ordersRegisteredData, error: ordersRegisteredError } = await supabase
+                .from('orders')
+                .select('id, total_amount, created_at')
+                .gte('created_at', startOfDay.toISOString())
+                .lte('created_at', endOfDay.toISOString());
+
+            if (ordersRegisteredError) {
+                console.error('Error fetching registered orders:', ordersRegisteredError);
             }
 
             // Obtener productos activos
@@ -88,14 +102,19 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                 console.error('Error fetching products:', productsError);
             }
 
-            // Calcular total de ventas del día
+            // Calcular total de ventas de pedidos que se entregarán hoy
             const totalSales = ordersData?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0;
+
+            // Calcular total de ventas de pedidos registrados hoy
+            const salesRegisteredToday = ordersRegisteredData?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0;
 
             setStats({
                 activeClients: clientsData?.length || 0,
                 totalOrders: ordersData?.length || 0,
+                ordersRegisteredToday: ordersRegisteredData?.length || 0,
                 activeProducts: productsData?.length || 0,
-                totalSales: totalSales
+                totalSales: totalSales,
+                salesRegisteredToday: salesRegisteredToday
             });
 
         } catch (error) {
@@ -105,10 +124,12 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
         }
     };
 
-    // Cargar estadísticas al montar el componente
+    // Cargar estadísticas al montar el componente y cuando se regrese al dashboard
     useEffect(() => {
-        fetchStats();
-    }, []);
+        if (currentView === 'dashboard') {
+            fetchStats();
+        }
+    }, [currentView]);
 
     const menuItems = [
         // Solo mostrar gestión de usuarios para admins
@@ -257,12 +278,25 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
 
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Botón de actualización */}
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Resumen del Día</h2>
+                    <button
+                        onClick={fetchStats}
+                        disabled={loading}
+                        className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Clock className="h-4 w-4" />
+                        <span>{loading ? 'Actualizando...' : 'Actualizar'}</span>
+                    </button>
+                </div>
+
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600">Ventas Hoy</p>
+                                <p className="text-sm font-medium text-gray-600">Ventas por Entregar</p>
                                 {loading ? (
                                     <div className="animate-pulse">
                                         <div className="h-8 bg-gray-200 rounded w-20 mb-1"></div>
@@ -274,7 +308,7 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                                             ${stats.totalSales.toFixed(2)}
                                         </p>
                                         <p className="text-xs text-gray-500">
-                                            {stats.totalSales > 0 ? 'Ventas del día' : 'Sin ventas hoy'}
+                                            {stats.totalSales > 0 ? 'Ventas que se entregarán hoy' : 'Sin entregas hoy'}
                                         </p>
                                     </>
                                 )}
@@ -288,7 +322,33 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600">Pedidos Hoy</p>
+                                <p className="text-sm font-medium text-gray-600">Ventas Registradas</p>
+                                {loading ? (
+                                    <div className="animate-pulse">
+                                        <div className="h-8 bg-gray-200 rounded w-20 mb-1"></div>
+                                        <div className="h-3 bg-gray-200 rounded w-24"></div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-2xl font-bold text-emerald-600">
+                                            ${stats.salesRegisteredToday.toFixed(2)}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {stats.salesRegisteredToday > 0 ? 'Ventas registradas hoy' : 'Sin ventas registradas'}
+                                        </p>
+                                    </>
+                                )}
+                            </div>
+                            <div className="p-3 bg-emerald-100 rounded-full">
+                                <DollarSign className="h-6 w-6 text-emerald-600" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Pedidos por Entregar</p>
                                 {loading ? (
                                     <div className="animate-pulse">
                                         <div className="h-8 bg-gray-200 rounded w-12 mb-1"></div>
@@ -298,13 +358,37 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                                     <>
                                         <p className="text-2xl font-bold text-blue-600">{stats.totalOrders}</p>
                                         <p className="text-xs text-gray-500">
-                                            {stats.totalOrders > 0 ? 'Pedidos del día' : 'Sin pedidos hoy'}
+                                            {stats.totalOrders > 0 ? 'Pedidos que se entregarán hoy' : 'Sin entregas hoy'}
                                         </p>
                                     </>
                                 )}
                             </div>
                             <div className="p-3 bg-blue-100 rounded-full">
                                 <ShoppingCart className="h-6 w-6 text-blue-600" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Pedidos Registrados</p>
+                                {loading ? (
+                                    <div className="animate-pulse">
+                                        <div className="h-8 bg-gray-200 rounded w-12 mb-1"></div>
+                                        <div className="h-3 bg-gray-200 rounded w-24"></div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-2xl font-bold text-indigo-600">{stats.ordersRegisteredToday}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {stats.ordersRegisteredToday > 0 ? 'Pedidos registrados hoy' : 'Sin pedidos registrados'}
+                                        </p>
+                                    </>
+                                )}
+                            </div>
+                            <div className="p-3 bg-indigo-100 rounded-full">
+                                <ShoppingCart className="h-6 w-6 text-indigo-600" />
                             </div>
                         </div>
                     </div>

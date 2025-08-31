@@ -8,6 +8,7 @@ interface RouteNotebookPreviewProps {
     setShowPreview: (show: boolean) => void;
     generatePDF: () => void;
     selectedDate: Date;
+    dateFilterType: 'registration' | 'delivery';
     selectedRoute: string;
     routes: Route[];
     productCategories: ProductCategory[];
@@ -24,6 +25,7 @@ export default function RouteNotebookPreview({
     setShowPreview,
     generatePDF,
     selectedDate,
+    dateFilterType,
     selectedRoute,
     routes,
     productCategories,
@@ -47,6 +49,7 @@ export default function RouteNotebookPreview({
                                 document={
                                     <RouteNotebookPDF
                                         selectedDate={selectedDate}
+                                        dateFilterType={dateFilterType}
                                         selectedRoute={selectedRoute}
                                         productCategories={productCategories}
                                         routes={routes}
@@ -57,7 +60,7 @@ export default function RouteNotebookPreview({
                                         getTotalForRoute={getTotalForRoute}
                                     />
                                 }
-                                fileName={`Mega-Donut-Rutas-${selectedRoute ? routes.find(r => r.id === selectedRoute)?.nombre : 'Todas'}-${selectedDate.toLocaleDateString('es-ES')}.pdf`}
+                                fileName={`Mega-Donut-Rutas-${selectedRoute ? routes.find(r => r.id === selectedRoute)?.nombre : 'Todas'}-${dateFilterType === 'registration' ? 'Registro' : 'Entrega'}-${selectedDate.toLocaleDateString('es-ES')}.pdf`}
                                 className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
                             >
                                 {({ loading }) => (
@@ -85,7 +88,7 @@ export default function RouteNotebookPreview({
                             <h1 className="text-3xl font-bold text-black">MEGA DONUT</h1>
                             <h2 className="text-2xl font-semibold text-gray-800">PEDIDOS Y ENTREGAS</h2>
                             <p className="text-lg text-gray-600">
-                                DÍA: {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}
+                                {dateFilterType === 'registration' ? 'FECHA DE REGISTRO' : 'FECHA DE ENTREGA'}: {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}
                             </p>
                             {selectedRoute && (
                                 <p className="text-lg text-gray-600">
@@ -107,9 +110,7 @@ export default function RouteNotebookPreview({
                                                 {category.name}
                                             </th>
                                         ))}
-                                        <th className="border border-gray-300 px-3 py-2 text-center text-black font-semibold">
-                                            TOTAL
-                                        </th>
+
                                     </tr>
                                     <tr className="bg-gray-50">
                                         <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold sticky left-0 bg-gray-50">
@@ -122,9 +123,7 @@ export default function RouteNotebookPreview({
                                                 </th>
                                             ))
                                         ))}
-                                        <th className="border border-gray-300 px-3 py-2 text-center text-black font-semibold">
-                                            CANT. | $
-                                        </th>
+
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -151,12 +150,7 @@ export default function RouteNotebookPreview({
                                                                 );
                                                             })
                                                         ))}
-                                                        <td className="border border-gray-300 px-3 py-2 text-black font-medium text-center">
-                                                            <div className="flex flex-col">
-                                                                <span className="font-bold">{clientTotal.quantity}</span>
-                                                                <span className="text-xs">${clientTotal.amount.toFixed(2)}</span>
-                                                            </div>
-                                                        </td>
+
                                                     </tr>
                                                 );
                                             });
@@ -177,21 +171,7 @@ export default function RouteNotebookPreview({
                                                 );
                                             }))
                                         )}
-                                        <td className="border border-gray-300 px-3 py-2 text-black font-bold text-center">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold">
-                                                    {routes
-                                                        .filter(route => !selectedRoute || route.id === selectedRoute)
-                                                        .reduce((sum, route) => sum + getTotalForRoute(route.id).quantity, 0)}
-                                                </span>
-                                                <span className="text-xs">
-                                                    ${routes
-                                                        .filter(route => !selectedRoute || route.id === selectedRoute)
-                                                        .reduce((sum, route) => sum + getTotalForRoute(route.id).amount, 0)
-                                                        .toFixed(2)}
-                                                </span>
-                                            </div>
-                                        </td>
+
                                     </tr>
                                 </tbody>
                             </table>

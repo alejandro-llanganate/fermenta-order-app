@@ -4,6 +4,8 @@ import { Route } from '@/types/routeNotebook';
 interface RouteNotebookControlsProps {
     selectedDate: Date;
     setSelectedDate: (date: Date) => void;
+    dateFilterType: 'registration' | 'delivery';
+    setDateFilterType: (type: 'registration' | 'delivery') => void;
     selectedRoute: string;
     setSelectedRoute: (route: string) => void;
     routes: Route[];
@@ -15,6 +17,8 @@ interface RouteNotebookControlsProps {
 export default function RouteNotebookControls({
     selectedDate,
     setSelectedDate,
+    dateFilterType,
+    setDateFilterType,
     selectedRoute,
     setSelectedRoute,
     routes,
@@ -24,11 +28,26 @@ export default function RouteNotebookControls({
 }: RouteNotebookControlsProps) {
     return (
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Date Selector */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Tipo de Filtro */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        DÍA
+                        CRITERIO DE FECHA
+                    </label>
+                    <select
+                        value={dateFilterType}
+                        onChange={(e) => setDateFilterType(e.target.value as 'registration' | 'delivery')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                        <option value="registration">Fecha de Registro</option>
+                        <option value="delivery">Fecha de Entrega</option>
+                    </select>
+                </div>
+
+                {/* Fecha */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {dateFilterType === 'registration' ? 'FECHA DE REGISTRO' : 'FECHA DE ENTREGA'}
                     </label>
                     <input
                         type="date"
