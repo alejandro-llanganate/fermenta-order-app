@@ -100,6 +100,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                     variant: product.variant || 'General',
                     priceRegular: product.price_regular,
                     pricePage: product.price_page,
+                    specialPrice: product.special_price || undefined,
                     description: product.description,
                     imageUrl: product.image_url,
                     isActive: product.is_active,
@@ -142,6 +143,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                 category_id: formData.categoryId,
                 variant: 'General', // Variante por defecto
                 price_regular: formData.price,
+                special_price: formData.specialPrice || null,
                 description: formData.description || null,
                 image_url: formData.imageBase64 || null
             };
@@ -177,6 +179,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                     variant: productWithCategory.variant || 'General',
                     priceRegular: productWithCategory.price_regular,
                     pricePage: productWithCategory.price_page,
+                    specialPrice: productWithCategory.special_price || undefined,
                     description: productWithCategory.description,
                     imageUrl: productWithCategory.image_url,
                     isActive: productWithCategory.is_active,
@@ -213,6 +216,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                 name: formData.name,
                 category_id: formData.categoryId,
                 price_regular: formData.price,
+                special_price: formData.specialPrice || null,
                 description: formData.description || null,
                 image_url: formData.imageBase64 || null
             };
@@ -291,22 +295,22 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
         });
 
         if (result.isConfirmed) {
-        try {
-            const { error } = await supabase
-                .from('products')
-                .delete()
-                .eq('id', productId);
+            try {
+                const { error } = await supabase
+                    .from('products')
+                    .delete()
+                    .eq('id', productId);
 
-            if (error) throw error;
+                if (error) throw error;
 
-            setProducts(products.filter(product => product.id !== productId));
+                setProducts(products.filter(product => product.id !== productId));
                 Swal.fire({
                     icon: 'success',
                     title: 'Producto eliminado',
                     text: 'El producto ha sido eliminado exitosamente.',
                 });
-        } catch (err) {
-            console.error('Error deleting product:', err);
+            } catch (err) {
+                console.error('Error deleting product:', err);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error al eliminar el producto',
@@ -360,11 +364,11 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
         if (result.isConfirmed) {
             try {
                 const { error } = await supabase
-                .from('products')
+                    .from('products')
                     .delete()
                     .in('id', selectedProducts);
 
-            if (error) throw error;
+                if (error) throw error;
 
                 setProducts(products.filter(p => !selectedProducts.includes(p.id)));
                 setSelectedProducts([]);
@@ -375,7 +379,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                     title: 'Productos eliminados',
                     text: `${selectedProducts.length} producto(s) han sido eliminados exitosamente.`,
                 });
-        } catch (err) {
+            } catch (err) {
                 console.error('Error deleting products:', err);
                 Swal.fire({
                     icon: 'error',
@@ -415,6 +419,10 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                 aValue = a.priceRegular || 0;
                 bValue = b.priceRegular || 0;
                 break;
+            case 'specialPrice':
+                aValue = a.specialPrice || 0;
+                bValue = b.specialPrice || 0;
+                break;
             default:
                 aValue = a.name.toLowerCase();
                 bValue = b.name.toLowerCase();
@@ -435,6 +443,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
             name: product.name,
             categoryId: product.categoryId,
             price: product.priceRegular,
+            specialPrice: product.specialPrice,
             description: product.description || '',
             imageBase64: product.imageUrl || ''
         });
@@ -445,6 +454,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
             name: '',
             categoryId: '',
             price: 0,
+            specialPrice: undefined,
             description: '',
             imageBase64: ''
         });
@@ -532,6 +542,12 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                             <span class="text-sm font-medium text-gray-600">Precio Regular:</span>
                             <span class="text-lg font-semibold text-green-600">
                                 $${formatPrice(product.priceRegular)}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-600">Precio Especial:</span>
+                            <span class="text-lg font-semibold ${product.specialPrice ? 'text-orange-600' : 'text-gray-400'}">
+                                ${product.specialPrice ? `$${formatPrice(product.specialPrice)}` : 'No definido'}
                             </span>
                         </div>
                         <div class="flex items-center justify-between">
@@ -627,19 +643,19 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
 
                             {/* Category Filter */}
                             <div className="w-full lg:w-64">
-                                    <select
+                                <select
                                     value={categoryFilter}
                                     onChange={(e) => setCategoryFilter(e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 bg-white"
                                 >
                                     <option value="">Todas las categorías</option>
-                                        {categories.map(category => (
+                                    {categories.map(category => (
                                         <option key={category.id} value={category.id}>
                                             {category.name}
                                         </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                    ))}
+                                </select>
+                            </div>
 
                             {/* Clear Filters Button */}
                             {(searchTerm || categoryFilter) && (
@@ -651,7 +667,7 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                         <X className="h-4 w-4" />
                                         <span>Limpiar filtros</span>
                                     </button>
-                            </div>
+                                </div>
                             )}
                         </div>
 
@@ -826,6 +842,15 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                                 {getSortIcon('price')}
                                             </div>
                                         </th>
+                                        <th
+                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                                            onClick={() => handleSort('specialPrice')}
+                                        >
+                                            <div className="flex items-center space-x-1">
+                                                <span>Precio especial</span>
+                                                {getSortIcon('specialPrice')}
+                                            </div>
+                                        </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Opciones
                                         </th>
@@ -853,68 +878,84 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                                         className="w-5 h-5 rounded border-gray-300 text-orange-600 focus:ring-orange-500 focus:ring-2 cursor-pointer hover:border-orange-400 transition-colors"
                                                     />
                                                 </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center">
-                                                    <div className="flex-shrink-0 h-10 w-10">
-                                                        {product.imageUrl ? (
-                                                            <img
-                                                                src={product.imageUrl}
-                                                                alt={product.name}
-                                                                className="h-10 w-10 rounded-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
-                                                                {getCategoryIcon(product.categoryName)}
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center">
+                                                        <div className="flex-shrink-0 h-10 w-10">
+                                                            {product.imageUrl ? (
+                                                                <img
+                                                                    src={product.imageUrl}
+                                                                    alt={product.name}
+                                                                    className="h-10 w-10 rounded-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
+                                                                    {getCategoryIcon(product.categoryName)}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="ml-4">
+                                                            <div className="text-sm font-medium text-gray-900">
+                                                                {product.name}
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="ml-4">
-                                                        <div className="text-sm font-medium text-gray-900">
-                                                            {product.name}
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                    {product.categoryName}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center space-x-1">
-                                                    <DollarSign className="h-4 w-4 text-green-600" />
-                                                    <span className="text-sm font-medium text-gray-900">
-                                                        {formatPrice(product.priceRegular)}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                        {product.categoryName}
                                                     </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center space-x-1">
+                                                        <DollarSign className="h-4 w-4 text-green-600" />
+                                                        <span className="text-sm font-medium text-gray-900">
+                                                            {formatPrice(product.priceRegular)}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center space-x-1">
+                                                        {product.specialPrice ? (
+                                                            <>
+                                                                <DollarSign className="h-4 w-4 text-orange-600" />
+                                                                <span className="text-sm font-medium text-orange-600">
+                                                                    {formatPrice(product.specialPrice)}
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-sm text-gray-400 italic">
+                                                                Sin precio especial
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end space-x-2">
-                                                    <button
+                                                        <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 openEditModal(product);
                                                             }}
                                                             className="flex items-center space-x-1 text-blue-600 hover:text-blue-900 px-2 py-1 rounded text-xs font-medium border border-blue-200 hover:bg-blue-50 transition-colors cursor-pointer"
-                                                        title="Editar producto"
-                                                    >
+                                                            title="Editar producto"
+                                                        >
                                                             <Edit className="h-3 w-3" />
                                                             <span>Editar</span>
-                                                    </button>
-                                                    <button
+                                                        </button>
+                                                        <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 handleDeleteProduct(product.id);
                                                             }}
                                                             className="flex items-center space-x-1 text-red-600 hover:text-red-900 px-2 py-1 rounded text-xs font-medium border border-red-200 hover:bg-red-50 transition-colors cursor-pointer"
-                                                        title="Eliminar producto"
-                                                    >
+                                                            title="Eliminar producto"
+                                                        >
                                                             <Trash2 className="h-3 w-3" />
                                                             <span>Eliminar</span>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
                                         );
                                     })}
                                 </tbody>
@@ -969,13 +1010,48 @@ export default function ProductsManagement({ onBack }: ProductsManagementProps) 
                                                 Precio regular *
                                             </label>
                                             <input
-                                                type="number"
-                                                step="0.01"
-                                                min="0"
-                                                value={formData.price}
-                                                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                                                type="text"
+                                                value={formData.price === 0 ? '' : formData.price.toString()}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    // Permitir solo números, punto decimal y comas
+                                                    const cleanValue = value.replace(/[^0-9.,]/g, '');
+                                                    // Convertir comas a puntos
+                                                    const normalizedValue = cleanValue.replace(',', '.');
+                                                    // Parsear el valor
+                                                    const parsedValue = parseFloat(normalizedValue) || 0;
+                                                    setFormData({ ...formData, price: parsedValue });
+                                                }}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
                                                 placeholder="0.00"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Precio especial (opcional)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.specialPrice ? formData.specialPrice.toString() : ''}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (!value) {
+                                                        setFormData({ ...formData, specialPrice: undefined });
+                                                        return;
+                                                    }
+                                                    // Permitir solo números, punto decimal y comas
+                                                    const cleanValue = value.replace(/[^0-9.,]/g, '');
+                                                    // Convertir comas a puntos
+                                                    const normalizedValue = cleanValue.replace(',', '.');
+                                                    // Parsear el valor
+                                                    const parsedValue = parseFloat(normalizedValue);
+                                                    if (!isNaN(parsedValue)) {
+                                                        setFormData({ ...formData, specialPrice: parsedValue });
+                                                    }
+                                                }}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-600"
+                                                placeholder="0.00 (opcional)"
                                             />
                                         </div>
 

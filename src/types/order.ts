@@ -10,6 +10,7 @@ export interface OrderItem {
   quantity: number;
   unitPrice: number;
   usePaginaPrice: boolean;
+  usesSpecialPrice: boolean; // Indica si usa precio especial
   individualValue: number;
   totalPrice: number;
   createdAt: Date;
@@ -67,6 +68,7 @@ export interface CreateOrderItemData {
   quantity: number;
   unitPrice: number;
   usePaginaPrice: boolean;
+  usesSpecialPrice: boolean; // Indica si usa precio especial
   individualValue: number;
   totalPrice: number;
 } 

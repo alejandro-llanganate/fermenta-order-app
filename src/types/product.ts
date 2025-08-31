@@ -26,6 +26,7 @@ export interface Product {
   variant: string;
   priceRegular: number;
   pricePage?: number;
+  specialPrice?: number; // Precio especial opcional
   description?: string;
   imageUrl?: string;
   isActive: boolean;
@@ -37,6 +38,7 @@ export interface CreateProductData {
   name: string;
   categoryId: string;
   price: number;
+  specialPrice?: number;
   description?: string;
   imageBase64?: string;
 }
@@ -47,6 +49,7 @@ export interface UpdateProductData {
   variant?: string;
   priceRegular?: number;
   pricePage?: number;
+  specialPrice?: number; // Precio especial opcional
   description?: string;
   imageUrl?: string;
   isActive?: boolean;

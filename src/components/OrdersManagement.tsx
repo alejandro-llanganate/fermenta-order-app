@@ -78,6 +78,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         quantity: number;
         unitPrice: number;
         totalPrice: number;
+        usesSpecialPrice: boolean;
     }>>([]);
     const [productSearchTerm, setProductSearchTerm] = useState('');
     const [showProductDropdown, setShowProductDropdown] = useState(false);
@@ -306,12 +307,15 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     variant: product.variant || 'Regular',
                     priceRegular: product.price_regular || 0,
                     pricePage: product.price_page || 0,
+                    specialPrice: product.special_price || undefined,
                     isActive: product.is_active,
                     createdAt: new Date(product.created_at),
                     updatedAt: new Date(product.updated_at)
                 };
             });
 
+            console.log('📦 Productos cargados:', transformedProducts.length);
+            console.log('📦 Productos con precio especial:', transformedProducts.filter(p => p.specialPrice).length);
             setProducts(transformedProducts);
 
             // Fetch clients
@@ -385,7 +389,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     };
 
     // Función para agregar producto
-    const addProduct = (product: Product, quantity: number) => {
+    const addProduct = async (product: Product, quantity: number) => {
+        console.log('🔍 Agregando producto:', product.name);
+        console.log('🔍 Precio especial:', product.specialPrice);
+
         const existingItem = selectedItems.find(item => item.product.id === product.id);
 
         if (existingItem) {
@@ -397,14 +404,72 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             );
             setSelectedItems(updatedItems);
         } else {
-            // Agregar nuevo producto
-            const newItem = {
-                product,
-                quantity,
-                unitPrice: product.priceRegular || 0,
-                totalPrice: (product.priceRegular || 0) * quantity
-            };
-            setSelectedItems([...selectedItems, newItem]);
+            // Verificar si el producto tiene precio especial
+            if (product.specialPrice && product.specialPrice > 0) {
+                console.log('💰 Producto tiene precio especial, mostrando modal...');
+                // Preguntar al usuario qué precio usar
+                const result = await Swal.fire({
+                    title: 'Seleccionar Precio',
+                    html: `
+                        <div class="text-left">
+                            <p class="mb-4"><strong>${product.name}</strong> tiene un precio especial disponible.</p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="text-center p-3 border rounded-lg">
+                                    <p class="font-bold text-green-600">Precio Regular</p>
+                                    <p class="text-lg">$${product.priceRegular?.toFixed(2)}</p>
+                                </div>
+                                <div class="text-center p-3 border rounded-lg bg-orange-50">
+                                    <p class="font-bold text-orange-600">Precio Especial</p>
+                                    <p class="text-lg">$${product.specialPrice.toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Precio Regular',
+                    cancelButtonText: 'Precio Especial',
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#f59e0b',
+                    reverseButtons: true
+                });
+
+                let selectedPrice: number;
+                let usesSpecialPrice: boolean;
+
+                if (result.isConfirmed) {
+                    // Usar precio regular
+                    selectedPrice = product.priceRegular || 0;
+                    usesSpecialPrice = false;
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    // Usar precio especial
+                    selectedPrice = product.specialPrice || 0;
+                    usesSpecialPrice = true;
+                } else {
+                    // Usuario canceló, no agregar producto
+                    return;
+                }
+
+                // Agregar nuevo producto con el precio seleccionado
+                const newItem = {
+                    product,
+                    quantity,
+                    unitPrice: selectedPrice,
+                    totalPrice: selectedPrice * quantity,
+                    usesSpecialPrice
+                };
+                setSelectedItems([...selectedItems, newItem]);
+            } else {
+                console.log('💰 Producto sin precio especial, agregando directamente...');
+                // Agregar nuevo producto con precio regular (sin precio especial)
+                const newItem = {
+                    product,
+                    quantity,
+                    unitPrice: product.priceRegular || 0,
+                    totalPrice: (product.priceRegular || 0) * quantity,
+                    usesSpecialPrice: false
+                };
+                setSelectedItems([...selectedItems, newItem]);
+            }
         }
 
         setProductSearchTerm('');
@@ -491,7 +556,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     <div class="max-h-32 overflow-y-auto space-y-1">
                         ${selectedItems.map(item => `
                             <div class="flex justify-between text-sm">
-                                                                                        <span>${item.product.name} x ${item.quantity}</span>
+                                <span>${item.product.name} x ${item.quantity}${item.usesSpecialPrice ? ' (Precio Especial)' : ''}</span>
                                 <span>$${item.totalPrice.toFixed(2)}</span>
                             </div>
                         `).join('')}
@@ -557,6 +622,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                         quantity: item.quantity,
                         unit_price: item.unitPrice,
                         use_pagina_price: false,
+                        uses_special_price: item.usesSpecialPrice,
                         total_price: item.totalPrice
                     }));
 
@@ -597,6 +663,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                         quantity: item.quantity,
                         unit_price: item.unitPrice,
                         use_pagina_price: false,
+                        uses_special_price: item.usesSpecialPrice,
                         total_price: item.totalPrice
                     }));
 
@@ -675,7 +742,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                         product: realProduct,
                         quantity: item.quantity,
                         unitPrice: item.unitPrice,
-                        totalPrice: item.totalPrice
+                        totalPrice: item.totalPrice,
+                        usesSpecialPrice: item.usesSpecialPrice || false
                     };
                 }
                 // Si no se encuentra el producto, crear uno temporal
@@ -695,7 +763,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     product: tempProduct,
                     quantity: item.quantity,
                     unitPrice: item.unitPrice,
-                    totalPrice: item.totalPrice
+                    totalPrice: item.totalPrice,
+                    usesSpecialPrice: item.usesSpecialPrice || false
                 };
             });
 
@@ -876,6 +945,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 quantity: item.quantity,
                 unitPrice: parseFloat(item.unit_price),
                 usePaginaPrice: item.use_pagina_price || false,
+                usesSpecialPrice: item.uses_special_price || false,
                 individualValue: parseFloat(item.unit_price), // Asumiendo que individual_value es igual a unit_price
                 totalPrice: parseFloat(item.total_price),
                 createdAt: new Date(item.created_at)
@@ -1703,7 +1773,13 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             {filteredProducts.map((product) => (
                                                 <button
                                                     key={product.id}
-                                                    onClick={() => addProduct(product, 1)}
+                                                    onClick={async () => {
+                                                        try {
+                                                            await addProduct(product, 1);
+                                                        } catch (error) {
+                                                            console.error('Error adding product:', error);
+                                                        }
+                                                    }}
                                                     className="w-full text-left p-2 sm:p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
                                                 >
                                                     <div className="flex justify-between items-start">
@@ -1744,7 +1820,12 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                                 />
                                                             </div>
                                                             <div className="text-right">
-                                                                <div className="text-xs sm:text-sm text-gray-600">${item.unitPrice.toFixed(2)} c/u</div>
+                                                                <div className="text-xs sm:text-sm text-gray-600">
+                                                                    ${item.unitPrice.toFixed(2)} c/u
+                                                                    {item.usesSpecialPrice && (
+                                                                        <span className="ml-1 text-orange-600 font-medium">(Especial)</span>
+                                                                    )}
+                                                                </div>
                                                                 <div className="font-medium text-green-600 text-sm sm:text-base">${item.totalPrice.toFixed(2)}</div>
                                                             </div>
                                                             <button
