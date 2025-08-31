@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     },
     tableCell: {
         padding: 2,
-        fontSize: 9,
+        fontSize: 11,
         textAlign: 'center',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     },
     tableCellHeader: {
         padding: 2,
-        fontSize: 8,
+        fontSize: 10,
         fontWeight: 'bold',
         textAlign: 'center',
         borderRightWidth: 1,
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     },
     clientCell: {
         padding: 2,
-        fontSize: 9,
+        fontSize: 11,
         textAlign: 'left',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
         marginBottom: 1,
     },
     productQuantity: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 'bold',
         color: '#1e40af',
     },
