@@ -43,7 +43,15 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const [showRoutePreviewModal, setShowRoutePreviewModal] = useState(false);
     const [selectedRoute, setSelectedRoute] = useState<string>('');
     const [routeFilter, setRouteFilter] = useState<string>('');
+    const [dateFilter, setDateFilter] = useState<string>('');
+    const [dateFilterType, setDateFilterType] = useState<'order' | 'delivery'>('order');
+    const [dateFilterValue, setDateFilterValue] = useState<Date | null>(null);
     const [showExportModal, setShowExportModal] = useState(false);
+    const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+    const [showBulkActionsModal, setShowBulkActionsModal] = useState(false);
+    const [bulkActionType, setBulkActionType] = useState<'status' | 'delivery_date'>('status');
+    const [bulkStatus, setBulkStatus] = useState<Order['status']>('pending');
+    const [bulkDeliveryDate, setBulkDeliveryDate] = useState<Date | null>(null);
     const [editingOrder, setEditingOrder] = useState<Order | null>(null);
     const [selectedOrder, setSelectedOrder] = useState<(Order & {
         clientPhone?: string;
@@ -74,6 +82,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const [productSearchTerm, setProductSearchTerm] = useState('');
     const [showProductDropdown, setShowProductDropdown] = useState(false);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const [quantityInputs, setQuantityInputs] = useState<{ [key: string]: string }>({});
 
     const paymentMethods: PaymentMethod[] = ['Efectivo', 'Transferencia', 'Tarjeta de crédito', 'Tarjeta de débito', 'Cheque'];
 
@@ -103,6 +112,15 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             text: `Error en ${context}. Por favor, inténtalo de nuevo.`,
             confirmButtonColor: '#3085d6'
         });
+    };
+
+    // Función auxiliar para manejar fechas sin problemas de zona horaria
+    const formatDateForDB = (date: Date): string => {
+        return date.toISOString().split('T')[0];
+    };
+
+    const parseDateFromDB = (dateStr: string): Date => {
+        return new Date(dateStr + 'T00:00:00');
     };
 
     // Función auxiliar para mostrar mensajes de éxito
@@ -137,6 +155,23 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const orderMatchesRouteFilter = (order: Order, routeFilter: string): boolean => {
         if (!routeFilter) return true;
         return order.routeId === routeFilter;
+    };
+
+    const orderMatchesDateFilter = (order: Order, dateFilterValue: Date | null, dateFilterType: 'order' | 'delivery'): boolean => {
+        if (!dateFilterValue) return true;
+
+        // Convertir la fecha del filtro a formato YYYY-MM-DD para comparación
+        const filterDateStr = dateFilterValue.toISOString().split('T')[0];
+
+        if (dateFilterType === 'order') {
+            const orderDateStr = order.orderDate.toISOString().split('T')[0];
+            return orderDateStr === filterDateStr;
+        } else {
+            // Filtro por fecha de entrega
+            if (!order.deliveryDate) return false;
+            const deliveryDateStr = order.deliveryDate.toISOString().split('T')[0];
+            return deliveryDateStr === filterDateStr;
+        }
     };
 
     // Función auxiliar para validar y limpiar datos de pedidos
@@ -235,8 +270,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 clientName: order.client_name,
                 routeName: order.route_name,
                 routeId: order.route_id,
-                orderDate: new Date(order.order_date),
-                deliveryDate: order.delivery_date ? new Date(order.delivery_date) : null,
+                orderDate: parseDateFromDB(order.order_date),
+                deliveryDate: order.delivery_date ? parseDateFromDB(order.delivery_date) : null,
                 totalAmount: parseFloat(order.total_amount) || 0,
                 paymentMethod: order.payment_method || 'Efectivo',
                 createdAt: new Date(order.created_at),
@@ -369,7 +404,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 unitPrice: product.priceRegular || 0,
                 totalPrice: (product.priceRegular || 0) * quantity
             };
-        setSelectedItems([...selectedItems, newItem]);
+            setSelectedItems([...selectedItems, newItem]);
         }
 
         setProductSearchTerm('');
@@ -379,13 +414,28 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     // Función para remover producto
     const removeProduct = (productId: string) => {
         setSelectedItems(selectedItems.filter(item => item.product.id !== productId));
+        // Limpiar el input de cantidad cuando se elimina el producto
+        setQuantityInputs(prev => {
+            const newInputs = { ...prev };
+            delete newInputs[productId];
+            return newInputs;
+        });
     };
 
     // Función para actualizar cantidad
-    const updateQuantity = (productId: string, quantity: number) => {
+    const updateQuantity = (productId: string, quantity: string) => {
+        // Actualizar el estado local del input
+        setQuantityInputs(prev => ({
+            ...prev,
+            [productId]: quantity
+        }));
+
+        // Convertir a número para el cálculo
+        const numQuantity = quantity === '' ? 0 : parseInt(quantity) || 0;
+
         const updatedItems = selectedItems.map(item =>
             item.product.id === productId
-                ? { ...item, quantity, totalPrice: item.unitPrice * quantity }
+                ? { ...item, quantity: numQuantity, totalPrice: item.unitPrice * numQuantity }
                 : item
         );
         setSelectedItems(updatedItems);
@@ -405,7 +455,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         return { isValid: true };
     };
 
-    // Función para crear pedido
+    // Función para crear o actualizar pedido
     const handleCreateOrder = async () => {
         // Validar formulario
         const validation = validateOrderForm();
@@ -457,75 +507,124 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             </div>
         `;
 
+        const isEditing = editingOrder !== null;
         const result = await Swal.fire({
-            title: 'Confirmar Pedido',
+            title: isEditing ? 'Confirmar Cambios' : 'Confirmar Pedido',
             html: orderSummary,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'Crear Pedido',
+            confirmButtonText: isEditing ? 'Actualizar Pedido' : 'Crear Pedido',
             cancelButtonText: 'Cancelar',
             width: '600px'
         });
 
         if (result.isConfirmed) {
             try {
-                // Crear el pedido
-                const { data: orderData, error: orderError } = await supabase
-                .from('orders')
-                    .insert([{
-                        order_number: orderNumber,
-                        client_id: selectedClient!.id,
-                        route_id: selectedRouteForOrder?.id,
-                        order_date: orderDate.toISOString(),
-                        delivery_date: deliveryDate?.toISOString(),
-                        status: 'pending',
-                        total_amount: subtotal,
-                        payment_method: paymentMethod,
-                        notes: notes
-                    }])
-                .select()
-                .single();
+                if (isEditing && editingOrder) {
+                    // Actualizar el pedido existente
+                    const { error: orderError } = await supabase
+                        .from('orders')
+                        .update({
+                            client_id: selectedClient!.id,
+                            route_id: selectedRouteForOrder?.id,
+                            order_date: formatDateForDB(orderDate),
+                            delivery_date: deliveryDate ? formatDateForDB(deliveryDate) : null,
+                            total_amount: subtotal,
+                            payment_method: paymentMethod,
+                            notes: notes
+                        })
+                        .eq('id', editingOrder.id);
 
-                if (orderError) throw orderError;
+                    if (orderError) throw orderError;
 
-                // Crear los items del pedido
-                const orderItems = selectedItems.map(item => ({
-                    order_id: orderData.id,
-                    product_id: item.product.id,
-                    product_name: item.product.name,
-                    product_category: item.product.categoryName || '',
-                    product_variant: item.product.variant || '',
-                quantity: item.quantity,
-                unit_price: item.unitPrice,
-                    use_pagina_price: false,
-                total_price: item.totalPrice
-            }));
+                    // Eliminar items existentes
+                    const { error: deleteItemsError } = await supabase
+                        .from('order_items')
+                        .delete()
+                        .eq('order_id', editingOrder.id);
 
-            const { error: itemsError } = await supabase
-                .from('order_items')
-                    .insert(orderItems);
+                    if (deleteItemsError) throw deleteItemsError;
 
-            if (itemsError) throw itemsError;
+                    // Crear los nuevos items del pedido
+                    const orderItems = selectedItems.map(item => ({
+                        order_id: editingOrder.id,
+                        product_id: item.product.id,
+                        product_name: item.product.name,
+                        product_category: item.product.categoryName || '',
+                        product_variant: item.product.variant || '',
+                        quantity: item.quantity,
+                        unit_price: item.unitPrice,
+                        use_pagina_price: false,
+                        total_price: item.totalPrice
+                    }));
+
+                    const { error: itemsError } = await supabase
+                        .from('order_items')
+                        .insert(orderItems);
+
+                    if (itemsError) throw itemsError;
+
+                    showSuccess('¡Pedido Actualizado!', `El pedido ${orderNumber} ha sido actualizado exitosamente.`);
+                } else {
+                    // Crear el pedido
+                    const { data: orderData, error: orderError } = await supabase
+                        .from('orders')
+                        .insert([{
+                            order_number: orderNumber,
+                            client_id: selectedClient!.id,
+                            route_id: selectedRouteForOrder?.id,
+                            order_date: formatDateForDB(orderDate),
+                            delivery_date: deliveryDate ? formatDateForDB(deliveryDate) : null,
+                            status: 'pending',
+                            total_amount: subtotal,
+                            payment_method: paymentMethod,
+                            notes: notes
+                        }])
+                        .select()
+                        .single();
+
+                    if (orderError) throw orderError;
+
+                    // Crear los items del pedido
+                    const orderItems = selectedItems.map(item => ({
+                        order_id: orderData.id,
+                        product_id: item.product.id,
+                        product_name: item.product.name,
+                        product_category: item.product.categoryName || '',
+                        product_variant: item.product.variant || '',
+                        quantity: item.quantity,
+                        unit_price: item.unitPrice,
+                        use_pagina_price: false,
+                        total_price: item.totalPrice
+                    }));
+
+                    const { error: itemsError } = await supabase
+                        .from('order_items')
+                        .insert(orderItems);
+
+                    if (itemsError) throw itemsError;
+
+                    showSuccess('¡Pedido Creado!', `El pedido ${orderNumber} ha sido creado exitosamente.`);
+                }
 
                 // Actualizar la lista de pedidos
                 await fetchData();
 
                 // Cerrar modal y resetear
-            setShowCreateModal(false);
+                setShowCreateModal(false);
                 resetOrderForm();
 
-                showSuccess('¡Pedido Creado!', `El pedido ${orderNumber} ha sido creado exitosamente.`);
-
             } catch (error) {
-                handleError(error, 'crear el pedido');
+                handleError(error, isEditing ? 'actualizar el pedido' : 'crear el pedido');
             }
         }
     };
 
     // Función para resetear formulario
     const resetOrderForm = () => {
+        setEditingOrder(null);
         setSelectedRouteForOrder(null);
         setSelectedClient(null);
         setClientSearchTerm('');
@@ -535,6 +634,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         setNotes('');
         setSelectedItems([]);
         setProductSearchTerm('');
+        setQuantityInputs({});
     };
 
     // Función para cerrar modal
@@ -555,6 +655,63 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     // Función para abrir modal de edición
     const openEditModal = (order: Order) => {
         setEditingOrder(order);
+
+        // Cargar los datos del pedido en el formulario
+        setSelectedClient(clients.find(c => c.id === order.clientId) || null);
+        setClientSearchTerm(order.clientName || '');
+        setSelectedRouteForOrder(routes.find(r => r.id === order.routeId) || null);
+        setOrderDate(new Date(order.orderDate));
+        setDeliveryDate(order.deliveryDate ? new Date(order.deliveryDate) : null);
+        setPaymentMethod(order.paymentMethod);
+        setNotes(order.notes || '');
+
+        // Cargar los items del pedido
+        if (order.items && order.items.length > 0) {
+            const transformedItems = order.items.map(item => {
+                // Buscar el producto real en la lista de productos
+                const realProduct = products.find(p => p.id === item.productId);
+                if (realProduct) {
+                    return {
+                        product: realProduct,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice,
+                        totalPrice: item.totalPrice
+                    };
+                }
+                // Si no se encuentra el producto, crear uno temporal
+                const tempProduct: Product = {
+                    id: item.productId,
+                    name: item.productName,
+                    categoryId: '', // Campo requerido pero no disponible
+                    categoryName: item.productCategory,
+                    variant: item.productVariant,
+                    priceRegular: item.unitPrice,
+                    pricePage: item.unitPrice,
+                    isActive: true,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                };
+                return {
+                    product: tempProduct,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                    totalPrice: item.totalPrice
+                };
+            });
+
+            setSelectedItems(transformedItems);
+
+            // Establecer los valores de los inputs de cantidad
+            const quantityInputs: { [key: string]: string } = {};
+            transformedItems.forEach(item => {
+                quantityInputs[item.product.id] = item.quantity.toString();
+            });
+            setQuantityInputs(quantityInputs);
+        } else {
+            setSelectedItems([]);
+            setQuantityInputs({});
+        }
+
         setShowCreateModal(true);
     };
 
@@ -601,6 +758,67 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             await fetchData();
         } catch (error) {
             handleError(error, 'actualizar el estado del pedido');
+        }
+    };
+
+    // Función para manejar selección múltiple de pedidos
+    const handleOrderSelection = (orderId: string, isSelected: boolean) => {
+        if (isSelected) {
+            setSelectedOrders(prev => [...prev, orderId]);
+        } else {
+            setSelectedOrders(prev => prev.filter(id => id !== orderId));
+        }
+    };
+
+    // Función para seleccionar/deseleccionar todos los pedidos
+    const handleSelectAllOrders = (selectAll: boolean) => {
+        if (selectAll) {
+            setSelectedOrders(filteredOrders.map(order => order.id));
+        } else {
+            setSelectedOrders([]);
+        }
+    };
+
+    // Función para aplicar acciones masivas
+    const handleBulkAction = async () => {
+        if (selectedOrders.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No hay pedidos seleccionados',
+                text: 'Por favor, selecciona al menos un pedido para aplicar la acción.',
+                confirmButtonColor: '#3085d6'
+            });
+            return;
+        }
+
+        try {
+            const updateData: any = {};
+
+            if (bulkActionType === 'status') {
+                updateData.status = bulkStatus;
+            } else if (bulkActionType === 'delivery_date') {
+                updateData.delivery_date = bulkDeliveryDate ? formatDateForDB(bulkDeliveryDate) : null;
+            }
+
+            const { error } = await supabase
+                .from('orders')
+                .update(updateData)
+                .in('id', selectedOrders);
+
+            if (error) throw error;
+
+            await fetchData();
+            setSelectedOrders([]);
+            setShowBulkActionsModal(false);
+
+            const actionText = bulkActionType === 'status'
+                ? `estado a "${getStatusInSpanish(bulkStatus)}"`
+                : `fecha de entrega a "${bulkDeliveryDate?.toLocaleDateString('es-ES')}"`;
+
+            showSuccess('Acción aplicada', `Se ha actualizado el ${actionText} en ${selectedOrders.length} pedido(s).`);
+
+        } catch (error) {
+            handleError(error, 'aplicar la acción masiva');
         }
     };
 
@@ -711,7 +929,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
 
             setSelectedOrder(orderWithItems);
-        setShowPrintModal(true);
+            setShowPrintModal(true);
         } catch (error) {
             handleError(error, 'preparar la vista previa del pedido');
         }
@@ -890,7 +1108,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 heightLeft -= pageHeight;
             }
 
-            const filterText = routeFilter ? `-Filtro-Ruta-${routes.find(r => r.id === routeFilter)?.identificador}` : '';
+            const routeFilterText = routeFilter ? `-Ruta-${routes.find(r => r.id === routeFilter)?.identificador}` : '';
+            const dateFilterText = dateFilterValue ? `-${dateFilterType === 'order' ? 'Registro' : 'Entrega'}-${dateFilterValue.toLocaleDateString('es-ES').replace(/\//g, '-')}` : '';
+            const filterText = routeFilterText + dateFilterText;
             pdf.save(`Reporte-Pedidos${filterText}-${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`);
         } catch (error) {
             console.error('Error generando PDF de exportación:', error);
@@ -925,6 +1145,11 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             filtered = filtered.filter(order => order.routeId === routeFilter);
         }
 
+        // Aplicar filtro de fecha
+        if (dateFilterValue) {
+            filtered = filtered.filter(order => orderMatchesDateFilter(order, dateFilterValue, dateFilterType));
+        }
+
         return filtered;
     };
 
@@ -933,8 +1158,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         .filter(order => {
             const matchesSearch = orderMatchesSearch(order, searchTerm);
             const matchesRouteFilter = orderMatchesRouteFilter(order, routeFilter);
-        return matchesSearch && matchesRouteFilter;
-    });
+            const matchesDateFilter = orderMatchesDateFilter(order, dateFilterValue, dateFilterType);
+            return matchesSearch && matchesRouteFilter && matchesDateFilter;
+        });
 
 
 
@@ -987,51 +1213,90 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
                     {/* Search and Filters */}
                     <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Buscar por número de pedido, cliente, teléfono, estado o código de ruta..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
-                                />
-                            </div>
-                            <div>
-                                <select
-                                    value={routeFilter}
-                                    onChange={(e) => setRouteFilter(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
-                                >
-                                    <option value="">Todas las rutas</option>
-                                    {routes.filter(route => route.isActive).map((route) => (
-                                        <option key={route.id} value={route.id}>
-                                            {route.identificador} - {route.nombre}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <button
-                                    onClick={openExportModal}
-                                    className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                                >
-                                    <Printer className="h-4 w-4" />
-                                    <span>Exportar</span>
-                                </button>
-                                {(searchTerm || routeFilter) && (
-                                    <button
-                                        onClick={() => {
-                                            setSearchTerm('');
-                                            setRouteFilter('');
-                                        }}
-                                        className="flex items-center space-x-2 bg-gray-500 text-white px-3 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                        <div className="space-y-4">
+                            {/* Primera fila: Búsqueda y Ruta */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar por número de pedido, cliente, teléfono, estado o código de ruta..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
+                                    />
+                                </div>
+                                <div>
+                                    <select
+                                        value={routeFilter}
+                                        onChange={(e) => setRouteFilter(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900"
                                     >
-                                        <X className="h-4 w-4" />
-                                        <span>Limpiar</span>
+                                        <option value="">Todas las rutas</option>
+                                        {routes.filter(route => route.isActive).map((route) => (
+                                            <option key={route.id} value={route.id}>
+                                                {route.identificador} - {route.nombre}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Segunda fila: Filtro de fecha y botones */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700">Filtrar por fecha</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <select
+                                            value={dateFilterType}
+                                            onChange={(e) => setDateFilterType(e.target.value as 'order' | 'delivery')}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 text-sm"
+                                        >
+                                            <option value="order">Fecha de registro</option>
+                                            <option value="delivery">Fecha de entrega</option>
+                                        </select>
+                                        <DatePicker
+                                            selected={dateFilterValue}
+                                            onChange={(date) => setDateFilterValue(date)}
+                                            placeholderText="Seleccionar fecha"
+                                            dateFormat="dd/MM/yyyy"
+                                            isClearable
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 text-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <button
+                                        onClick={openExportModal}
+                                        className="flex items-center justify-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm"
+                                    >
+                                        <Printer className="h-4 w-4" />
+                                        <span>Exportar</span>
                                     </button>
-                                )}
+                                    {selectedOrders.length > 0 && (
+                                        <button
+                                            onClick={() => setShowBulkActionsModal(true)}
+                                            className="flex items-center justify-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                                        >
+                                            <Check className="h-4 w-4" />
+                                            <span>Acciones ({selectedOrders.length})</span>
+                                        </button>
+                                    )}
+                                    {(searchTerm || routeFilter || dateFilterValue) && (
+                                        <button
+                                            onClick={() => {
+                                                setSearchTerm('');
+                                                setRouteFilter('');
+                                                setDateFilterValue(null);
+                                            }}
+                                            className="flex items-center justify-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm"
+                                        >
+                                            <X className="h-4 w-4" />
+                                            <span>Limpiar</span>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1043,6 +1308,14 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
+                                                onChange={(e) => handleSelectAllOrders(e.target.checked)}
+                                                className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                                            />
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Número de pedido
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1052,7 +1325,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             Ruta
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Fecha
+                                            Fecha de registro
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Fecha de entrega
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Estado
@@ -1068,6 +1344,14 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {filteredOrders.map((order) => (
                                         <tr key={order.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedOrders.includes(order.id)}
+                                                    onChange={(e) => handleOrderSelection(order.id, e.target.checked)}
+                                                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                                                />
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
                                                     <div className="flex-shrink-0 h-10 w-10">
@@ -1108,6 +1392,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {order.orderDate.toLocaleDateString('es-ES')}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {order.deliveryDate ? order.deliveryDate.toLocaleDateString('es-ES') : 'Sin fecha'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <select
@@ -1222,7 +1509,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                         {/* Header */}
                         <div className="p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Crear Nuevo Pedido</h3>
+                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                                    {editingOrder ? 'Editar Pedido' : 'Crear Nuevo Pedido'}
+                                </h3>
                                 <button
                                     onClick={closeModal}
                                     className="text-gray-400 hover:text-gray-600 p-1"
@@ -1267,9 +1556,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             Buscar Cliente *
                                         </label>
                                         <div className="relative">
-                                        <input
-                                            type="text"
-                                            value={clientSearchTerm}
+                                            <input
+                                                type="text"
+                                                value={clientSearchTerm}
                                                 onChange={(e) => setClientSearchTerm(e.target.value)}
                                                 className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 text-sm sm:text-base"
                                                 placeholder="Buscar cliente..."
@@ -1306,7 +1595,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                     </div>
 
 
-                                        </div>
+                                </div>
 
                                 {/* Middle Column - Order Information */}
                                 <div className="space-y-4 sm:space-y-6">
@@ -1314,10 +1603,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                        <div>
+                                            <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                                     Fecha del Pedido *
-                                            </label>
+                                                </label>
                                                 <DatePicker
                                                     selected={orderDate}
                                                     onChange={(date: Date | null) => date && setOrderDate(date)}
@@ -1325,12 +1614,12 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                     dateFormat="dd/MM/yyyy"
                                                     placeholderText="Seleccionar fecha"
                                                 />
-                                    </div>
+                                            </div>
 
-                                    <div>
+                                            <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                                     Fecha de Entrega
-                                        </label>
+                                                </label>
                                                 <DatePicker
                                                     selected={deliveryDate}
                                                     onChange={(date: Date | null) => setDeliveryDate(date)}
@@ -1338,8 +1627,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                     dateFormat="dd/MM/yyyy"
                                                     placeholderText="Seleccionar fecha (opcional)"
                                                     minDate={orderDate}
-                                        />
-                                    </div>
+                                                />
+                                            </div>
                                         </div>
 
                                         <div>
@@ -1357,13 +1646,13 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                     </option>
                                                 ))}
                                             </select>
-                                    </div>
+                                        </div>
 
-                                    <div>
+                                        <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Notas Adicionales
-                                        </label>
-                                        <textarea
+                                            </label>
+                                            <textarea
                                                 value={notes}
                                                 onChange={(e) => setNotes(e.target.value)}
                                                 rows={3}
@@ -1393,12 +1682,27 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                         <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                                     </div>
 
+                                    {/* Current Products Info (when editing) */}
+                                    {editingOrder && selectedItems.length > 0 && (
+                                        <div className="p-3 bg-blue-50 rounded-lg">
+                                            <h5 className="font-medium text-blue-900 mb-2">Productos actuales del pedido:</h5>
+                                            <div className="space-y-1">
+                                                {selectedItems.map((item) => (
+                                                    <div key={item.product.id} className="flex justify-between text-sm">
+                                                        <span className="text-blue-800">{item.product.name} x {item.quantity}</span>
+                                                        <span className="text-blue-700 font-medium">${item.totalPrice.toFixed(2)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Product Results */}
                                     {productSearchTerm && filteredProducts.length > 0 && (
                                         <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
-                                                {filteredProducts.map((product) => (
-                                                    <button
-                                                        key={product.id}
+                                            {filteredProducts.map((product) => (
+                                                <button
+                                                    key={product.id}
                                                     onClick={() => addProduct(product, 1)}
                                                     className="w-full text-left p-2 sm:p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
                                                 >
@@ -1411,11 +1715,11 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                             <div className="font-medium text-green-600 text-sm sm:text-base">${product.priceRegular?.toFixed(2) || '0.00'}</div>
                                                             <div className="text-xs text-gray-500">Click para agregar</div>
                                                         </div>
-                                                        </div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
 
                                     {/* Selected Products */}
                                     {selectedItems.length > 0 ? (
@@ -1427,50 +1731,50 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                         <div className="flex-1 min-w-0">
                                                             <div className="font-medium text-gray-900 text-sm sm:text-base truncate">{item.product.name}</div>
                                                             <div className="text-xs sm:text-sm text-gray-600 truncate">{item.product.categoryName}</div>
-                                            </div>
+                                                        </div>
                                                         <div className="flex items-center space-x-2 sm:space-x-3 ml-2">
                                                             <div className="flex items-center space-x-1 sm:space-x-2">
                                                                 <label className="text-xs sm:text-sm text-gray-700">Cant:</label>
-                                                                    <input
-                                                                        type="number"
-                                                                        min="1"
-                                                                        value={item.quantity}
-                                                                    onChange={(e) => updateQuantity(item.product.id, parseInt(e.target.value) || 1)}
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="0"
+                                                                    value={quantityInputs[item.product.id] || ''}
+                                                                    onChange={(e) => updateQuantity(item.product.id, e.target.value)}
                                                                     className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-center text-xs sm:text-sm"
-                                                                    />
-                                                                </div>
+                                                                />
+                                                            </div>
                                                             <div className="text-right">
                                                                 <div className="text-xs sm:text-sm text-gray-600">${item.unitPrice.toFixed(2)} c/u</div>
                                                                 <div className="font-medium text-green-600 text-sm sm:text-base">${item.totalPrice.toFixed(2)}</div>
-                                                                </div>
+                                                            </div>
                                                             <button
                                                                 onClick={() => removeProduct(item.product.id)}
                                                                 className="text-red-500 hover:text-red-700 p-1"
                                                             >
                                                                 <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                                                             </button>
-                                                                </div>
-                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 ))}
-                                                                </div>
+                                            </div>
 
                                             <div className="p-3 sm:p-4 bg-orange-50 rounded-lg">
-                                                    <div className="flex justify-between items-center">
+                                                <div className="flex justify-between items-center">
                                                     <span className="text-base sm:text-lg font-semibold text-gray-900">Total:</span>
                                                     <span className="text-lg sm:text-xl font-bold text-orange-600">${calculateSubtotal().toFixed(2)}</span>
-                                                    </div>
                                                 </div>
                                             </div>
+                                        </div>
                                     ) : (
                                         <div className="text-center py-6 sm:py-8 text-gray-500">
                                             <Package className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 text-gray-300" />
                                             <p className="text-sm sm:text-base">No hay productos agregados</p>
                                             <p className="text-xs sm:text-sm">Busca y agrega productos al pedido</p>
-                                            </div>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+                        </div>
 
                         {/* Footer */}
                         <div className="p-4 sm:p-6 border-t border-gray-200 flex-shrink-0">
@@ -1488,7 +1792,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                     className="flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                                 >
                                     <Check className="h-4 w-4" />
-                                    <span>Crear Pedido</span>
+                                    <span>{editingOrder ? 'Actualizar Pedido' : 'Crear Pedido'}</span>
                                 </button>
                             </div>
                         </div>
@@ -1574,16 +1878,16 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                     <tbody>
                                         {selectedOrder.items && selectedOrder.items.length > 0 ? (
                                             selectedOrder.items.map((item, index) => (
-                                            <tr key={index}>
+                                                <tr key={index}>
                                                     <td style={{ border: '1px solid #d1d5db', padding: '12px' }}>
-                                                    <div>
+                                                        <div>
                                                             <div style={{ color: '#000000', fontWeight: '500' }}>{item.productName}</div>
-                                                    </div>
-                                                </td>
+                                                        </div>
+                                                    </td>
                                                     <td style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'center', color: '#000000' }}>{item.quantity}</td>
                                                     <td style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'right', color: '#000000' }}>${item.unitPrice.toFixed(2)}</td>
                                                     <td style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'right', fontWeight: '500', color: '#000000' }}>${item.totalPrice.toFixed(2)}</td>
-                                            </tr>
+                                                </tr>
                                             ))
                                         ) : (
                                             <tr>
@@ -1845,11 +2149,16 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             <p className="text-sm text-gray-500">
                                                 Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
                                             </p>
-                                            {(searchTerm || routeFilter) && (
+                                            {(searchTerm || routeFilter || dateFilterValue) && (
                                                 <div className="mt-2 p-2 bg-gray-50 rounded-lg">
                                                     <p className="text-sm font-medium text-gray-700">Filtros aplicados:</p>
                                                     {searchTerm && <p className="text-sm text-gray-600">• Búsqueda: "{searchTerm}"</p>}
                                                     {routeFilterInfo && <p className="text-sm text-gray-600">• Ruta: {routeFilterInfo.identificador} - {routeFilterInfo.nombre}</p>}
+                                                    {dateFilterValue && (
+                                                        <p className="text-sm text-gray-600">
+                                                            • Fecha de {dateFilterType === 'order' ? 'registro' : 'entrega'}: {dateFilterValue.toLocaleDateString('es-ES')}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -1929,6 +2238,84 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                     </div>
                                 );
                             })()}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Actions Modal */}
+            {showBulkActionsModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+                        <div className="p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                Acciones Masivas ({selectedOrders.length} pedidos)
+                            </h3>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Tipo de acción
+                                    </label>
+                                    <select
+                                        value={bulkActionType}
+                                        onChange={(e) => setBulkActionType(e.target.value as 'status' | 'delivery_date')}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                    >
+                                        <option value="status">Cambiar estado</option>
+                                        <option value="delivery_date">Cambiar fecha de entrega</option>
+                                    </select>
+                                </div>
+
+                                {bulkActionType === 'status' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Nuevo estado
+                                        </label>
+                                        <select
+                                            value={bulkStatus}
+                                            onChange={(e) => setBulkStatus(e.target.value as Order['status'])}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        >
+                                            <option value="pending">Pendiente</option>
+                                            <option value="ready">Listo</option>
+                                            <option value="delivered">Entregado</option>
+                                            <option value="cancelled">Cancelado</option>
+                                        </select>
+                                    </div>
+                                )}
+
+                                {bulkActionType === 'delivery_date' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Nueva fecha de entrega
+                                        </label>
+                                        <DatePicker
+                                            selected={bulkDeliveryDate}
+                                            onChange={(date) => setBulkDeliveryDate(date)}
+                                            placeholderText="Seleccionar fecha"
+                                            dateFormat="dd/MM/yyyy"
+                                            isClearable
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex justify-end space-x-3 mt-6">
+                                <button
+                                    onClick={() => setShowBulkActionsModal(false)}
+                                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleBulkAction}
+                                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                >
+                                    Aplicar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

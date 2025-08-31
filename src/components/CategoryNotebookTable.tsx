@@ -141,9 +141,7 @@ export default function CategoryNotebookTable({
                                                             {product.name}
                                                         </th>
                                                     ))}
-                                                    <th className="border border-gray-300 px-3 py-2 text-center text-black font-semibold" style={{ width: '120px' }}>
-                                                        TOTAL
-                                                    </th>
+
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -162,31 +160,14 @@ export default function CategoryNotebookTable({
                                                                 return (
                                                                     <td key={product.id} className="border border-gray-300 px-2 py-2 text-center">
                                                                         {quantity > 0 ? (
-                                                                            <input
-                                                                                type="number"
-                                                                                value={quantity}
-                                                                                onChange={(e) => handleQuantityChange(client.id, product.id, parseInt(e.target.value) || 0)}
-                                                                                className={`w-16 px-1 py-1 border rounded-md text-center ${isEditing ? 'border-green-500 bg-green-50' : 'border-gray-300'}`}
-                                                                                disabled={isUpdating}
-                                                                            />
+                                                                            <span className="text-black font-medium">{quantity}</span>
                                                                         ) : (
-                                                                            <button
-                                                                                onClick={() => handleQuantityChange(client.id, product.id, 1)}
-                                                                                disabled={isUpdating}
-                                                                                className={`text-green-500 hover:text-green-700 ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                            >
-                                                                                <Plus className="h-4 w-4" />
-                                                                            </button>
+                                                                            <span className="text-gray-400">-</span>
                                                                         )}
                                                                     </td>
                                                                 );
                                                             })}
-                                                            <td className="border border-gray-300 px-3 py-2 text-black font-medium text-center">
-                                                                <div className="flex flex-col">
-                                                                    <span className="font-bold">{clientTotal.quantity}</span>
-                                                                    <span className="text-xs">${clientTotal.amount.toFixed(2)}</span>
-                                                                </div>
-                                                            </td>
+
                                                         </tr>
                                                     );
                                                 })}
@@ -206,12 +187,7 @@ export default function CategoryNotebookTable({
                                                             </td>
                                                         );
                                                     })}
-                                                    <td className="border border-gray-300 px-3 py-2 text-black font-bold text-center">
-                                                        <div className="flex flex-col">
-                                                            <span className="font-bold">{routeTotal.quantity}</span>
-                                                            <span className="text-xs">${routeTotal.amount.toFixed(2)}</span>
-                                                        </div>
-                                                    </td>
+
                                                 </tr>
                                             </tbody>
                                         </table>
