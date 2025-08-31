@@ -31,6 +31,8 @@ export interface Order {
   paymentMethod: PaymentMethod;
   notes?: string;
   items?: OrderItem[];
+  totalItems?: number;
+  productsSummary?: string;
   createdAt: Date;
   updatedAt: Date;
 }

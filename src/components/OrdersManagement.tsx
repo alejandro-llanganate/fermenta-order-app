@@ -257,7 +257,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
             // Fetch orders
             const { data: ordersData, error: ordersError } = await supabase
-                .from('orders_with_details')
+                .from('orders_summary')
                 .select('*')
                 .order('created_at', { ascending: false });
 
@@ -275,6 +275,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 deliveryDate: order.delivery_date ? parseDateFromDB(order.delivery_date) : null,
                 totalAmount: parseFloat(order.total_amount) || 0,
                 paymentMethod: order.payment_method || 'Efectivo',
+                totalItems: order.total_items || 0,
+                productsSummary: order.products_summary || '',
                 createdAt: new Date(order.created_at),
                 updatedAt: new Date(order.updated_at)
             }));
