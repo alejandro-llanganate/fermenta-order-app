@@ -278,10 +278,43 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 totalItems: order.total_items || 0,
                 productsSummary: order.products_summary || '',
                 createdAt: new Date(order.created_at),
-                updatedAt: new Date(order.updated_at)
+                updatedAt: new Date(order.updated_at),
+                items: [] // Inicializar items vacío
             }));
 
-            setOrders(transformedOrders);
+            // Ahora cargar los items para cada pedido
+            const ordersWithItems = await Promise.all(
+                transformedOrders.map(async (order) => {
+                    const { data: itemsData, error: itemsError } = await supabase
+                        .from('order_items')
+                        .select('*')
+                        .eq('order_id', order.id);
+
+                    if (itemsError) {
+                        console.error('Error fetching items for order:', order.id, itemsError);
+                        return order;
+                    }
+
+                    const items = (itemsData || []).map(item => ({
+                        id: item.id,
+                        productId: item.product_id,
+                        productName: item.product_name,
+                        productCategory: item.product_category,
+                        productVariant: item.product_variant,
+                        quantity: item.quantity,
+                        unitPrice: parseFloat(item.unit_price),
+                        totalPrice: parseFloat(item.total_price),
+                        usesSpecialPrice: item.uses_special_price || false
+                    }));
+
+                    return {
+                        ...order,
+                        items
+                    };
+                })
+            );
+
+            setOrders(ordersWithItems);
 
             // Fetch products with categories
             const { data: productsData, error: productsError } = await supabase
@@ -723,6 +756,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
     // Función para abrir modal de edición
     const openEditModal = (order: Order) => {
+        console.log('🔍 Abriendo modal de edición para pedido:', order);
+        console.log('📦 Items del pedido:', order.items);
+        
         setEditingOrder(order);
 
         // Cargar los datos del pedido en el formulario
@@ -736,19 +772,29 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
         // Cargar los items del pedido
         if (order.items && order.items.length > 0) {
+            console.log('📦 Procesando', order.items.length, 'items del pedido');
+            
             const transformedItems = order.items.map(item => {
+                console.log('🔍 Procesando item:', item);
+                
                 // Buscar el producto real en la lista de productos
                 const realProduct = products.find(p => p.id === item.productId);
+                console.log('🔍 Producto real encontrado:', realProduct);
+                
                 if (realProduct) {
-                    return {
+                    const transformedItem = {
                         product: realProduct,
                         quantity: item.quantity,
                         unitPrice: item.unitPrice,
                         totalPrice: item.totalPrice,
                         usesSpecialPrice: item.usesSpecialPrice || false
                     };
+                    console.log('✅ Item transformado con producto real:', transformedItem);
+                    return transformedItem;
                 }
+                
                 // Si no se encuentra el producto, crear uno temporal
+                console.log('⚠️ Producto no encontrado, creando temporal');
                 const tempProduct: Product = {
                     id: item.productId,
                     name: item.productName,
@@ -761,15 +807,18 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     createdAt: new Date(),
                     updatedAt: new Date()
                 };
-                return {
+                const transformedItem = {
                     product: tempProduct,
                     quantity: item.quantity,
                     unitPrice: item.unitPrice,
                     totalPrice: item.totalPrice,
                     usesSpecialPrice: item.usesSpecialPrice || false
                 };
+                console.log('✅ Item transformado con producto temporal:', transformedItem);
+                return transformedItem;
             });
 
+            console.log('📦 Total items transformados:', transformedItems.length);
             setSelectedItems(transformedItems);
 
             // Establecer los valores de los inputs de cantidad
@@ -778,7 +827,11 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 quantityInputs[item.product.id] = item.quantity.toString();
             });
             setQuantityInputs(quantityInputs);
+            
+            console.log('💾 selectedItems establecido:', transformedItems.length, 'items');
+            console.log('💾 quantityInputs establecido:', Object.keys(quantityInputs).length, 'inputs');
         } else {
+            console.log('⚠️ No hay items en el pedido o items es undefined');
             setSelectedItems([]);
             setQuantityInputs({});
         }
