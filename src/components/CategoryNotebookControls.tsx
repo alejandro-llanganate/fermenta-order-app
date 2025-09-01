@@ -6,6 +6,8 @@ interface CategoryNotebookControlsProps {
     setSelectedDate: (date: Date) => void;
     selectedCategory: string;
     setSelectedCategory: (category: string) => void;
+    dateFilterType: 'order' | 'delivery';
+    setDateFilterType: (type: 'order' | 'delivery') => void;
     productCategories: ProductCategory[];
     orders: any[]; // Should be Order[]
     isUpdating: boolean;
@@ -18,6 +20,8 @@ export default function CategoryNotebookControls({
     setSelectedDate,
     selectedCategory,
     setSelectedCategory,
+    dateFilterType,
+    setDateFilterType,
     productCategories,
     orders,
     isUpdating,
@@ -26,7 +30,22 @@ export default function CategoryNotebookControls({
 }: CategoryNotebookControlsProps) {
     return (
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Date Filter Type Selector */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        FILTRAR POR
+                    </label>
+                    <select
+                        value={dateFilterType}
+                        onChange={(e) => setDateFilterType(e.target.value as 'order' | 'delivery')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    >
+                        <option value="order">Fecha de Registro</option>
+                        <option value="delivery">Fecha de Entrega</option>
+                    </select>
+                </div>
+
                 {/* Date Selector */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

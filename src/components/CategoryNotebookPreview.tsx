@@ -11,6 +11,7 @@ interface CategoryNotebookPreviewProps {
     isGeneratingPDF: boolean;
     selectedDate: Date;
     selectedCategory: string;
+    dateFilterType: 'order' | 'delivery';
     productCategories: ProductCategory[];
     routes: Route[];
     getClientsWithOrders: (categoryId?: string) => any[];
@@ -28,6 +29,7 @@ export default function CategoryNotebookPreview({
     isGeneratingPDF,
     selectedDate,
     selectedCategory,
+    dateFilterType,
     productCategories,
     routes,
     getClientsWithOrders,
@@ -66,6 +68,7 @@ export default function CategoryNotebookPreview({
         exportToExcel({
             selectedDate,
             selectedCategory,
+            dateFilterType,
             categoryProducts: categoryProductsWithOrders,
             clientsByRoute,
             getQuantityForClientAndProduct,
@@ -94,19 +97,22 @@ export default function CategoryNotebookPreview({
     // Usar la función para obtener productos filtrados
     const categoryProductsWithOrders = getProductsWithOrders();
 
-    // Función para paginar contenido (igual que en PDF)
+    // Función para paginar contenido (EXACTAMENTE IGUAL QUE EN PDF - Mismos cálculos y lógica)
+    // OPTIMIZADO: Balance entre no cortar tablas y aprovechar máximo espacio
     const paginateContent = () => {
         const pages = [];
         let currentPage = [];
         let currentPageHeight = 0;
-        const maxPageHeight = 220;
+        const maxPageHeight = 200; // OPTIMIZADO: Balance entre seguridad y aprovechamiento
 
-        // Altura estimada de elementos
-        const headerHeight = 30;
-        const productTotalsHeight = 20;
-        const routeHeaderHeight = 10;
-        const tableRowHeight = 8;
-        const tableHeaderHeight = 6;
+        // Altura estimada de elementos (OPTIMIZADA para máximo aprovechamiento)
+        // Valores realistas pero con margen de seguridad mínimo
+        const headerHeight = 35;
+        const productTotalsHeight = 25;
+        const routeHeaderHeight = 12;
+        const tableRowHeight = 10;
+        const tableHeaderHeight = 8;
+        const marginBuffer = 10; // Buffer OPTIMIZADO para máximo aprovechamiento
 
         // Agregar header y totales a la primera página
         const allClients = getClientsWithOrders(selectedCategory);
@@ -116,7 +122,7 @@ export default function CategoryNotebookPreview({
         })).filter(group => group.clients.length > 0);
 
         if (clientsByRoute.length > 0) {
-            currentPageHeight = headerHeight + productTotalsHeight;
+            currentPageHeight = headerHeight + productTotalsHeight + marginBuffer;
         }
 
         // Agrupar tablas pequeñas para mejor distribución
@@ -125,10 +131,10 @@ export default function CategoryNotebookPreview({
         let currentGroupHeight = 0;
 
         for (const { route, clients } of clientsByRoute) {
-            const tableHeight = routeHeaderHeight + tableHeaderHeight + (clients.length * tableRowHeight);
+            const tableHeight = routeHeaderHeight + tableHeaderHeight + (clients.length * tableRowHeight) + marginBuffer;
 
-            // Si la tabla es pequeña (menos de 50mm) y hay espacio, agruparla
-            if (tableHeight < 50 && currentGroupHeight + tableHeight < 100) {
+            // Si la tabla es pequeña (menos de 70mm) y hay espacio, agruparla
+            if (tableHeight < 70 && currentGroupHeight + tableHeight < 120) {
                 currentGroup.push({ route, clients, tableHeight });
                 currentGroupHeight += tableHeight;
             } else {
@@ -140,7 +146,7 @@ export default function CategoryNotebookPreview({
                 }
 
                 // Si la tabla es grande, agregarla sola
-                if (tableHeight >= 50) {
+                if (tableHeight >= 70) {
                     groupedRoutes.push({ type: 'single', route, clients, tableHeight });
                 } else {
                     // Iniciar nuevo grupo con esta tabla pequeña
@@ -155,17 +161,19 @@ export default function CategoryNotebookPreview({
             groupedRoutes.push({ type: 'group', tables: currentGroup });
         }
 
-        // Distribuir en páginas
+        // Distribuir en páginas con lógica optimizada para aprovechar máximo espacio (IGUAL QUE PDF)
         for (const item of groupedRoutes) {
             if (item.type === 'group' && item.tables) {
                 // Calcular altura total del grupo
                 const groupHeight = item.tables.reduce((sum, table) => sum + table.tableHeight, 0);
 
-                // Si el grupo no cabe en la página actual, crear nueva página
+                // Verificar si el grupo cabe en la página actual
                 if (currentPageHeight + groupHeight > maxPageHeight && currentPage.length > 0) {
+                    // Crear nueva página solo si realmente no cabe
                     pages.push([...currentPage]);
                     currentPage = [];
                     currentPageHeight = 0;
+                    console.log(`🔄 Nueva página creada - Grupo no cabía (altura: ${groupHeight}, límite: ${maxPageHeight})`);
                 }
 
                 // Agregar todas las tablas del grupo
@@ -173,16 +181,22 @@ export default function CategoryNotebookPreview({
                     currentPage.push({ type: 'route', route: table.route, clients: table.clients });
                 });
                 currentPageHeight += groupHeight;
+
+                console.log(`✅ Grupo de ${item.tables.length} tablas pequeñas agregado - altura total: ${groupHeight}, página actual: ${currentPageHeight}/${maxPageHeight}`);
             } else if (item.type === 'single' && item.tableHeight !== undefined) {
-                // Tabla individual
+                // Tabla individual - verificar si cabe completamente
                 if (currentPageHeight + item.tableHeight > maxPageHeight && currentPage.length > 0) {
+                    // Crear nueva página solo si la tabla no cabe completamente
                     pages.push([...currentPage]);
                     currentPage = [];
                     currentPageHeight = 0;
+                    console.log(`🔄 Nueva página creada - Tabla individual no cabía completamente (altura: ${item.tableHeight}, límite: ${maxPageHeight})`);
                 }
 
                 currentPage.push({ type: 'route', route: item.route, clients: item.clients });
                 currentPageHeight += item.tableHeight;
+
+                console.log(`✅ Tabla individual ${item.route.nombre} agregada - altura: ${item.tableHeight}, página actual: ${currentPageHeight}/${maxPageHeight}`);
             }
         }
 
@@ -190,6 +204,32 @@ export default function CategoryNotebookPreview({
         if (currentPage.length > 0) {
             pages.push(currentPage);
         }
+
+        // Optimización final: verificar si se puede aprovechar mejor el espacio (IGUAL QUE PDF)
+        console.log(`📊 Total de páginas generadas: ${pages.length}`);
+
+        // Mostrar estadísticas de uso de espacio por página y sugerir optimizaciones
+        pages.forEach((page, index) => {
+            const pageHeight = page.reduce((sum, item) => {
+                if (item.type === 'route') {
+                    const clients = item.clients;
+                    return sum + routeHeaderHeight + tableHeaderHeight + (clients.length * tableRowHeight) + marginBuffer;
+                }
+                return sum;
+            }, headerHeight + productTotalsHeight + marginBuffer);
+
+            const spaceUsage = ((pageHeight / maxPageHeight) * 100).toFixed(1);
+            const remainingSpace = maxPageHeight - pageHeight;
+
+            console.log(`📄 Página ${index + 1}: ${spaceUsage}% de espacio utilizado (${pageHeight}/${maxPageHeight})`);
+
+            // Sugerir optimizaciones si hay mucho espacio desperdiciado
+            if (remainingSpace > 50) {
+                console.log(`💡 Página ${index + 1}: Se desperdician ${remainingSpace}mm - Podría caber 1-2 tablas pequeñas más`);
+            } else if (remainingSpace > 30) {
+                console.log(`💡 Página ${index + 1}: Se desperdician ${remainingSpace}mm - Podría caber 1 tabla pequeña más`);
+            }
+        });
 
         return pages;
     };
@@ -244,12 +284,30 @@ export default function CategoryNotebookPreview({
                     </div>
                 </div>
 
-                {/* A5 Print Content - Vista previa paginada */}
+                {/* A5 Print Content - Vista previa paginada con líneas de separación */}
                 <div ref={printRef} className="p-2">
                     {pages.map((pageData, pageIndex) => (
-                        <div key={pageIndex} className="mb-4">
-                            {/* A5 Container - 148mm x 210mm */}
-                            <div className="mx-auto bg-white border border-gray-300" style={{ width: '148mm', minHeight: '210mm', padding: '8mm' }}>
+                        <div key={pageIndex} className="mb-8 relative">
+                            {/* Línea de separación superior */}
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-red-500 opacity-60"></div>
+
+                            {/* A5 Container - 148mm x 210mm con líneas de separación visuales */}
+                            <div className="mx-auto bg-white border-2 border-red-400 relative" style={{ width: '148mm', minHeight: '210mm', padding: '8mm' }}>
+                                {/* Líneas de separación A5 - Esquinas */}
+                                <div className="absolute top-0 left-0 w-3 h-3 border-l-2 border-t-2 border-red-500"></div>
+                                <div className="absolute top-0 right-0 w-3 h-3 border-r-2 border-t-2 border-red-500"></div>
+                                <div className="absolute bottom-0 left-0 w-3 h-3 border-l-2 border-b-2 border-red-500"></div>
+                                <div className="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2 border-red-500"></div>
+
+                                {/* Línea de separación de página */}
+                                <div className="absolute top-0 left-0 right-0 h-0.5 bg-red-500 opacity-80"></div>
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500 opacity-80"></div>
+
+                                {/* Indicador de página A5 */}
+                                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded font-bold">
+                                    A5 - Página {pageIndex + 1}
+                                </div>
+
                                 <div className="space-y-2">
                                     {/* Header solo en la primera página */}
                                     {pageIndex === 0 && (
@@ -258,6 +316,9 @@ export default function CategoryNotebookPreview({
                                             <h2 className="text-sm font-semibold text-gray-800">PEDIDOS POR CATEGORÍAS</h2>
                                             <p className="text-xs text-gray-600">
                                                 DÍA: {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}
+                                            </p>
+                                            <p className="text-xs text-gray-600">
+                                                FILTRADO POR: {dateFilterType === 'order' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                                             </p>
                                             {selectedCategory && (
                                                 <p className="text-xs text-gray-600">
@@ -350,6 +411,9 @@ export default function CategoryNotebookPreview({
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Línea de separación inferior */}
+                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500 opacity-60"></div>
                         </div>
                     ))}
                 </div>

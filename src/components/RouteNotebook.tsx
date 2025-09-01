@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import Footer from './Footer';
 import RouteNotebookHeader from './RouteNotebookHeader';
@@ -30,15 +30,28 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     const [isUpdating, setIsUpdating] = useState(false);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [showColumnOrderModal, setShowColumnOrderModal] = useState(false);
+    const [columnOrderVersion, setColumnOrderVersion] = useState(0); // Para forzar re-render
     const printRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchData();
     }, []);
 
+    // Listener para cambios en localStorage del orden de columnas
+    useEffect(() => {
+        const handleLocalChange = () => {
+            setColumnOrderVersion(prev => prev + 1);
+        };
+
+        window.addEventListener('megaDonutColumnOrderChanged', handleLocalChange);
+
+        return () => {
+            window.removeEventListener('megaDonutColumnOrderChanged', handleLocalChange);
+        };
+    }, []);
+
     useEffect(() => {
         if (selectedDate) {
-            console.log('🔄 useEffect triggered - fetching orders for', dateFilterType, 'date:', selectedDate.toISOString().split('T')[0]);
             fetchOrdersByDate();
         }
     }, [selectedDate, dateFilterType]);
@@ -136,8 +149,6 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
             const endDate = new Date(selectedDate);
             endDate.setHours(23, 59, 59, 999);
 
-            console.log('🔍 Buscando órdenes para', dateFilterType, 'fecha:', selectedDate.toISOString().split('T')[0]);
-
             // Fetch orders for the selected date based on filter type
             const { data: ordersData, error: ordersError } = await supabase
                 .from('orders')
@@ -165,13 +176,9 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                 throw ordersError;
             }
 
-            console.log('📋 Órdenes encontradas:', ordersData?.length || 0);
-            console.log('📋 Datos de órdenes:', ordersData);
-
             // Fetch order items for each order
             const ordersWithItems = await Promise.all(
                 (ordersData || []).map(async (order) => {
-                    console.log('🔍 Obteniendo items para orden:', order.id, order.order_number);
 
                     const { data: itemsData, error: itemsError } = await supabase
                         .from('order_items')
@@ -182,8 +189,6 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         console.error('❌ Error fetching items for order:', order.id, itemsError);
                         return null;
                     }
-
-                    console.log('📦 Items encontrados para orden', order.order_number, ':', itemsData?.length || 0);
 
                     const items = (itemsData || []).map(item => ({
                         id: item.id,
@@ -209,28 +214,12 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         items: items
                     };
 
-                    console.log('✅ Orden transformada:', {
-                        id: transformedOrder.id,
-                        orderNumber: transformedOrder.orderNumber,
-                        clientName: transformedOrder.clientName,
-                        routeName: transformedOrder.routeName,
-                        itemsCount: transformedOrder.items.length,
-                        totalAmount: transformedOrder.totalAmount
-                    });
-
                     return transformedOrder;
                 })
             );
 
             const validOrders = ordersWithItems.filter(order => order !== null) as Order[];
-            console.log('🎯 Total de órdenes válidas:', validOrders.length);
-            console.log('🎯 Órdenes finales:', validOrders.map(o => ({
-                orderNumber: o.orderNumber,
-                clientName: o.clientName,
-                routeName: o.routeName,
-                itemsCount: o.items.length
-            })));
-
+            console.log('📊 RouteNotebook: Órdenes cargadas:', validOrders.length);
             setOrders(validOrders);
         } catch (error) {
             console.error('❌ Error fetching orders by date:', error);
@@ -255,6 +244,11 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
     // Función para obtener solo categorías y productos que tienen valores
     const getActiveProductCategories = (): ProductCategory[] => {
+        // Si no hay órdenes, retornar array vacío
+        if (orders.length === 0) {
+            return [];
+        }
+
         const categoriesMap = new Map<string, Product[]>();
         const activeProducts = new Set<string>();
 
@@ -282,9 +276,6 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
             products
         }));
 
-        // console.log('📦 Categorías activas:', activeCategories.length, activeCategories.map(c => c.name));
-        // console.log('📦 Productos activos:', activeProducts.size);
-
         return activeCategories;
     };
 
@@ -308,14 +299,62 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
         return allCategories;
     };
 
+    // Versión memoizada de allProductCategories para evitar re-renders innecesarios
+    const memoizedAllProductCategories = useMemo(() => {
+        return getAllProductCategories();
+    }, [products]);
+
 
 
     // Función para obtener categorías ordenadas según configuración
     const getOrderedProductCategories = (): ProductCategory[] => {
+        // Usar columnOrderVersion para forzar re-render cuando cambie el orden
+        const _ = columnOrderVersion; // eslint-disable-line no-unused-vars
+
         const activeCategories = getActiveProductCategories();
 
-        // Por ahora, usar solo el orden por defecto
-        // En el futuro, aquí se aplicará el orden guardado en settings
+        // Intentar cargar orden personalizado desde localStorage
+        const savedOrder = localStorage.getItem('megaDonutColumnOrder');
+
+        if (savedOrder) {
+            try {
+                const parsedOrder = JSON.parse(savedOrder);
+                const savedCategories = parsedOrder.categories;
+
+                // Ordenar categorías activas según el orden guardado
+                const orderedCategories = activeCategories.sort((a, b) => {
+                    const orderA = savedCategories.find((sc: any) => sc.categoryId === a.name)?.order || 999;
+                    const orderB = savedCategories.find((sc: any) => sc.categoryId === b.name)?.order || 999;
+                    return orderA - orderB;
+                });
+
+                // Ordenar productos dentro de cada categoría
+                return orderedCategories.map(category => {
+                    const savedCategory = savedCategories.find((sc: any) => sc.categoryId === category.name);
+
+                    if (savedCategory) {
+                        const orderedProducts = category.products.sort((a, b) => {
+                            const orderA = savedCategory.products.find((sp: any) => sp.productId === a.id)?.order || 999;
+                            const orderB = savedCategory.products.find((sp: any) => sp.productId === b.id)?.order || 999;
+                            return orderA - orderB;
+                        });
+
+                        return {
+                            ...category,
+                            products: orderedProducts
+                        };
+                    }
+
+                    return category;
+                });
+            } catch (error) {
+                console.error('Error parsing saved column order:', error);
+                // Si hay error, usar orden por defecto
+                return activeCategories;
+            }
+        }
+
+        // Si no hay orden guardado, usar orden por defecto
         return activeCategories;
     };
 
@@ -420,8 +459,8 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     };
 
     const handleColumnOrderUpdated = () => {
-        // Por ahora, solo recargar datos
-        fetchData();
+        // Esta función ya no se usa, pero la mantenemos por compatibilidad
+        console.log('🔄 Función handleColumnOrderUpdated llamada (no necesaria)');
     };
 
 
@@ -491,9 +530,8 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
             <ColumnOrderModal
                 isOpen={showColumnOrderModal}
                 onClose={() => setShowColumnOrderModal(false)}
-                productCategories={getActiveProductCategories()}
                 onOrderUpdated={handleColumnOrderUpdated}
-                allProductCategories={getAllProductCategories()}
+                allProductCategories={memoizedAllProductCategories}
             />
 
             <Footer />

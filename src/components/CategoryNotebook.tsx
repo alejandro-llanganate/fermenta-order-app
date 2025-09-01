@@ -22,6 +22,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
     const [orders, setOrders] = useState<Order[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [dateFilterType, setDateFilterType] = useState<'order' | 'delivery'>('order');
     const [loading, setLoading] = useState(true);
     const [showPreview, setShowPreview] = useState(false);
     const [editingCell, setEditingCell] = useState<{ clientId: string; productId: string } | null>(null);
@@ -37,7 +38,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
         if (selectedDate) {
             fetchOrdersByDate();
         }
-    }, [selectedDate]);
+    }, [selectedDate, dateFilterType]);
 
     const fetchData = async () => {
         try {
@@ -108,6 +109,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
     const fetchOrdersByDate = async () => {
         try {
             console.log('🔄 useEffect triggered - fetching orders for date:', selectedDate.toISOString().split('T')[0]);
+            console.log('🔍 Tipo de filtro:', dateFilterType);
 
             // Calcular rango de fechas (todo el día)
             const startOfDay = new Date(selectedDate);
@@ -118,16 +120,30 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
             console.log('🔍 Buscando órdenes para fecha:', selectedDate.toISOString().split('T')[0]);
             console.log('📅 Rango de búsqueda:', startOfDay.toISOString(), 'a', endOfDay.toISOString());
 
-            const { data: ordersData, error: ordersError } = await supabase
+            let query = supabase
                 .from('orders')
                 .select(`
                     *,
                     clients!inner(id, nombre, route_id, is_active),
                     routes!inner(id, nombre, is_active, identificador)
-                `)
-                .gte('order_date', startOfDay.toISOString().split('T')[0])
-                .lte('order_date', endOfDay.toISOString().split('T')[0])
-                .order('order_number');
+                `);
+
+            // Aplicar filtro según el tipo seleccionado
+            if (dateFilterType === 'order') {
+                // Filtrar por fecha de registro (order_date)
+                query = query
+                    .gte('order_date', startOfDay.toISOString().split('T')[0])
+                    .lte('order_date', endOfDay.toISOString().split('T')[0]);
+                console.log('📅 Filtrando por fecha de registro');
+            } else {
+                // Filtrar por fecha de entrega (delivery_date)
+                query = query
+                    .gte('delivery_date', startOfDay.toISOString().split('T')[0])
+                    .lte('delivery_date', endOfDay.toISOString().split('T')[0]);
+                console.log('📅 Filtrando por fecha de entrega');
+            }
+
+            const { data: ordersData, error: ordersError } = await query.order('order_number');
 
             if (ordersError) throw ordersError;
 
@@ -476,6 +492,8 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                         setSelectedDate={setSelectedDate}
                         selectedCategory={selectedCategory}
                         setSelectedCategory={setSelectedCategory}
+                        dateFilterType={dateFilterType}
+                        setDateFilterType={setDateFilterType}
                         productCategories={productCategories}
                         orders={orders}
                         isUpdating={isUpdating}
@@ -508,6 +526,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                 isGeneratingPDF={isGeneratingPDF}
                 selectedDate={selectedDate}
                 selectedCategory={selectedCategory}
+                dateFilterType={dateFilterType}
                 productCategories={productCategories}
                 routes={routes}
                 getClientsWithOrders={getClientsWithOrders}

@@ -360,27 +360,33 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                     Página {pageNumber} de {totalPages} |
                     Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
                 </Text>
+                <Text style={{ fontSize: 6, color: '#999', marginTop: 2 }}>
+                    ✓ Formato A5 optimizado - Sin tablas cortadas
+                </Text>
             </View>
         </Page>
     );
 
     // Función para dividir el contenido en páginas
+    // OPTIMIZADO: Balance entre no cortar tablas y aprovechar máximo espacio
     const paginateContent = () => {
         const pages = [];
         let currentPage = [];
         let currentPageHeight = 0;
-        const maxPageHeight = 220; // Aumentado para aprovechar mejor el espacio A5
+        const maxPageHeight = 200; // OPTIMIZADO: Balance entre seguridad y aprovechamiento
 
-        // Altura estimada de elementos (ajustada)
-        const headerHeight = 30;
-        const productTotalsHeight = 20;
-        const routeHeaderHeight = 10;
-        const tableRowHeight = 8;
-        const tableHeaderHeight = 6;
+        // Altura estimada de elementos (OPTIMIZADA para máximo aprovechamiento)
+        // Valores realistas pero con margen de seguridad mínimo
+        const headerHeight = 35;
+        const productTotalsHeight = 25;
+        const routeHeaderHeight = 12;
+        const tableRowHeight = 10;
+        const tableHeaderHeight = 8;
+        const marginBuffer = 10; // Buffer OPTIMIZADO para máximo aprovechamiento
 
         // Agregar header y totales a la primera página
         if (clientsByRoute.length > 0) {
-            currentPageHeight = headerHeight + productTotalsHeight;
+            currentPageHeight = headerHeight + productTotalsHeight + marginBuffer;
         }
 
         // Agrupar tablas pequeñas para mejor distribución
@@ -389,10 +395,10 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
         let currentGroupHeight = 0;
 
         for (const { route, clients } of clientsByRoute) {
-            const tableHeight = routeHeaderHeight + tableHeaderHeight + (clients.length * tableRowHeight);
+            const tableHeight = routeHeaderHeight + tableHeaderHeight + (clients.length * tableRowHeight) + marginBuffer;
 
-            // Si la tabla es pequeña (menos de 50mm) y hay espacio, agruparla
-            if (tableHeight < 50 && currentGroupHeight + tableHeight < 100) {
+            // Si la tabla es pequeña (menos de 70mm) y hay espacio, agruparla
+            if (tableHeight < 70 && currentGroupHeight + tableHeight < 120) {
                 currentGroup.push({ route, clients, tableHeight });
                 currentGroupHeight += tableHeight;
             } else {
@@ -404,7 +410,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                 }
 
                 // Si la tabla es grande, agregarla sola
-                if (tableHeight >= 50) {
+                if (tableHeight >= 70) {
                     groupedRoutes.push({ type: 'single', route, clients, tableHeight });
                 } else {
                     // Iniciar nuevo grupo con esta tabla pequeña
@@ -419,17 +425,19 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
             groupedRoutes.push({ type: 'group', tables: currentGroup });
         }
 
-        // Distribuir en páginas
+        // Distribuir en páginas con lógica optimizada para aprovechar máximo espacio
         for (const item of groupedRoutes) {
             if (item.type === 'group' && item.tables) {
                 // Calcular altura total del grupo
                 const groupHeight = item.tables.reduce((sum, table) => sum + table.tableHeight, 0);
 
-                // Si el grupo no cabe en la página actual, crear nueva página
+                // Verificar si el grupo cabe en la página actual
                 if (currentPageHeight + groupHeight > maxPageHeight && currentPage.length > 0) {
+                    // Crear nueva página solo si realmente no cabe
                     pages.push([...currentPage]);
                     currentPage = [];
                     currentPageHeight = 0;
+                    console.log(`🔄 Nueva página creada - Grupo no cabía (altura: ${groupHeight}, límite: ${maxPageHeight})`);
                 }
 
                 // Agregar todas las tablas del grupo
@@ -438,28 +446,56 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                 });
                 currentPageHeight += groupHeight;
 
-                console.log(`Grupo de ${item.tables.length} tablas pequeñas: altura total ${groupHeight}`);
+                console.log(`✅ Grupo de ${item.tables.length} tablas pequeñas agregado - altura total: ${groupHeight}, página actual: ${currentPageHeight}/${maxPageHeight}`);
             } else if (item.type === 'single' && item.tableHeight !== undefined) {
-                // Tabla individual
+                // Tabla individual - verificar si cabe completamente
                 if (currentPageHeight + item.tableHeight > maxPageHeight && currentPage.length > 0) {
+                    // Crear nueva página solo si la tabla no cabe completamente
                     pages.push([...currentPage]);
                     currentPage = [];
                     currentPageHeight = 0;
+                    console.log(`🔄 Nueva página creada - Tabla individual no cabía completamente (altura: ${item.tableHeight}, límite: ${maxPageHeight})`);
                 }
 
                 currentPage.push({ type: 'route', route: item.route, clients: item.clients });
                 currentPageHeight += item.tableHeight;
 
-                console.log(`Tabla individual ${item.route.nombre}: ${item.clients.length} clientes, altura: ${item.tableHeight}`);
+                console.log(`✅ Tabla individual ${item.route.nombre} agregada - altura: ${item.tableHeight}, página actual: ${currentPageHeight}/${maxPageHeight}`);
             }
         }
 
         // Agregar la última página si tiene contenido
         if (currentPage.length > 0) {
             pages.push(currentPage);
+            console.log(`📄 Página final agregada con ${currentPage.length} elementos`);
         }
 
-        console.log('Páginas generadas:', pages.length, 'con', pages.map(p => p.length).join(', '), 'tablas cada una');
+        // Optimización final: verificar si se puede aprovechar mejor el espacio
+        console.log(`📊 Total de páginas generadas: ${pages.length}`);
+
+        // Mostrar estadísticas de uso de espacio por página y sugerir optimizaciones
+        pages.forEach((page, index) => {
+            const pageHeight = page.reduce((sum, item) => {
+                if (item.type === 'route') {
+                    const clients = item.clients;
+                    return sum + routeHeaderHeight + tableHeaderHeight + (clients.length * tableRowHeight) + marginBuffer;
+                }
+                return sum;
+            }, headerHeight + productTotalsHeight + marginBuffer);
+
+            const spaceUsage = ((pageHeight / maxPageHeight) * 100).toFixed(1);
+            const remainingSpace = maxPageHeight - pageHeight;
+
+            console.log(`📄 Página ${index + 1}: ${spaceUsage}% de espacio utilizado (${pageHeight}/${maxPageHeight})`);
+
+            // Sugerir optimizaciones si hay mucho espacio desperdiciado
+            if (remainingSpace > 50) {
+                console.log(`💡 Página ${index + 1}: Se desperdician ${remainingSpace}mm - Podría caber 1-2 tablas pequeñas más`);
+            } else if (remainingSpace > 30) {
+                console.log(`💡 Página ${index + 1}: Se desperdician ${remainingSpace}mm - Podría caber 1 tabla pequeña más`);
+            }
+        });
+
         return pages;
     };
 

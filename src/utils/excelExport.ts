@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 export interface ExcelExportData {
     selectedDate: Date;
     selectedCategory: string;
+    dateFilterType: 'order' | 'delivery';
     categoryProducts: any[];
     clientsByRoute: Array<{
         route: any;
@@ -89,6 +90,7 @@ export const exportToExcel = (data: ExcelExportData) => {
             month: 'long', 
             day: 'numeric' 
         }).toUpperCase()}`],
+        [`FILTRADO POR: ${data.dateFilterType === 'order' ? 'Fecha de Registro' : 'Fecha de Entrega'}`],
         [`CATEGORÍA: ${data.selectedCategory}`],
         [''],
         ['TOTALES POR PRODUCTO'],
@@ -114,6 +116,7 @@ export const exportToExcel = (data: ExcelExportData) => {
             month: 'long', 
             day: 'numeric' 
         }).toUpperCase()}`],
+        [`FILTRADO POR: ${data.dateFilterType === 'order' ? 'Fecha de Registro' : 'Fecha de Entrega'}`],
         [`CATEGORÍA: ${data.selectedCategory}`],
         ['']
     ];
@@ -195,11 +198,11 @@ export const exportToExcel = (data: ExcelExportData) => {
         ['MEGA DONUT - RESUMEN GENERAL'],
         [''],
         [`DÍA: ${data.selectedDate.toLocaleDateString('es-ES', { 
-            weekday: 'long', 
-            year: 'numeric', 
+            weekday: 'long', year: 'numeric', 
             month: 'long', 
             day: 'numeric' 
         }).toUpperCase()}`],
+        [`FILTRADO POR: ${data.dateFilterType === 'order' ? 'Fecha de Registro' : 'Fecha de Entrega'}`],
         [`CATEGORÍA: ${data.selectedCategory}`],
         [''],
         ['RESUMEN'],
