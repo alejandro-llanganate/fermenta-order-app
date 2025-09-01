@@ -186,10 +186,30 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
     getTotalForProduct,
     getTotalForCategory,
 }) => {
-    // Obtener productos de la categoría seleccionada
-    const categoryProducts = selectedCategory
-        ? productCategories.find(cat => cat.name === selectedCategory)?.products || []
-        : productCategories.flatMap(cat => cat.products);
+    // Obtener productos de la categoría seleccionada que tienen pedidos
+    const getProductsWithOrders = () => {
+        if (selectedCategory) {
+            const category = productCategories.find(cat => cat.name === selectedCategory);
+            if (!category) return [];
+
+            // Filtrar solo productos que tienen pedidos
+            const filteredProducts = category.products.filter(product => {
+                const total = getTotalForProduct(product.id, selectedCategory);
+                console.log(`Producto ${product.name}: total = ${total}`);
+                return total > 0;
+            });
+
+            console.log('Productos con pedidos:', filteredProducts.map(p => p.name));
+            return filteredProducts;
+        }
+        return [];
+    };
+
+    const categoryProducts = getProductsWithOrders();
+
+    // Debug: Verificar que el filtrado funciona
+    console.log('Productos filtrados:', categoryProducts.length, 'de',
+        selectedCategory ? productCategories.find(cat => cat.name === selectedCategory)?.products.length || 0 : 0);
 
     // Obtener clientes con órdenes
     const clientsWithOrders = getClientsWithOrders(selectedCategory);
@@ -199,6 +219,44 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
         route,
         clients: clientsWithOrders.filter(client => client.routeId === route.id)
     })).filter(group => group.clients.length > 0);
+
+    // Función para obtener estilos dinámicos según el número de columnas
+    const getDynamicStyles = (numColumns: number) => {
+        const baseFontSize = numColumns > 6 ? 8 : 11;
+        const headerFontSize = numColumns > 6 ? 7 : 10;
+
+        return {
+            tableCell: {
+                padding: 2,
+                fontSize: baseFontSize,
+                textAlign: 'center' as const,
+                borderRightWidth: 1,
+                borderRightColor: '#d1d5db',
+                flex: 1,
+                color: '#000000',
+            },
+            tableCellHeader: {
+                padding: 2,
+                fontSize: headerFontSize,
+                fontWeight: 'bold' as const,
+                textAlign: 'center' as const,
+                borderRightWidth: 1,
+                borderRightColor: '#d1d5db',
+                flex: 1,
+                color: '#000000',
+            },
+            clientCell: {
+                padding: 2,
+                fontSize: baseFontSize,
+                textAlign: 'left' as const,
+                borderRightWidth: 1,
+                borderRightColor: '#d1d5db',
+                flex: 2,
+                backgroundColor: '#f3f4f6',
+                color: '#000000',
+            },
+        };
+    };
 
     // Función para calcular el contenido de una página
     const createPageContent = (pageData: any[], pageNumber: number, totalPages: number) => (
@@ -231,10 +289,17 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                     <View style={styles.productTotalsGrid}>
                         {categoryProducts.map((product) => {
                             const total = getTotalForProduct(product.id, selectedCategory);
+                            const dynamicStyles = getDynamicStyles(categoryProducts.length);
                             return (
                                 <View key={product.id} style={styles.productTotalItem}>
-                                    <Text style={styles.productName}>{product.name}</Text>
-                                    <Text style={styles.productQuantity}>{total}</Text>
+                                    <Text style={{
+                                        ...styles.productName,
+                                        fontSize: categoryProducts.length > 6 ? 6 : 8
+                                    }}>{product.name}</Text>
+                                    <Text style={{
+                                        ...styles.productQuantity,
+                                        fontSize: categoryProducts.length > 6 ? 8 : 12
+                                    }}>{total}</Text>
                                 </View>
                             );
                         })}
@@ -246,6 +311,8 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
             {pageData.map((item) => {
                 if (item.type === 'route') {
                     const { route, clients } = item;
+                    const dynamicStyles = getDynamicStyles(categoryProducts.length);
+
                     return (
                         <View key={route.id} style={styles.section}>
                             <Text style={styles.routeTitle}>
@@ -255,9 +322,9 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                             <View style={styles.table}>
                                 {/* Header de la tabla */}
                                 <View style={[styles.tableRow, styles.tableHeader]}>
-                                    <Text style={styles.clientCell}>CLIENTES</Text>
+                                    <Text style={dynamicStyles.clientCell}>CLIENTES</Text>
                                     {categoryProducts.map((product) => (
-                                        <Text key={product.id} style={styles.tableCellHeader}>
+                                        <Text key={product.id} style={dynamicStyles.tableCellHeader}>
                                             {product.name}
                                         </Text>
                                     ))}
@@ -266,13 +333,13 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                 {/* Filas de clientes */}
                                 {clients.map((client: Client) => (
                                     <View key={client.id} style={styles.tableRow}>
-                                        <Text style={styles.clientCell}>
+                                        <Text style={dynamicStyles.clientCell}>
                                             {client.nombre}
                                         </Text>
                                         {categoryProducts.map((product) => {
                                             const quantity = getQuantityForClientAndProduct(client.id, product.id);
                                             return (
-                                                <Text key={product.id} style={styles.tableCell}>
+                                                <Text key={product.id} style={dynamicStyles.tableCell}>
                                                     {quantity > 0 ? quantity : ''}
                                                 </Text>
                                             );
@@ -302,34 +369,89 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
         const pages = [];
         let currentPage = [];
         let currentPageHeight = 0;
-        const maxPageHeight = 180; // Altura máxima aproximada para A5 (en mm)
+        const maxPageHeight = 220; // Aumentado para aprovechar mejor el espacio A5
 
-        // Altura estimada de elementos
-        const headerHeight = 35;
-        const productTotalsHeight = 25;
-        const routeHeaderHeight = 12;
-        const tableRowHeight = 10;
-        const tableHeaderHeight = 8;
+        // Altura estimada de elementos (ajustada)
+        const headerHeight = 30;
+        const productTotalsHeight = 20;
+        const routeHeaderHeight = 10;
+        const tableRowHeight = 8;
+        const tableHeaderHeight = 6;
 
         // Agregar header y totales a la primera página
         if (clientsByRoute.length > 0) {
             currentPageHeight = headerHeight + productTotalsHeight;
         }
 
+        // Agrupar tablas pequeñas para mejor distribución
+        const groupedRoutes = [];
+        let currentGroup = [];
+        let currentGroupHeight = 0;
+
         for (const { route, clients } of clientsByRoute) {
-            // Calcular altura de esta tabla
             const tableHeight = routeHeaderHeight + tableHeaderHeight + (clients.length * tableRowHeight);
 
-            // Si esta tabla no cabe en la página actual, crear nueva página
-            if (currentPageHeight + tableHeight > maxPageHeight && currentPage.length > 0) {
-                pages.push([...currentPage]);
-                currentPage = [];
-                currentPageHeight = 0;
-            }
+            // Si la tabla es pequeña (menos de 50mm) y hay espacio, agruparla
+            if (tableHeight < 50 && currentGroupHeight + tableHeight < 100) {
+                currentGroup.push({ route, clients, tableHeight });
+                currentGroupHeight += tableHeight;
+            } else {
+                // Si hay un grupo pendiente, agregarlo
+                if (currentGroup.length > 0) {
+                    groupedRoutes.push({ type: 'group', tables: [...currentGroup] });
+                    currentGroup = [];
+                    currentGroupHeight = 0;
+                }
 
-            // Agregar la tabla a la página actual
-            currentPage.push({ type: 'route', route, clients });
-            currentPageHeight += tableHeight;
+                // Si la tabla es grande, agregarla sola
+                if (tableHeight >= 50) {
+                    groupedRoutes.push({ type: 'single', route, clients, tableHeight });
+                } else {
+                    // Iniciar nuevo grupo con esta tabla pequeña
+                    currentGroup.push({ route, clients, tableHeight });
+                    currentGroupHeight = tableHeight;
+                }
+            }
+        }
+
+        // Agregar el último grupo si existe
+        if (currentGroup.length > 0) {
+            groupedRoutes.push({ type: 'group', tables: currentGroup });
+        }
+
+        // Distribuir en páginas
+        for (const item of groupedRoutes) {
+            if (item.type === 'group' && item.tables) {
+                // Calcular altura total del grupo
+                const groupHeight = item.tables.reduce((sum, table) => sum + table.tableHeight, 0);
+
+                // Si el grupo no cabe en la página actual, crear nueva página
+                if (currentPageHeight + groupHeight > maxPageHeight && currentPage.length > 0) {
+                    pages.push([...currentPage]);
+                    currentPage = [];
+                    currentPageHeight = 0;
+                }
+
+                // Agregar todas las tablas del grupo
+                item.tables.forEach(table => {
+                    currentPage.push({ type: 'route', route: table.route, clients: table.clients });
+                });
+                currentPageHeight += groupHeight;
+
+                console.log(`Grupo de ${item.tables.length} tablas pequeñas: altura total ${groupHeight}`);
+            } else if (item.type === 'single' && item.tableHeight !== undefined) {
+                // Tabla individual
+                if (currentPageHeight + item.tableHeight > maxPageHeight && currentPage.length > 0) {
+                    pages.push([...currentPage]);
+                    currentPage = [];
+                    currentPageHeight = 0;
+                }
+
+                currentPage.push({ type: 'route', route: item.route, clients: item.clients });
+                currentPageHeight += item.tableHeight;
+
+                console.log(`Tabla individual ${item.route.nombre}: ${item.clients.length} clientes, altura: ${item.tableHeight}`);
+            }
         }
 
         // Agregar la última página si tiene contenido
@@ -337,6 +459,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
             pages.push(currentPage);
         }
 
+        console.log('Páginas generadas:', pages.length, 'con', pages.map(p => p.length).join(', '), 'tablas cada una');
         return pages;
     };
 
