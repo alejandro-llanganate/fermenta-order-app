@@ -10,7 +10,7 @@ import RouteNotebookPreview from './RouteNotebookPreview';
 import { Route, Client, Product, ProductCategory, Order, OrderItem } from '@/types/routeNotebook';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RouteNotebookPDF from './pdf/RouteNotebookPDF';
-import ColumnOrderModal from './ColumnOrderModal';
+// ColumnOrderModal eliminado - ahora usamos localStorage directamente
 
 interface RouteNotebookProps {
     onBack: () => void;
@@ -29,7 +29,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     const [editingCell, setEditingCell] = useState<{ clientId: string; productId: string } | null>(null);
     const [isUpdating, setIsUpdating] = useState(false);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-    const [showColumnOrderModal, setShowColumnOrderModal] = useState(false);
+    // Sistema de orden local con localStorage
     const [columnOrderVersion, setColumnOrderVersion] = useState(0); // Para forzar re-render
     const printRef = useRef<HTMLDivElement>(null);
 
@@ -40,7 +40,12 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     // Listener para cambios en localStorage del orden de columnas
     useEffect(() => {
         const handleLocalChange = () => {
-            setColumnOrderVersion(prev => prev + 1);
+            console.log('🔄 Evento megaDonutColumnOrderChanged recibido, actualizando versión...');
+            setColumnOrderVersion(prev => {
+                const newVersion = prev + 1;
+                console.log(`📈 Nueva versión de orden: ${newVersion}`);
+                return newVersion;
+            });
         };
 
         window.addEventListener('megaDonutColumnOrderChanged', handleLocalChange);
@@ -304,64 +309,117 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
         return getAllProductCategories();
     }, [products]);
 
+    // Función para guardar el orden de columnas en localStorage
+    const saveColumnOrder = (categories: ProductCategory[]) => {
+        const orderData = {
+            categories: categories.map((category, categoryIndex) => ({
+                name: category.name,
+                order: categoryIndex,
+                products: category.products.map((product, productIndex) => ({
+                    id: product.id,
+                    order: productIndex
+                }))
+            })),
+            timestamp: new Date().toISOString()
+        };
+
+        localStorage.setItem('routeNotebookColumnOrder', JSON.stringify(orderData));
+        console.log('✅ Orden de columnas guardado:', orderData);
+
+        // Disparar evento para actualizar la vista
+        window.dispatchEvent(new CustomEvent('megaDonutColumnOrderChanged'));
+    };
+
+    // Funciones para reordenar categorías y productos
+    const handleReorderCategories = (newCategories: ProductCategory[]) => {
+        // Reconstruir el array unificado con el nuevo orden
+        const newUnifiedProducts = newCategories.flatMap(category => category.products);
+
+        // Actualizar el estado local
+        setColumnOrderVersion(prev => prev + 1);
+
+        // Guardar el nuevo orden
+        saveColumnOrder(newCategories);
+    };
+
+    const handleReorderProducts = (newProducts: Product[]) => {
+        // Reconstruir las categorías con el nuevo orden de productos
+        const newCategories = [...getOrderedProductCategories];
+
+        // Actualizar el estado local
+        setColumnOrderVersion(prev => prev + 1);
+
+        // Guardar el nuevo orden
+        saveColumnOrder(newCategories);
+    };
 
 
-    // Función para obtener categorías ordenadas según configuración
-    const getOrderedProductCategories = (): ProductCategory[] => {
-        // Usar columnOrderVersion para forzar re-render cuando cambie el orden
-        const _ = columnOrderVersion; // eslint-disable-line no-unused-vars
 
-        const activeCategories = getActiveProductCategories();
+    // Función para obtener categorías y productos ordenados localmente
+    const getOrderedProductCategories = useMemo((): ProductCategory[] => {
+        // Obtener productos activos (con pedidos > 0)
+        const activeProducts = new Set<string>();
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                if (item.quantity > 0) {
+                    activeProducts.add(item.productId);
+                }
+            });
+        });
 
-        // Intentar cargar orden personalizado desde localStorage
-        const savedOrder = localStorage.getItem('megaDonutColumnOrder');
+        // Cargar orden desde localStorage
+        const savedOrder = localStorage.getItem('routeNotebookColumnOrder');
 
         if (savedOrder) {
             try {
                 const parsedOrder = JSON.parse(savedOrder);
-                const savedCategories = parsedOrder.categories;
+                const orderedCategories: ProductCategory[] = [];
 
-                // Ordenar categorías activas según el orden guardado
-                const orderedCategories = activeCategories.sort((a, b) => {
-                    const orderA = savedCategories.find((sc: any) => sc.categoryId === a.name)?.order || 999;
-                    const orderB = savedCategories.find((sc: any) => sc.categoryId === b.name)?.order || 999;
-                    return orderA - orderB;
-                });
+                // Crear categorías según el orden guardado
+                parsedOrder.categories.forEach((savedCategory: any) => {
+                    const categoryName = savedCategory.name;
+                    const categoryProducts = products.filter(product =>
+                        product.categoryName === categoryName && activeProducts.has(product.id)
+                    );
 
-                // Ordenar productos dentro de cada categoría
-                return orderedCategories.map(category => {
-                    const savedCategory = savedCategories.find((sc: any) => sc.categoryId === category.name);
-
-                    if (savedCategory) {
-                        const orderedProducts = category.products.sort((a, b) => {
-                            const orderA = savedCategory.products.find((sp: any) => sp.productId === a.id)?.order || 999;
-                            const orderB = savedCategory.products.find((sp: any) => sp.productId === b.id)?.order || 999;
+                    if (categoryProducts.length > 0) {
+                        // Ordenar productos según el orden guardado
+                        const orderedProducts = categoryProducts.sort((a, b) => {
+                            const orderA = savedCategory.products.find((sp: any) => sp.id === a.id)?.order || 999;
+                            const orderB = savedCategory.products.find((sp: any) => sp.id === b.id)?.order || 999;
                             return orderA - orderB;
                         });
 
-                        return {
-                            ...category,
+                        orderedCategories.push({
+                            name: categoryName,
                             products: orderedProducts
-                        };
+                        });
                     }
-
-                    return category;
                 });
+
+                return orderedCategories;
             } catch (error) {
                 console.error('Error parsing saved column order:', error);
-                // Si hay error, usar orden por defecto
-                return activeCategories;
+                return getActiveProductCategories();
             }
         }
 
         // Si no hay orden guardado, usar orden por defecto
-        return activeCategories;
-    };
+        return getActiveProductCategories();
+    }, [products, orders, columnOrderVersion]);
 
     // Función helper para generar array unificado de productos
-    const getUnifiedProductArray = (): Product[] => {
-        return getActiveProductCategories().flatMap(category => category.products);
-    };
+    const getUnifiedProductArray = useMemo((): Product[] => {
+        const orderedCategories = getOrderedProductCategories;
+        const unifiedProducts = orderedCategories.flatMap(category => category.products);
+        // console.log('🔗 Array unificado de productos:', unifiedProducts.map(p => p.name));
+        // console.log('📊 Resumen:', {
+        //     categorías: orderedCategories.length,
+        //     productos: unifiedProducts.length,
+        //     categoríasDetalle: orderedCategories.map(c => ({ nombre: c.name, productos: c.products.length }))
+        // });
+        return unifiedProducts;
+    }, [getOrderedProductCategories]);
 
     const getClientsWithOrders = (routeId?: string): Client[] => {
         // Solo mostrar clientes que tienen pedidos
@@ -454,8 +512,10 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
         console.log('⚠️ Edición deshabilitada en cuadernos por rutas');
     };
 
+    // Funciones para manejar el orden de columnas local
     const handleDefineColumnOrder = () => {
-        setShowColumnOrderModal(true);
+        // Ahora se maneja directamente en la tabla
+        console.log('🔄 Orden de columnas se maneja directamente en la tabla');
     };
 
     const handleColumnOrderUpdated = () => {
@@ -495,8 +555,8 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         selectedRoute={selectedRoute}
                         setSelectedRoute={setSelectedRoute}
                         loading={loading}
-                        productCategories={getOrderedProductCategories()}
-                        unifiedProducts={getUnifiedProductArray()}
+                        productCategories={getOrderedProductCategories}
+                        unifiedProducts={getUnifiedProductArray}
                         getClientsWithOrders={getClientsWithOrders}
                         getQuantityForClientAndProduct={getQuantityForClientAndProduct}
                         getTotalForClient={getTotalForClient}
@@ -506,6 +566,9 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         editingCell={editingCell}
                         isUpdating={isUpdating}
                         onDefineColumnOrder={handleDefineColumnOrder}
+                        saveColumnOrder={saveColumnOrder}
+                        onReorderCategories={handleReorderCategories}
+                        onReorderProducts={handleReorderProducts}
                     />
                 </div>
             </div>
@@ -518,7 +581,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                 dateFilterType={dateFilterType}
                 selectedRoute={selectedRoute}
                 routes={routes}
-                productCategories={getOrderedProductCategories()}
+                productCategories={getOrderedProductCategories}
                 getClientsWithOrders={getClientsWithOrders}
                 getQuantityForClientAndProduct={getQuantityForClientAndProduct}
                 getTotalForClient={getTotalForClient}
@@ -527,12 +590,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                 printRef={printRef}
             />
 
-            <ColumnOrderModal
-                isOpen={showColumnOrderModal}
-                onClose={() => setShowColumnOrderModal(false)}
-                onOrderUpdated={handleColumnOrderUpdated}
-                allProductCategories={memoizedAllProductCategories}
-            />
+            {/* Modal eliminado - ahora se maneja directamente en la tabla */}
 
             <Footer />
         </div>

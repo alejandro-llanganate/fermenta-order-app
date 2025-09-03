@@ -161,6 +161,160 @@ const styles = StyleSheet.create({
         borderTop: '1 solid #e5e7eb',
         paddingTop: 4,
     },
+    categoryTotals: {
+        backgroundColor: '#f3f4f6',
+        padding: 5,
+        marginTop: 10,
+        borderRadius: 3,
+    },
+    categoryTotalsGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 5,
+    },
+    categoryTotalItem: {
+        alignItems: 'center',
+    },
+    categoryTotalLabel: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#374151',
+        marginBottom: 2,
+    },
+    categoryTotalValue: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#1e40af',
+    },
+    finalTotal: {
+        backgroundColor: '#dbeafe',
+        padding: 8,
+        marginTop: 10,
+        borderRadius: 4,
+        border: '1 solid #93c5fd',
+    },
+    finalTotalTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        marginBottom: 5,
+        color: '#1e40af',
+        textAlign: 'center',
+    },
+    finalTotalContent: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 20,
+    },
+    finalTotalValue: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#1e40af',
+    },
+    productGroup: {
+        marginBottom: 8,
+        padding: 4,
+        backgroundColor: '#f8fafc',
+        borderRadius: 3,
+    },
+    productGroupTitle: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#1e40af',
+        marginBottom: 4,
+        textAlign: 'center',
+        backgroundColor: '#dbeafe',
+        padding: 2,
+        borderRadius: 2,
+    },
+    productTotalSummary: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#dbeafe',
+        padding: 3,
+        marginTop: 2,
+        borderRadius: 2,
+        borderTop: '1 solid #93c5fd',
+    },
+    productTotalSummaryLabel: {
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: '#1e40af',
+    },
+    productTotalSummaryValue: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#1e40af',
+    },
+    finalTotalTable: {
+        marginTop: 5,
+    },
+    finalTotalRow: {
+        flexDirection: 'row',
+        marginBottom: 2,
+    },
+    finalTotalHeaderCell: {
+        flex: 1,
+        backgroundColor: '#fed7aa',
+        padding: 3,
+        border: '1 solid #f97316',
+        alignItems: 'center',
+    },
+    finalTotalProductHeader: {
+        fontSize: 8,
+        fontWeight: 'bold',
+        color: '#92400e',
+        textAlign: 'center',
+    },
+    finalTotalDataCell: {
+        flex: 1,
+        backgroundColor: '#ffedd5',
+        padding: 3,
+        border: '1 solid #f97316',
+        alignItems: 'center',
+    },
+    finalTotalProductData: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#ea580c',
+        textAlign: 'center',
+    },
+    finalTotalConsolidatedCell: {
+        flex: 1,
+        backgroundColor: '#dbeafe',
+        padding: 4,
+        border: '1 solid #3b82f6',
+        alignItems: 'center',
+    },
+    finalTotalConsolidatedValue: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#1e40af',
+        textAlign: 'center',
+    },
+    finalTotalSubtotalCell: {
+        flex: 1,
+        backgroundColor: '#fed7aa',
+        padding: 3,
+        border: '1 solid #f97316',
+        alignItems: 'center',
+    },
+    finalTotalSubtotalContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+    },
+    finalTotalSubtotalLabel: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#92400e',
+    },
+    finalTotalSubtotalValue: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#ea580c',
+    },
 });
 
 interface CategoryNotebookPDFProps {
@@ -173,6 +327,11 @@ interface CategoryNotebookPDFProps {
     getTotalForClient: (clientId: string) => { quantity: number; amount: number };
     getTotalForProduct: (productId: string, categoryId?: string) => number;
     getTotalForCategory: (categoryId: string) => { quantity: number; amount: number };
+    fontSizeConfig?: {
+        titles: number;
+        headers: number;
+        cells: number;
+    };
 }
 
 const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
@@ -185,6 +344,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
     getTotalForClient,
     getTotalForProduct,
     getTotalForCategory,
+    fontSizeConfig = { titles: 14, headers: 12, cells: 11 },
 }) => {
     // Obtener productos de la categoría seleccionada que tienen pedidos
     const getProductsWithOrders = () => {
@@ -215,15 +375,27 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
     const clientsWithOrders = getClientsWithOrders(selectedCategory);
 
     // Agrupar clientes por ruta
-    const clientsByRoute = routes.map(route => ({
-        route,
-        clients: clientsWithOrders.filter(client => client.routeId === route.id)
-    })).filter(group => group.clients.length > 0);
+    const clientsByRoute = routes.map(route => {
+        const routeClients = clientsWithOrders.filter(client => client.routeId === route.id);
 
-    // Función para obtener estilos dinámicos según el número de columnas
-    const getDynamicStyles = (numColumns: number) => {
-        const baseFontSize = numColumns > 6 ? 8 : 11;
-        const headerFontSize = numColumns > 6 ? 7 : 10;
+        // Filtrar clientes que tienen al menos un pedido > 0 en la categoría seleccionada
+        const filteredClients = routeClients.filter(client => {
+            const clientTotal = getTotalForClient(client.id);
+            return clientTotal.quantity > 0;
+        });
+
+        return {
+            route,
+            clients: filteredClients
+        };
+    }).filter(group => group.clients.length > 0);
+
+    // Función para obtener estilos dinámicos según la configuración de tamaños
+    const getDynamicStyles = () => {
+        // Usar configuración personalizada si está disponible, sino usar valores por defecto
+        const baseFontSize = fontSizeConfig.cells;
+        const headerFontSize = fontSizeConfig.headers;
+        const titleFontSize = fontSizeConfig.titles;
 
         return {
             tableCell: {
@@ -255,117 +427,405 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                 backgroundColor: '#f3f4f6',
                 color: '#000000',
             },
+            titleText: {
+                fontSize: titleFontSize,
+                fontWeight: 'bold' as const,
+                marginBottom: 3,
+                color: '#000000',
+            },
+            subtitleText: {
+                fontSize: headerFontSize,
+                fontWeight: 'bold' as const,
+                marginBottom: 2,
+                color: '#374151',
+            },
+            dateText: {
+                fontSize: baseFontSize,
+                color: '#6b7280',
+                marginBottom: 2,
+            },
+            categoryText: {
+                fontSize: baseFontSize,
+                color: '#6b7280',
+                marginBottom: 5,
+            },
+            // Propiedades adicionales para compatibilidad
+            cells: {
+                fontSize: baseFontSize,
+            },
+            headers: {
+                fontSize: headerFontSize,
+            },
         };
     };
 
+    // Calcular totales por tipo para Pasteles
+    const getTotalsByType = (): { chocolate: number; naranja: number } => {
+        if (selectedCategory !== 'Pasteles') {
+            return { chocolate: 0, naranja: 0 };
+        }
+
+        let chocolateTotal = 0;
+        let naranjaTotal = 0;
+
+        categoryProducts.forEach(product => {
+            const total = getTotalForProduct(product.id, selectedCategory);
+
+            // Identificar productos de chocolate y naranja por nombre
+            const productName = product.name.toLowerCase();
+            if (productName.includes('choco') || productName.includes('chocolate')) {
+                chocolateTotal += total;
+            } else if (productName.includes('naranja') || productName.includes('orange')) {
+                naranjaTotal += total;
+            }
+        });
+
+        return { chocolate: chocolateTotal, naranja: naranjaTotal };
+    };
+
+    const totalsByType = getTotalsByType();
+
+    // Usar categoryProducts que ya están filtrados por getProductsWithOrders() anterior
+    const filteredProducts = categoryProducts;
+
     // Función para calcular el contenido de una página
-    const createPageContent = (pageData: any[], pageNumber: number, totalPages: number) => (
-        <Page key={pageNumber} size="A5" orientation="portrait" style={styles.page}>
-            {/* Header solo en la primera página */}
-            {pageNumber === 1 && (
-                <View style={styles.header}>
-                    <Text style={styles.title}>MEGA DONUT</Text>
-                    <Text style={styles.subtitle}>PEDIDOS POR CATEGORÍAS</Text>
-                    <Text style={styles.date}>
-                        DÍA: {selectedDate.toLocaleDateString('es-ES', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        }).toUpperCase()}
-                    </Text>
-                    {selectedCategory && (
-                        <Text style={styles.category}>CATEGORÍA: {selectedCategory}</Text>
-                    )}
-                </View>
-            )}
+    const createPageContent = (pageData: any[], pageNumber: number, totalPages: number) => {
+        const dynamicStyles = getDynamicStyles();
 
-            {/* Totales por producto solo en la primera página */}
-            {pageNumber === 1 && selectedCategory && (
-                <View style={styles.productTotals}>
-                    <Text style={styles.productTotalsTitle}>
-                        TOTALES POR PRODUCTO - {selectedCategory}
-                    </Text>
-                    <View style={styles.productTotalsGrid}>
-                        {categoryProducts.map((product) => {
-                            const total = getTotalForProduct(product.id, selectedCategory);
-                            const dynamicStyles = getDynamicStyles(categoryProducts.length);
-                            return (
-                                <View key={product.id} style={styles.productTotalItem}>
-                                    <Text style={{
-                                        ...styles.productName,
-                                        fontSize: categoryProducts.length > 6 ? 6 : 8
-                                    }}>{product.name}</Text>
-                                    <Text style={{
-                                        ...styles.productQuantity,
-                                        fontSize: categoryProducts.length > 6 ? 8 : 12
-                                    }}>{total}</Text>
-                                </View>
-                            );
-                        })}
+        return (
+            <Page key={pageNumber} size="A5" orientation="portrait" style={styles.page}>
+                {/* Header solo en la primera página */}
+                {pageNumber === 1 && (
+                    <View style={styles.header}>
+                        <Text style={dynamicStyles.titleText}>MEGA DONUT</Text>
+                        <Text style={dynamicStyles.subtitleText}>PEDIDOS POR CATEGORÍAS</Text>
+                        <Text style={dynamicStyles.dateText}>
+                            DÍA: {selectedDate.toLocaleDateString('es-ES', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            }).toUpperCase()}
+                        </Text>
+                        {selectedCategory && (
+                            <Text style={dynamicStyles.categoryText}>CATEGORÍA: {selectedCategory}</Text>
+                        )}
                     </View>
-                </View>
-            )}
+                )}
 
-            {/* Contenido de la página */}
-            {pageData.map((item) => {
-                if (item.type === 'route') {
-                    const { route, clients } = item;
-                    const dynamicStyles = getDynamicStyles(categoryProducts.length);
+                {/* Bloque de TOTAL para Pasteles - AL INICIO */}
+                {pageNumber === 1 && selectedCategory === 'Pasteles' && (totalsByType.chocolate > 0 || totalsByType.naranja > 0) && (
+                    <View style={styles.finalTotal}>
+                        <Text style={{
+                            ...styles.finalTotalTitle,
+                            fontSize: dynamicStyles.subtitleText.fontSize
+                        }}>
+                            TOTAL
+                        </Text>
 
-                    return (
-                        <View key={route.id} style={styles.section}>
-                            <Text style={styles.routeTitle}>
-                                {route.nombre} - {route.identificador}
-                            </Text>
-
-                            <View style={styles.table}>
-                                {/* Header de la tabla */}
-                                <View style={[styles.tableRow, styles.tableHeader]}>
-                                    <Text style={dynamicStyles.clientCell}>CLIENTES</Text>
-                                    {categoryProducts.map((product) => (
-                                        <Text key={product.id} style={dynamicStyles.tableCellHeader}>
-                                            {product.name}
-                                        </Text>
+                        {/* Tabla de totales en columnas */}
+                        <View style={styles.finalTotalTable}>
+                            {/* Headers de productos */}
+                            <View style={styles.finalTotalRow}>
+                                {/* Headers Chocolate */}
+                                {filteredProducts
+                                    .filter(product => {
+                                        const productName = product.name.toLowerCase();
+                                        return productName.includes('choco') || productName.includes('chocolate');
+                                    })
+                                    .map(product => (
+                                        <View key={product.id} style={styles.finalTotalHeaderCell}>
+                                            <Text style={styles.finalTotalProductHeader}>
+                                                {product.name.replace('PASTEL ', '').replace('CHOCO ', '').replace('CHOCOLATE ', '').substring(0, 8)}
+                                            </Text>
+                                        </View>
                                     ))}
+
+                                {/* Headers Naranja */}
+                                {filteredProducts
+                                    .filter(product => {
+                                        const productName = product.name.toLowerCase();
+                                        return productName.includes('naranja') || productName.includes('orange');
+                                    })
+                                    .map(product => (
+                                        <View key={product.id} style={styles.finalTotalHeaderCell}>
+                                            <Text style={styles.finalTotalProductHeader}>
+                                                {product.name.replace('PASTEL ', '').replace('NARANJA ', '').substring(0, 8)}
+                                            </Text>
+                                        </View>
+                                    ))}
+                            </View>
+
+                            {/* Fila de datos */}
+                            <View style={styles.finalTotalRow}>
+                                {/* Datos Chocolate */}
+                                {filteredProducts
+                                    .filter(product => {
+                                        const productName = product.name.toLowerCase();
+                                        return productName.includes('choco') || productName.includes('chocolate');
+                                    })
+                                    .map(product => {
+                                        const total = getTotalForProduct(product.id, selectedCategory);
+                                        return (
+                                            <View key={product.id} style={styles.finalTotalDataCell}>
+                                                <Text style={styles.finalTotalProductData}>
+                                                    {total}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
+
+                                {/* Datos Naranja */}
+                                {filteredProducts
+                                    .filter(product => {
+                                        const productName = product.name.toLowerCase();
+                                        return productName.includes('naranja') || productName.includes('orange');
+                                    })
+                                    .map(product => {
+                                        const total = getTotalForProduct(product.id, selectedCategory);
+                                        return (
+                                            <View key={product.id} style={styles.finalTotalDataCell}>
+                                                <Text style={styles.finalTotalProductData}>
+                                                    {total}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
+                            </View>
+
+                            {/* Fila de separadores y subtotales */}
+                            <View style={styles.finalTotalRow}>
+                                {/* Separador y subtotal Chocolate */}
+                                <View style={styles.finalTotalSubtotalCell}>
+                                    <View style={styles.finalTotalSubtotalContent}>
+                                        <Text style={styles.finalTotalSubtotalLabel}>CHOCOLATE</Text>
+                                        <Text style={styles.finalTotalSubtotalValue}>{totalsByType.chocolate}</Text>
+                                    </View>
                                 </View>
 
-                                {/* Filas de clientes */}
-                                {clients.map((client: Client) => (
-                                    <View key={client.id} style={styles.tableRow}>
-                                        <Text style={dynamicStyles.clientCell}>
-                                            {client.nombre}
-                                        </Text>
-                                        {categoryProducts.map((product) => {
-                                            const quantity = getQuantityForClientAndProduct(client.id, product.id);
-                                            return (
-                                                <Text key={product.id} style={dynamicStyles.tableCell}>
-                                                    {quantity > 0 ? quantity : ''}
-                                                </Text>
-                                            );
-                                        })}
+                                {/* Separador y subtotal Naranja */}
+                                <View style={styles.finalTotalSubtotalCell}>
+                                    <View style={styles.finalTotalSubtotalContent}>
+                                        <Text style={styles.finalTotalSubtotalLabel}>NARANJA</Text>
+                                        <Text style={styles.finalTotalSubtotalValue}>{totalsByType.naranja}</Text>
                                     </View>
-                                ))}
+                                </View>
+                            </View>
+
+                            {/* Fila de total consolidado */}
+                            <View style={styles.finalTotalRow}>
+                                <View style={styles.finalTotalConsolidatedCell}>
+                                    <Text style={styles.finalTotalConsolidatedValue}>
+                                        TOTAL GENERAL: {totalsByType.chocolate + totalsByType.naranja}
+                                    </Text>
+                                </View>
                             </View>
                         </View>
-                    );
-                }
-                return null;
-            })}
+                    </View>
+                )}
 
-            {/* Footer de página */}
-            <View style={styles.pageFooter}>
-                <Text>
-                    MEGA DONUT - Sistema de Gestión de Pedidos por Categorías |
-                    Página {pageNumber} de {totalPages} |
-                    Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
-                </Text>
-                <Text style={{ fontSize: 6, color: '#999', marginTop: 2 }}>
-                    ✓ Formato A5 optimizado - Sin tablas cortadas
-                </Text>
-            </View>
-        </Page>
-    );
+                {/* Totales por producto para otras categorías */}
+                {pageNumber === 1 && selectedCategory && selectedCategory !== 'Pasteles' && (
+                    <View style={styles.productTotals}>
+                        <Text style={{
+                            ...styles.productTotalsTitle,
+                            fontSize: dynamicStyles.subtitleText.fontSize
+                        }}>
+                            TOTALES POR PRODUCTO - {selectedCategory}
+                        </Text>
+                        <View style={styles.productTotalsGrid}>
+                            {filteredProducts.map((product) => {
+                                const total = getTotalForProduct(product.id, selectedCategory);
+                                return (
+                                    <View key={product.id} style={styles.productTotalItem}>
+                                        <Text style={{
+                                            ...styles.productName,
+                                            fontSize: dynamicStyles.tableCell.fontSize
+                                        }}>{product.name}</Text>
+                                        <Text style={{
+                                            ...styles.productQuantity,
+                                            fontSize: dynamicStyles.tableCellHeader.fontSize
+                                        }}>{total}</Text>
+                                    </View>
+                                );
+                            })}
+                        </View>
+                    </View>
+                )}
+
+                {/* Bloque de TOTAL para Pasteles solo en la primera página */}
+                {pageNumber === 1 && selectedCategory === 'Pasteles' && (totalsByType.chocolate > 0 || totalsByType.naranja > 0) && (
+                    <View style={styles.finalTotal}>
+                        <Text style={{
+                            ...styles.finalTotalTitle,
+                            fontSize: dynamicStyles.subtitleText.fontSize
+                        }}>
+                            TOTAL
+                        </Text>
+
+                        {/* Tabla de totales en columnas */}
+                        <View style={styles.finalTotalTable}>
+                            {/* Headers de productos */}
+                            <View style={styles.finalTotalRow}>
+                                {/* Headers Chocolate */}
+                                {categoryProducts
+                                    .filter(product => {
+                                        const productName = product.name.toLowerCase();
+                                        return productName.includes('choco') || productName.includes('chocolate');
+                                    })
+                                    .map(product => (
+                                        <View key={product.id} style={styles.finalTotalHeaderCell}>
+                                            <Text style={styles.finalTotalProductHeader}>
+                                                {product.name.replace('PASTEL ', '').replace('CHOCO ', '').replace('CHOCOLATE ', '').substring(0, 8)}
+                                            </Text>
+                                        </View>
+                                    ))}
+
+                                {/* Headers Naranja */}
+                                {categoryProducts
+                                    .filter(product => {
+                                        const productName = product.name.toLowerCase();
+                                        return productName.includes('naranja') || productName.includes('orange');
+                                    })
+                                    .map(product => (
+                                        <View key={product.id} style={styles.finalTotalHeaderCell}>
+                                            <Text style={styles.finalTotalProductHeader}>
+                                                {product.name.replace('PASTEL ', '').replace('NARANJA ', '').substring(0, 8)}
+                                            </Text>
+                                        </View>
+                                    ))}
+                            </View>
+
+                            {/* Fila de datos */}
+                            <View style={styles.finalTotalRow}>
+                                {/* Datos Chocolate */}
+                                {categoryProducts
+                                    .filter(product => {
+                                        const productName = product.name.toLowerCase();
+                                        return productName.includes('choco') || productName.includes('chocolate');
+                                    })
+                                    .map(product => {
+                                        const total = getTotalForProduct(product.id, selectedCategory);
+                                        return (
+                                            <View key={product.id} style={styles.finalTotalDataCell}>
+                                                <Text style={styles.finalTotalProductData}>
+                                                    {total}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
+
+                                {/* Datos Naranja */}
+                                {categoryProducts
+                                    .filter(product => {
+                                        const productName = product.name.toLowerCase();
+                                        return productName.includes('naranja') || productName.includes('orange');
+                                    })
+                                    .map(product => {
+                                        const total = getTotalForProduct(product.id, selectedCategory);
+                                        return (
+                                            <View key={product.id} style={styles.finalTotalDataCell}>
+                                                <Text style={styles.finalTotalProductData}>
+                                                    {total}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
+                            </View>
+
+                            {/* Fila de separadores y subtotales */}
+                            <View style={styles.finalTotalRow}>
+                                {/* Separador y subtotal Chocolate */}
+                                <View style={styles.finalTotalSubtotalCell}>
+                                    <View style={styles.finalTotalSubtotalContent}>
+                                        <Text style={styles.finalTotalSubtotalLabel}>CHOCOLATE</Text>
+                                        <Text style={styles.finalTotalSubtotalValue}>{totalsByType.chocolate}</Text>
+                                    </View>
+                                </View>
+
+                                {/* Separador y subtotal Naranja */}
+                                <View style={styles.finalTotalSubtotalCell}>
+                                    <View style={styles.finalTotalSubtotalContent}>
+                                        <Text style={styles.finalTotalSubtotalLabel}>NARANJA</Text>
+                                        <Text style={styles.finalTotalSubtotalValue}>{totalsByType.naranja}</Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            {/* Fila de total consolidado */}
+                            <View style={styles.finalTotalRow}>
+                                <View style={styles.finalTotalConsolidatedCell}>
+                                    <Text style={styles.finalTotalConsolidatedValue}>
+                                        TOTAL GENERAL: {totalsByType.chocolate + totalsByType.naranja}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                    </View>
+                )}
+
+                {/* Contenido de la página */}
+                {pageData.map((item) => {
+                    if (item.type === 'route') {
+                        const { route, clients } = item;
+
+                        return (
+                            <View key={route.id} style={styles.section}>
+                                <Text style={{
+                                    ...styles.routeTitle,
+                                    fontSize: dynamicStyles.subtitleText.fontSize
+                                }}>
+                                    {route.nombre} - {route.identificador}
+                                </Text>
+
+                                <View style={styles.table}>
+                                    {/* Header de la tabla */}
+                                    <View style={[styles.tableRow, styles.tableHeader]}>
+                                        <Text style={dynamicStyles.clientCell}>CLIENTES</Text>
+                                        {filteredProducts.map((product) => (
+                                            <Text key={product.id} style={dynamicStyles.tableCellHeader}>
+                                                {product.name}
+                                            </Text>
+                                        ))}
+                                    </View>
+
+                                    {/* Filas de clientes */}
+                                    {clients.map((client: Client) => (
+                                        <View key={client.id} style={styles.tableRow}>
+                                            <Text style={dynamicStyles.clientCell}>
+                                                {client.nombre}
+                                            </Text>
+                                            {filteredProducts.map((product) => {
+                                                const quantity = getQuantityForClientAndProduct(client.id, product.id);
+                                                return (
+                                                    <Text key={product.id} style={dynamicStyles.tableCell}>
+                                                        {quantity > 0 ? quantity : ''}
+                                                    </Text>
+                                                );
+                                            })}
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        );
+                    }
+                    return null;
+                })}
+
+                {/* Footer de página */}
+                <View style={styles.pageFooter}>
+                    <Text style={{ fontSize: dynamicStyles.tableCell.fontSize }}>
+                        MEGA DONUT - Sistema de Gestión de Pedidos por Categorías |
+                        Página {pageNumber} de {totalPages} |
+                        Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
+                    </Text>
+                    <Text style={{ fontSize: 6, color: '#999', marginTop: 2 }}>
+                        ✓ Formato A5 optimizado - Sin tablas cortadas
+                    </Text>
+                </View>
+            </Page>
+        );
+    };
 
     // Función para dividir el contenido en páginas
     // OPTIMIZADO: Balance entre no cortar tablas y aprovechar máximo espacio

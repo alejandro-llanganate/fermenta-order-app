@@ -2,6 +2,7 @@ import { Route, Client, ProductCategory, Product } from '@/types/routeNotebook';
 import RouteNotebookTableHeader from './RouteNotebookTableHeader';
 import RouteNotebookTableBody from './RouteNotebookTableBody';
 import RouteNotebookTableLoading from './RouteNotebookTableLoading';
+import { useState, useEffect } from 'react';
 
 interface RouteNotebookTableProps {
     routes: Route[];
@@ -19,6 +20,9 @@ interface RouteNotebookTableProps {
     editingCell: { clientId: string; productId: string } | null;
     isUpdating: boolean;
     onDefineColumnOrder: () => void;
+    saveColumnOrder: (categories: ProductCategory[]) => void;
+    onReorderCategories: (newCategories: ProductCategory[]) => void;
+    onReorderProducts: (newProducts: Product[]) => void;
 }
 
 export default function RouteNotebookTable({
@@ -36,15 +40,271 @@ export default function RouteNotebookTable({
     handleQuantityChange,
     editingCell,
     isUpdating,
-    onDefineColumnOrder
+    onDefineColumnOrder,
+    saveColumnOrder,
+    onReorderCategories,
+    onReorderProducts
 }: RouteNotebookTableProps) {
+    // Estado para la orientación vertical del texto
+    const [isVerticalText, setIsVerticalText] = useState(() => {
+        const saved = localStorage.getItem('routeNotebookVerticalText');
+        return saved ? JSON.parse(saved) : false;
+    });
+
+    // Guardar en localStorage cuando cambie
+    useEffect(() => {
+        localStorage.setItem('routeNotebookVerticalText', JSON.stringify(isVerticalText));
+    }, [isVerticalText]);
+
+    // Función para alternar la orientación del texto
+    const toggleVerticalText = () => {
+        setIsVerticalText(!isVerticalText);
+    };
+
+    // Filtrar productos que tienen pedidos > 0
+    const getProductsWithOrders = () => {
+        return unifiedProducts.filter(product => {
+            const total = getTotalForProduct(product.id, selectedRoute);
+            return total > 0;
+        });
+    };
+
+    const filteredProducts = getProductsWithOrders();
+
+    // Funciones para reordenar categorías (trabajan solo con arrays filtrados)
+    const handleMoveCategoryLeft = (filteredCategoryIndex: number) => {
+        const filteredCategories = getCategoriesWithOrders();
+
+        if (filteredCategoryIndex > 0) {
+            // Crear nuevo array con solo las categorías filtradas
+            const newFilteredCategories = [...filteredCategories];
+
+            // Intercambiar directamente en el array filtrado
+            const temp = newFilteredCategories[filteredCategoryIndex];
+            newFilteredCategories[filteredCategoryIndex] = newFilteredCategories[filteredCategoryIndex - 1];
+            newFilteredCategories[filteredCategoryIndex - 1] = temp;
+
+            // Crear nuevo array completo manteniendo el orden de las categorías filtradas
+            const newCategories = [...productCategories];
+
+            // Aplicar el nuevo orden solo a las categorías filtradas
+            let filteredIndex = 0;
+            for (let i = 0; i < newCategories.length; i++) {
+                // Si esta categoría está en el array filtrado, aplicar el nuevo orden
+                if (filteredCategories.some(cat => cat.name === newCategories[i].name)) {
+                    newCategories[i] = newFilteredCategories[filteredIndex];
+                    filteredIndex++;
+                }
+            }
+
+            onReorderCategories(newCategories);
+        }
+    };
+
+    const handleMoveCategoryRight = (filteredCategoryIndex: number) => {
+        const filteredCategories = getCategoriesWithOrders();
+
+        if (filteredCategoryIndex < filteredCategories.length - 1) {
+            // Crear nuevo array con solo las categorías filtradas
+            const newFilteredCategories = [...filteredCategories];
+
+            // Intercambiar directamente en el array filtrado
+            const temp = newFilteredCategories[filteredCategoryIndex];
+            newFilteredCategories[filteredCategoryIndex] = newFilteredCategories[filteredCategoryIndex + 1];
+            newFilteredCategories[filteredCategoryIndex + 1] = temp;
+
+            // Crear nuevo array completo manteniendo el orden de las categorías filtradas
+            const newCategories = [...productCategories];
+
+            // Aplicar el nuevo orden solo a las categorías filtradas
+            let filteredIndex = 0;
+            for (let i = 0; i < newCategories.length; i++) {
+                // Si esta categoría está en el array filtrado, aplicar el nuevo orden
+                if (filteredCategories.some(cat => cat.name === newCategories[i].name)) {
+                    newCategories[i] = newFilteredCategories[filteredIndex];
+                    filteredIndex++;
+                }
+            }
+
+            onReorderCategories(newCategories);
+        }
+    };
+
+    // Funciones para reordenar productos (nueva estrategia simple)
+    const handleMoveProductLeft = (filteredProductIndex: number) => {
+        const filteredProducts = getProductsWithOrders();
+
+        if (filteredProductIndex > 0) {
+            // Obtener el producto que se quiere mover
+            const productToMove = filteredProducts[filteredProductIndex];
+            const productToSwap = filteredProducts[filteredProductIndex - 1];
+
+            console.log('🔄 handleMoveProductLeft - Producto a mover:', productToMove.name);
+            console.log('🔄 handleMoveProductLeft - Producto a intercambiar:', productToSwap.name);
+            console.log('🔄 handleMoveProductLeft - Índice filtrado:', filteredProductIndex);
+
+            // Verificar que ambos productos pertenezcan a la misma categoría
+            const productToMoveCategory = productCategories.find(cat =>
+                cat.products.some(prod => prod.id === productToMove.id)
+            );
+            const productToSwapCategory = productCategories.find(cat =>
+                cat.products.some(prod => prod.id === productToSwap.id)
+            );
+
+            console.log('🔄 handleMoveProductLeft - Categoría del producto a mover:', productToMoveCategory?.name);
+            console.log('🔄 handleMoveProductLeft - Categoría del producto a intercambiar:', productToSwapCategory?.name);
+
+            // Solo permitir el intercambio si ambos productos están en la misma categoría
+            if (productToMoveCategory && productToSwapCategory &&
+                productToMoveCategory.name === productToSwapCategory.name) {
+
+                console.log('✅ handleMoveProductLeft - Misma categoría, procediendo con intercambio');
+
+                // Crear nuevo array de productos unificados
+                const newUnifiedProducts = [...unifiedProducts];
+
+                // Encontrar los índices reales en el array unificado
+                const moveIndex = newUnifiedProducts.findIndex(prod => prod.id === productToMove.id);
+                const swapIndex = newUnifiedProducts.findIndex(prod => prod.id === productToSwap.id);
+
+                console.log('🔄 handleMoveProductLeft - Índices en array unificado:', { moveIndex, swapIndex });
+                console.log('🔄 handleMoveProductLeft - Productos en índices unificados:', {
+                    moveProduct: newUnifiedProducts[moveIndex]?.name,
+                    swapProduct: newUnifiedProducts[swapIndex]?.name
+                });
+
+                if (moveIndex !== -1 && swapIndex !== -1) {
+                    // Intercambiar los productos en el array unificado
+                    const temp = newUnifiedProducts[moveIndex];
+                    newUnifiedProducts[moveIndex] = newUnifiedProducts[swapIndex];
+                    newUnifiedProducts[swapIndex] = temp;
+
+                    console.log('✅ handleMoveProductLeft - Productos intercambiados en array unificado');
+
+                    // Crear nuevo array de categorías con el orden actualizado
+                    const newCategories = [...productCategories];
+
+                    // Reconstruir las categorías con el nuevo orden de productos
+                    let productIndex = 0;
+                    for (let i = 0; i < newCategories.length; i++) {
+                        const category = newCategories[i];
+                        const categoryProductCount = category.products.length;
+
+                        // Actualizar los productos de esta categoría con el nuevo orden
+                        newCategories[i] = {
+                            ...category,
+                            products: newUnifiedProducts.slice(productIndex, productIndex + categoryProductCount)
+                        };
+
+                        productIndex += categoryProductCount;
+                    }
+
+                    // Reordenar las categorías (esto es lo que realmente funciona)
+                    onReorderCategories(newCategories);
+                }
+            } else {
+                console.log('❌ handleMoveProductLeft - Diferentes categorías, no se permite el intercambio');
+            }
+        }
+    };
+
+    const handleMoveProductRight = (filteredProductIndex: number) => {
+        const filteredProducts = getProductsWithOrders();
+
+        if (filteredProductIndex < filteredProducts.length - 1) {
+            // Obtener el producto que se quiere mover
+            const productToMove = filteredProducts[filteredProductIndex];
+            const productToSwap = filteredProducts[filteredProductIndex + 1];
+
+            console.log('🔄 handleMoveProductRight - Producto a mover:', productToMove.name);
+            console.log('🔄 handleMoveProductRight - Producto a intercambiar:', productToSwap.name);
+            console.log('🔄 handleMoveProductRight - Índice filtrado:', filteredProductIndex);
+
+            // Verificar que ambos productos pertenezcan a la misma categoría
+            const productToMoveCategory = productCategories.find(cat =>
+                cat.products.some(prod => prod.id === productToMove.id)
+            );
+            const productToSwapCategory = productCategories.find(cat =>
+                cat.products.some(prod => prod.id === productToSwap.id)
+            );
+
+            console.log('🔄 handleMoveProductRight - Categoría del producto a mover:', productToMoveCategory?.name);
+            console.log('🔄 handleMoveProductRight - Categoría del producto a intercambiar:', productToSwapCategory?.name);
+
+            // Solo permitir el intercambio si ambos productos están en la misma categoría
+            if (productToMoveCategory && productToSwapCategory &&
+                productToMoveCategory.name === productToSwapCategory.name) {
+
+                console.log('✅ handleMoveProductRight - Misma categoría, procediendo con intercambio');
+
+                // Crear nuevo array de productos unificados
+                const newUnifiedProducts = [...unifiedProducts];
+
+                // Encontrar los índices reales en el array unificado
+                const moveIndex = newUnifiedProducts.findIndex(prod => prod.id === productToMove.id);
+                const swapIndex = newUnifiedProducts.findIndex(prod => prod.id === productToSwap.id);
+
+                console.log('🔄 handleMoveProductRight - Índices en array unificado:', { moveIndex, swapIndex });
+                console.log('🔄 handleMoveProductRight - Productos en índices unificados:', {
+                    moveProduct: newUnifiedProducts[moveIndex]?.name,
+                    swapProduct: newUnifiedProducts[swapIndex]?.name
+                });
+
+                if (moveIndex !== -1 && swapIndex !== -1) {
+                    // Intercambiar los productos en el array unificado
+                    const temp = newUnifiedProducts[moveIndex];
+                    newUnifiedProducts[moveIndex] = newUnifiedProducts[swapIndex];
+                    newUnifiedProducts[swapIndex] = temp;
+
+                    console.log('✅ handleMoveProductRight - Productos intercambiados en array unificado');
+
+                    // Crear nuevo array de categorías con el orden actualizado
+                    const newCategories = [...productCategories];
+
+                    // Reconstruir las categorías con el nuevo orden de productos
+                    let productIndex = 0;
+                    for (let i = 0; i < newCategories.length; i++) {
+                        const category = newCategories[i];
+                        const categoryProductCount = category.products.length;
+
+                        // Actualizar los productos de esta categoría con el nuevo orden
+                        newCategories[i] = {
+                            ...category,
+                            products: newUnifiedProducts.slice(productIndex, productIndex + categoryProductCount)
+                        };
+
+                        productIndex += categoryProductCount;
+                    }
+
+                    // Reordenar las categorías (esto es lo que realmente funciona)
+                    onReorderCategories(newCategories);
+                }
+            } else {
+                console.log('❌ handleMoveProductRight - Diferentes categorías, no se permite el intercambio');
+            }
+        }
+    };
+
+    // Filtrar categorías que tienen productos con pedidos
+    const getCategoriesWithOrders = () => {
+        return productCategories.filter(category => {
+            const categoryProducts = category.products.filter(product => {
+                const total = getTotalForProduct(product.id, selectedRoute);
+                return total > 0;
+            });
+            return categoryProducts.length > 0;
+        });
+    };
+
+    const filteredCategories = getCategoriesWithOrders();
+
     if (loading) {
         return <RouteNotebookTableLoading />;
     }
 
     return (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            {/* Route Tabs with Column Order Button */}
+            {/* Route Tabs */}
             <div className="border-b border-gray-200">
                 <div className="flex items-center justify-between px-6">
                     <nav className="flex space-x-8 overflow-x-auto">
@@ -61,15 +321,20 @@ export default function RouteNotebookTable({
                             </button>
                         ))}
                     </nav>
-                    <button
-                        onClick={onDefineColumnOrder}
-                        className="flex items-center space-x-2 bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
-                        <span>Definir Orden</span>
-                    </button>
+
+                    {/* Botón para orientación vertical del texto */}
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={toggleVerticalText}
+                            className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${isVerticalText
+                                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
+                            title={isVerticalText ? 'Cambiar a texto horizontal' : 'Cambiar a texto vertical'}
+                        >
+                            {isVerticalText ? 'Horizontal' : 'Vertical'}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -77,28 +342,19 @@ export default function RouteNotebookTable({
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200" style={{ tableLayout: 'fixed' }}>
                     <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10" style={{ width: '200px' }}>
-                                CLIENTES
-                            </th>
-                            {productCategories.map((category) => (
-                                <th key={category.name} colSpan={category.products.length} className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200">
-                                    {category.name}
-                                </th>
-                            ))}
-
-                        </tr>
-                        <tr>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10" style={{ width: '200px' }}>
-                                &nbsp;
-                            </th>
-                            {unifiedProducts.map((product) => (
-                                <th key={product.id} className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200" style={{ width: '80px' }}>
-                                    {product.name}
-                                </th>
-                            ))}
-
-                        </tr>
+                        <RouteNotebookTableHeader
+                            routes={routes}
+                            selectedRoute={selectedRoute}
+                            setSelectedRoute={setSelectedRoute}
+                            productCategories={productCategories}
+                            unifiedProducts={unifiedProducts}
+                            getTotalForProduct={getTotalForProduct}
+                            onMoveCategoryLeft={handleMoveCategoryLeft}
+                            onMoveCategoryRight={handleMoveCategoryRight}
+                            onMoveProductLeft={handleMoveProductLeft}
+                            onMoveProductRight={handleMoveProductRight}
+                            isVerticalText={isVerticalText}
+                        />
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         <RouteNotebookTableBody
@@ -114,6 +370,7 @@ export default function RouteNotebookTable({
                             handleQuantityChange={handleQuantityChange}
                             editingCell={editingCell}
                             isUpdating={isUpdating}
+                            isVerticalText={isVerticalText}
                         />
                     </tbody>
                 </table>

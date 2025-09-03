@@ -36,6 +36,29 @@ export default function RouteNotebookPreview({
     getTotalForRoute,
     printRef
 }: RouteNotebookPreviewProps) {
+    // Filtrar productos que tienen pedidos > 0
+    const getProductsWithOrders = () => {
+        const allProducts = productCategories.flatMap(category => category.products);
+        return allProducts.filter(product => {
+            const total = getTotalForProduct(product.id);
+            return total > 0;
+        });
+    };
+
+    const filteredProducts = getProductsWithOrders();
+
+    // Filtrar categorías que tienen productos con pedidos
+    const getCategoriesWithOrders = () => {
+        return productCategories.filter(category => {
+            const categoryProducts = category.products.filter(product => {
+                const total = getTotalForProduct(product.id);
+                return total > 0;
+            });
+            return categoryProducts.length > 0;
+        });
+    };
+
+    const filteredCategories = getCategoriesWithOrders();
     if (!showPreview) return null;
 
     return (
@@ -105,19 +128,28 @@ export default function RouteNotebookPreview({
                                         <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold sticky left-0 bg-gray-100">
                                             CLIENTES
                                         </th>
-                                        {productCategories.map((category) => (
-                                            <th key={category.name} colSpan={category.products.length} className="border border-gray-300 px-3 py-2 text-center text-black font-semibold">
-                                                {category.name}
-                                            </th>
-                                        ))}
+                                        {filteredCategories.map((category) => {
+                                            const categoryProductsWithOrders = category.products.filter(product => {
+                                                const total = getTotalForProduct(product.id);
+                                                return total > 0;
+                                            });
+                                            return (
+                                                <th key={category.name} colSpan={categoryProductsWithOrders.length} className="border border-gray-300 px-3 py-2 text-center text-black font-semibold">
+                                                    {category.name}
+                                                </th>
+                                            );
+                                        })}
 
                                     </tr>
                                     <tr className="bg-gray-50">
                                         <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold sticky left-0 bg-gray-50">
                                             &nbsp;
                                         </th>
-                                        {productCategories.map((category) => (
-                                            category.products.map((product) => (
+                                        {filteredCategories.map((category) => (
+                                            category.products.filter(product => {
+                                                const total = getTotalForProduct(product.id);
+                                                return total > 0;
+                                            }).map((product) => (
                                                 <th key={product.id} className="border border-gray-300 px-2 py-2 text-center text-black font-semibold text-xs">
                                                     {product.name}
                                                 </th>
@@ -140,8 +172,11 @@ export default function RouteNotebookPreview({
                                                         <td className="border border-gray-300 px-3 py-2 text-black font-medium sticky left-0 bg-white">
                                                             {client.nombre}
                                                         </td>
-                                                        {productCategories.map((category) => (
-                                                            category.products.map((product) => {
+                                                        {filteredCategories.map((category) => (
+                                                            category.products.filter(product => {
+                                                                const total = getTotalForProduct(product.id);
+                                                                return total > 0;
+                                                            }).map((product) => {
                                                                 const quantity = getQuantityForClientAndProduct(client.id, product.id);
                                                                 return (
                                                                     <td key={product.id} className="border border-gray-300 px-2 py-2 text-black text-center">

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import "sweetalert2/dist/sweetalert2.min.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { FontSizeProvider } from "@/contexts/FontSizeContext";
 import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -27,7 +28,9 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <AuthProvider>
-          {children}
+          <FontSizeProvider>
+            {children}
+          </FontSizeProvider>
         </AuthProvider>
       </body>
     </html>

@@ -193,15 +193,23 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
     // Obtener la ruta seleccionada
     const currentRoute = selectedRoute ? routes.find(r => r.id === selectedRoute) : null;
 
-    // Obtener todos los productos
-    const allProducts = productCategories.flatMap(cat => cat.products);
+    // Filtrar productos que tienen pedidos > 0
+    const getProductsWithOrders = () => {
+        const allProducts = productCategories.flatMap(cat => cat.products);
+        return allProducts.filter(product => {
+            const total = getTotalForProduct(product.id, selectedRoute);
+            return total > 0;
+        });
+    };
+
+    const filteredProducts = getProductsWithOrders();
 
     // Obtener clientes con órdenes
     const clientsWithOrders = getClientsWithOrders();
 
     // Calcular el tamaño de página óptimo basado en los datos
     const calculatePageSize = () => {
-        const totalColumns = allProducts.length + 1; // +1 para CLIENTES (sin TOTAL)
+        const totalColumns = filteredProducts.length + 1; // +1 para CLIENTES (sin TOTAL)
         const totalRows = routes.reduce((sum, route) => {
             const routeClients = getClientsWithOrders(route.id);
             return sum + routeClients.length + 2; // +2 para header y total de ruta
@@ -229,10 +237,10 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
 
     console.log('📏 Tamaño de página calculado:', pageSize);
     console.log('📊 Datos:', {
-        productos: allProducts.length,
+        productos: filteredProducts.length,
         rutas: routes.length,
         clientes: clientsWithOrders.length,
-        columnas: allProducts.length + 1
+        columnas: filteredProducts.length + 1
     });
 
     return (
@@ -261,7 +269,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                         TOTALES POR PRODUCTO
                     </Text>
                     <View style={styles.productTotalsGrid}>
-                        {allProducts.map((product) => {
+                        {filteredProducts.map((product) => {
                             const total = getTotalForProduct(product.id);
                             return (
                                 <View key={product.id} style={styles.productTotalItem}>
@@ -292,7 +300,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                     {/* Header de la tabla */}
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={styles.clientCell}>CLIENTES</Text>
-                                        {allProducts.map((product) => (
+                                        {filteredProducts.map((product) => (
                                             <Text key={product.id} style={styles.tableCellHeader}>
                                                 {product.name}
                                             </Text>
@@ -304,7 +312,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                         return (
                                             <View key={client.id} style={styles.tableRow}>
                                                 <Text style={styles.clientCell}>{client.nombre}</Text>
-                                                {allProducts.map((product) => {
+                                                {filteredProducts.map((product) => {
                                                     const quantity = getQuantityForClientAndProduct(client.id, product.id);
                                                     return (
                                                         <Text key={product.id} style={styles.tableCell}>
@@ -319,7 +327,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                     {/* Fila de totales de ruta */}
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={styles.tableCellHeader}>TOTAL {route.nombre}</Text>
-                                        {allProducts.map((product) => {
+                                        {filteredProducts.map((product) => {
                                             const total = getTotalForProduct(product.id, selectedRoute);
                                             return (
                                                 <Text key={product.id} style={styles.tableCellHeader}>
@@ -341,7 +349,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                             {/* Header de la tabla */}
                             <View style={[styles.tableRow, styles.tableHeader]}>
                                 <Text style={styles.clientCell}>CLIENTES</Text>
-                                {allProducts.map((product) => (
+                                {filteredProducts.map((product) => (
                                     <Text key={product.id} style={styles.tableCellHeader}>
                                         {product.name}
                                     </Text>
@@ -353,7 +361,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                 return (
                                     <View key={client.id} style={styles.tableRow}>
                                         <Text style={styles.clientCell}>{client.nombre}</Text>
-                                        {allProducts.map((product) => {
+                                        {filteredProducts.map((product) => {
                                             const quantity = getQuantityForClientAndProduct(client.id, product.id);
                                             return (
                                                 <Text key={product.id} style={styles.tableCell}>
@@ -368,7 +376,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                             {/* Fila de totales generales */}
                             <View style={[styles.tableRow, styles.tableHeader]}>
                                 <Text style={styles.tableCellHeader}>TOTAL GENERAL</Text>
-                                {allProducts.map((product) => {
+                                {filteredProducts.map((product) => {
                                     const total = getTotalForProduct(product.id);
                                     return (
                                         <Text key={product.id} style={styles.tableCellHeader}>

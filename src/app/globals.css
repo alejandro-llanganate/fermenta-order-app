@@ -29,3 +29,19 @@ body {
   );
   min-height: 100vh;
 }
+
+/* Estilos para texto vertical en tablas */
+.writing-mode-vertical-rl {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.transform-rotate-45 {
+  transform: rotate(-90deg);
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+}
+
+.origin-center {
+  transform-origin: center;
+}

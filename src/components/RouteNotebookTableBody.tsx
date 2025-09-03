@@ -13,6 +13,7 @@ interface RouteNotebookTableBodyProps {
     handleQuantityChange: (clientId: string, productId: string, newQuantity: number) => void;
     editingCell: { clientId: string; productId: string } | null;
     isUpdating: boolean;
+    isVerticalText?: boolean;
 }
 
 export default function RouteNotebookTableBody({
@@ -27,7 +28,8 @@ export default function RouteNotebookTableBody({
     getTotalForRoute,
     handleQuantityChange,
     editingCell,
-    isUpdating
+    isUpdating,
+    isVerticalText
 }: RouteNotebookTableBodyProps) {
     // Filtrar rutas según la selección
     const filteredRoutes = selectedRoute
