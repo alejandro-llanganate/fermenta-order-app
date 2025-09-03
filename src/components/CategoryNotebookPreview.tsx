@@ -6,6 +6,7 @@ import { exportToExcel } from '@/utils/excelExport';
 import { useFontSize } from '@/contexts/FontSizeContext';
 import FontSizeConfig from './FontSizeConfig';
 import { generateMainTitle } from '@/utils/dateUtils';
+import { getCategoryColors } from '@/utils/categoryColors';
 
 interface CategoryNotebookPreviewProps {
     showPreview: boolean;
@@ -357,31 +358,31 @@ export default function CategoryNotebookPreview({
                                 </div>
 
                                 <div className="space-y-2">
-                                    {/* Header solo en la primera página */}
+                                    {/* Header solo en la primera página - RF-18: Encabezado en negro con fecha subrayada */}
                                     {pageIndex === 0 && (
                                         <div className="text-center border-b border-gray-200 pb-2">
                                             <h1 className={`font-bold text-black ${getFontSizeClass('titles')}`}>
                                                 {generateMainTitle(selectedDate, selectedCategory)}
                                             </h1>
-                                            <p className={`text-gray-600 ${getFontSizeClass('cells')}`}>
+                                            <p className={`text-black underline ${getFontSizeClass('cells')}`}>
                                                 FILTRADO POR: {dateFilterType === 'order' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                                             </p>
                                         </div>
                                     )}
 
-                                    {/* Totales por producto solo en la primera página - EXCLUYENDO Pasteles */}
+                                    {/* Totales por producto solo en la primera página - EXCLUYENDO Pasteles - RF-18: Colores de categoría */}
                                     {pageIndex === 0 && selectedCategory && selectedCategory !== 'Pasteles' && (
-                                        <div className="bg-blue-50 rounded p-2 border border-blue-200 mb-2">
-                                            <h3 className={`font-semibold text-blue-900 mb-1 ${getFontSizeClass('headers')}`}>
+                                        <div className={`rounded p-2 border mb-2 ${getCategoryColors(selectedCategory).backgroundColor} border-gray-300`}>
+                                            <h3 className={`font-semibold mb-1 ${getFontSizeClass('headers')} ${getCategoryColors(selectedCategory).textColor}`}>
                                                 TOTALES POR PRODUCTO - {selectedCategory}
                                             </h3>
                                             <div className="grid grid-cols-4 gap-1">
                                                 {categoryProducts.map((product) => {
                                                     const total = getTotalForProduct(product.id, selectedCategory);
                                                     return (
-                                                        <div key={product.id} className="text-center bg-white rounded p-1 border border-blue-200">
-                                                            <p className={`text-blue-600 font-medium truncate ${getFontSizeClass('cells')}`}>{product.name}</p>
-                                                            <p className={`font-bold text-blue-900 ${getFontSizeClass('headers')}`}>{total}</p>
+                                                        <div key={product.id} className="text-center bg-white rounded p-1 border border-gray-300">
+                                                            <p className={`font-medium truncate ${getFontSizeClass('cells')} ${getCategoryColors(selectedCategory).textColor}`}>{product.name}</p>
+                                                            <p className={`font-bold ${getFontSizeClass('headers')} ${getCategoryColors(selectedCategory).textColor}`}>{total}</p>
                                                         </div>
                                                     );
                                                 })}
@@ -389,10 +390,10 @@ export default function CategoryNotebookPreview({
                                         </div>
                                     )}
 
-                                    {/* Category Totals - EXCLUYENDO Pasteles */}
+                                    {/* Category Totals - EXCLUYENDO Pasteles - RF-18: Colores de categoría */}
                                     {selectedCategory !== 'Pasteles' && (
-                                        <div className="bg-green-50 rounded-lg p-4 border border-green-200 mb-4">
-                                            <h3 className="text-lg font-semibold text-green-900 mb-4">
+                                        <div className={`rounded-lg p-4 border mb-4 ${getCategoryColors(selectedCategory).backgroundColor} border-gray-300`}>
+                                            <h3 className={`text-lg font-semibold mb-4 ${getCategoryColors(selectedCategory).textColor}`}>
                                                 TOTALES GENERALES - {selectedCategory}
                                             </h3>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

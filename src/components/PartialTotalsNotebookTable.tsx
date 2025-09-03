@@ -1,5 +1,6 @@
 import { Route, Product } from '@/types/routeNotebook';
 import PartialTotalsNotebookTableLoading from './PartialTotalsNotebookTableLoading';
+import { getCategoryColors } from '@/utils/categoryColors';
 
 interface PartialTotalsNotebookTableProps {
     loading: boolean;
@@ -46,13 +47,13 @@ export default function PartialTotalsNotebookTable({
             <div className="overflow-x-auto">
                 <table className="min-w-full border border-gray-300" style={{ tableLayout: 'fixed' }}>
                     <thead>
-                        {/* Category Headers */}
+                        {/* Category Headers - RF-18: Colores de categoría */}
                         <tr className="bg-gray-100">
                             <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold sticky left-0 bg-gray-100 z-20" style={{ width: '200px' }}>
                                 RUTAS
                             </th>
                             {productCategories.map((category) => (
-                                <th key={category.name} colSpan={category.products.length} className="border border-gray-300 px-3 py-2 text-center text-black font-semibold text-sm">
+                                <th key={category.name} colSpan={category.products.length} className={`border border-gray-300 px-3 py-2 text-center font-semibold text-sm ${getCategoryColors(category.name).backgroundColor} ${getCategoryColors(category.name).textColor}`}>
                                     {category.name}
                                 </th>
                             ))}

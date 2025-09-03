@@ -27,6 +27,8 @@ import Footer from './Footer';
 import Swal from 'sweetalert2';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import BulkOrderNotesPDF from './pdf/BulkOrderNotesPDF';
 
 interface OrdersManagementProps {
     onBack: () => void;
@@ -49,6 +51,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const [showExportModal, setShowExportModal] = useState(false);
     const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
     const [showBulkActionsModal, setShowBulkActionsModal] = useState(false);
+    const [isGeneratingBulkPDF, setIsGeneratingBulkPDF] = useState(false);
     const [bulkActionType, setBulkActionType] = useState<'status' | 'delivery_date'>('status');
     const [bulkStatus, setBulkStatus] = useState<Order['status']>('pending');
     const [bulkDeliveryDate, setBulkDeliveryDate] = useState<Date | null>(null);
@@ -59,6 +62,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         clientCedula?: string;
     }) | null>(null);
     const [loading, setLoading] = useState(true);
+    const [updatingStatus, setUpdatingStatus] = useState<Set<string>>(new Set());
     const printRef = useRef<HTMLDivElement>(null);
     const routePreviewRef = useRef<HTMLDivElement>(null);
     const exportRef = useRef<HTMLDivElement>(null);
@@ -758,7 +762,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const openEditModal = (order: Order) => {
         console.log('🔍 Abriendo modal de edición para pedido:', order);
         console.log('📦 Items del pedido:', order.items);
-        
+
         setEditingOrder(order);
 
         // Cargar los datos del pedido en el formulario
@@ -773,14 +777,14 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         // Cargar los items del pedido
         if (order.items && order.items.length > 0) {
             console.log('📦 Procesando', order.items.length, 'items del pedido');
-            
+
             const transformedItems = order.items.map(item => {
                 console.log('🔍 Procesando item:', item);
-                
+
                 // Buscar el producto real en la lista de productos
                 const realProduct = products.find(p => p.id === item.productId);
                 console.log('🔍 Producto real encontrado:', realProduct);
-                
+
                 if (realProduct) {
                     const transformedItem = {
                         product: realProduct,
@@ -792,7 +796,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     console.log('✅ Item transformado con producto real:', transformedItem);
                     return transformedItem;
                 }
-                
+
                 // Si no se encuentra el producto, crear uno temporal
                 console.log('⚠️ Producto no encontrado, creando temporal');
                 const tempProduct: Product = {
@@ -827,7 +831,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 quantityInputs[item.product.id] = item.quantity.toString();
             });
             setQuantityInputs(quantityInputs);
-            
+
             console.log('💾 selectedItems establecido:', transformedItems.length, 'items');
             console.log('💾 quantityInputs establecido:', Object.keys(quantityInputs).length, 'inputs');
         } else {
@@ -872,16 +876,47 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     // Función para actualizar estado del pedido
     const handleUpdateStatus = async (orderId: string, newStatus: Order['status']) => {
         try {
+            // Marcar como actualizando
+            setUpdatingStatus(prev => new Set(prev).add(orderId));
+
+            // Actualizar el estado local inmediatamente para feedback visual instantáneo
+            setOrders(prevOrders =>
+                prevOrders.map(order =>
+                    order.id === orderId
+                        ? { ...order, status: newStatus }
+                        : order
+                )
+            );
+
+            // Actualizar en la base de datos
             const { error } = await supabase
                 .from('orders')
                 .update({ status: newStatus })
                 .eq('id', orderId);
 
-            if (error) throw error;
+            if (error) {
+                // Si hay error, revertir el cambio local
+                setOrders(prevOrders =>
+                    prevOrders.map(order =>
+                        order.id === orderId
+                            ? { ...order, status: order.status }
+                            : order
+                    )
+                );
+                throw error;
+            }
 
-            await fetchData();
+            // Opcional: Recargar datos para asegurar sincronización completa
+            // await fetchData();
         } catch (error) {
             handleError(error, 'actualizar el estado del pedido');
+        } finally {
+            // Remover del estado de actualización
+            setUpdatingStatus(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(orderId);
+                return newSet;
+            });
         }
     };
 
@@ -924,14 +959,30 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 updateData.delivery_date = bulkDeliveryDate ? formatDateForDB(bulkDeliveryDate) : null;
             }
 
+            // Actualizar el estado local inmediatamente para feedback visual instantáneo
+            setOrders(prevOrders =>
+                prevOrders.map(order =>
+                    selectedOrders.includes(order.id)
+                        ? {
+                            ...order,
+                            ...(bulkActionType === 'status' ? { status: bulkStatus } : {}),
+                            ...(bulkActionType === 'delivery_date' && bulkDeliveryDate ? { deliveryDate: bulkDeliveryDate } : {})
+                        }
+                        : order
+                )
+            );
+
             const { error } = await supabase
                 .from('orders')
                 .update(updateData)
                 .in('id', selectedOrders);
 
-            if (error) throw error;
+            if (error) {
+                // Si hay error, revertir los cambios locales
+                await fetchData();
+                throw error;
+            }
 
-            await fetchData();
             setSelectedOrders([]);
             setShowBulkActionsModal(false);
 
@@ -1199,6 +1250,31 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         setShowExportModal(true);
     };
 
+    // Función para generar nombre del archivo PDF masivo
+    const generateBulkPDFFileName = (): string => {
+        const filters = [];
+
+        if (searchTerm) {
+            filters.push(`Busqueda-${searchTerm.replace(/[^a-zA-Z0-9]/g, '-')}`);
+        }
+
+        if (routeFilter) {
+            const route = routes.find(r => r.id === routeFilter);
+            filters.push(`Ruta-${route?.identificador || routeFilter}`);
+        }
+
+        if (dateFilterValue) {
+            const filterType = dateFilterType === 'order' ? 'Registro' : 'Entrega';
+            const dateStr = dateFilterValue.toLocaleDateString('es-ES').replace(/\//g, '-');
+            filters.push(`${filterType}-${dateStr}`);
+        }
+
+        const filterText = filters.length > 0 ? `-${filters.join('-')}` : '';
+        const orderCount = filteredOrders.length;
+
+        return `Notas-Pedido-Masivas${filterText}-${orderCount}-pedidos-${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`;
+    };
+
     const generateExportPDF = async () => {
         if (!exportRef.current) return;
 
@@ -1399,6 +1475,35 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                         <Printer className="h-4 w-4" />
                                         <span>Exportar</span>
                                     </button>
+
+                                    {/* Botón de descarga masiva de notas de pedido */}
+                                    {filteredOrders.length > 0 && (
+                                        <PDFDownloadLink
+                                            document={
+                                                <BulkOrderNotesPDF
+                                                    orders={filteredOrders}
+                                                    clients={clients}
+                                                    routes={routes}
+                                                    dateFilterType={dateFilterType}
+                                                    dateFilterValue={dateFilterValue}
+                                                    routeFilter={routeFilter}
+                                                    searchTerm={searchTerm}
+                                                />
+                                            }
+                                            fileName={generateBulkPDFFileName()}
+                                            className="flex items-center justify-center space-x-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm"
+                                        >
+                                            {({ loading }) => (
+                                                <>
+                                                    <FileText className="h-4 w-4" />
+                                                    <span>
+                                                        {loading ? 'Generando...' : `Descargar Notas (${filteredOrders.length})`}
+                                                    </span>
+                                                </>
+                                            )}
+                                        </PDFDownloadLink>
+                                    )}
+
                                     {selectedOrders.length > 0 && (
                                         <button
                                             onClick={() => setShowBulkActionsModal(true)}
@@ -1522,16 +1627,22 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                 {order.deliveryDate ? order.deliveryDate.toLocaleDateString('es-ES') : 'Sin fecha'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <select
-                                                    value={order.status}
-                                                    onChange={(e) => handleUpdateStatus(order.id, e.target.value as Order['status'])}
-                                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border-none ${getStatusColor(order.status)}`}
-                                                >
-                                                    <option value="pending">Pendiente</option>
-                                                    <option value="ready">Listo</option>
-                                                    <option value="delivered">Entregado</option>
-                                                    <option value="cancelled">Cancelado</option>
-                                                </select>
+                                                <div className="flex items-center space-x-2">
+                                                    <select
+                                                        value={order.status}
+                                                        onChange={(e) => handleUpdateStatus(order.id, e.target.value as Order['status'])}
+                                                        disabled={updatingStatus.has(order.id)}
+                                                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border-none ${getStatusColor(order.status)} ${updatingStatus.has(order.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    >
+                                                        <option value="pending">Pendiente</option>
+                                                        <option value="ready">Listo</option>
+                                                        <option value="delivered">Entregado</option>
+                                                        <option value="cancelled">Cancelado</option>
+                                                    </select>
+                                                    {updatingStatus.has(order.id) && (
+                                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center space-x-1">

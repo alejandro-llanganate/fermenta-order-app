@@ -2,6 +2,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { ProductCategory, Route, Client, Product } from '@/types/routeNotebook';
 import { generateMainTitle } from '@/utils/dateUtils';
+import { getCategoryPDFStyles } from '@/utils/categoryColors';
 
 // Registrar fuentes (opcional - usar fuentes del sistema)
 Font.register({
@@ -497,13 +498,13 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
 
         return (
             <Page key={pageNumber} size="A5" orientation="portrait" style={styles.page}>
-                {/* Header solo en la primera página */}
+                {/* Header solo en la primera página - RF-18: Encabezado en negro con fecha subrayada */}
                 {pageNumber === 1 && (
                     <View style={styles.header}>
-                        <Text style={dynamicStyles.titleText}>
+                        <Text style={[dynamicStyles.titleText, { color: '#000000' }]}>
                             {generateMainTitle(selectedDate, selectedCategory)}
                         </Text>
-                        <Text style={dynamicStyles.dateText}>
+                        <Text style={[dynamicStyles.dateText, { color: '#000000', textDecoration: 'underline' }]}>
                             FILTRADO POR: {dateFilterType === 'order' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                         </Text>
                     </View>
@@ -620,12 +621,13 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                     </View>
                 )}
 
-                {/* Totales por producto para otras categorías */}
+                {/* Totales por producto para otras categorías - RF-18: Colores de categoría */}
                 {pageNumber === 1 && selectedCategory && selectedCategory !== 'Pasteles' && (
-                    <View style={styles.productTotals}>
+                    <View style={[styles.productTotals, getCategoryPDFStyles(selectedCategory)]}>
                         <Text style={{
                             ...styles.productTotalsTitle,
-                            fontSize: dynamicStyles.subtitleText.fontSize
+                            fontSize: dynamicStyles.subtitleText.fontSize,
+                            color: '#000000'
                         }}>
                             TOTALES POR PRODUCTO - {selectedCategory}
                         </Text>
@@ -636,11 +638,13 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                     <View key={product.id} style={styles.productTotalItem}>
                                         <Text style={{
                                             ...styles.productName,
-                                            fontSize: dynamicStyles.tableCell.fontSize
+                                            fontSize: dynamicStyles.tableCell.fontSize,
+                                            color: '#000000'
                                         }}>{product.name}</Text>
                                         <Text style={{
                                             ...styles.productQuantity,
-                                            fontSize: dynamicStyles.tableCellHeader.fontSize
+                                            fontSize: dynamicStyles.tableCellHeader.fontSize,
+                                            color: '#000000'
                                         }}>{total}</Text>
                                     </View>
                                 );

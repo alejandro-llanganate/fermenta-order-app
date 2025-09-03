@@ -1,4 +1,5 @@
 import { Route, ProductCategory, Product } from '@/types/routeNotebook';
+import { getCategoryColors } from '@/utils/categoryColors';
 
 interface RouteNotebookTableHeaderProps {
     routes: Route[];
@@ -63,7 +64,7 @@ export default function RouteNotebookTableHeader({
                         return total > 0;
                     });
                     return (
-                        <th key={category.name} colSpan={categoryProductsWithOrders.length} className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200 relative group">
+                        <th key={category.name} colSpan={categoryProductsWithOrders.length} className={`px-3 py-3 text-center text-xs font-medium uppercase tracking-wider border-l border-gray-200 relative group ${getCategoryColors(category.name).backgroundColor} ${getCategoryColors(category.name).textColor}`}>
                             <div className="flex items-center justify-center space-x-2">
                                 <button
                                     onClick={() => onMoveCategoryLeft(categoryIndex)}

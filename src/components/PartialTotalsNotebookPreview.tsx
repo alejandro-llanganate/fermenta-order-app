@@ -1,6 +1,7 @@
 import { Printer } from 'lucide-react';
 import { Route, Product } from '@/types/routeNotebook';
 import { generateMainTitle } from '@/utils/dateUtils';
+import { getCategoryColors } from '@/utils/categoryColors';
 
 interface PartialTotalsNotebookPreviewProps {
     showPreview: boolean;
@@ -64,12 +65,12 @@ export default function PartialTotalsNotebookPreview({
                 {/* Print Content */}
                 <div ref={printRef} className="p-6">
                     <div className="space-y-6">
-                        {/* Header */}
+                        {/* Header - RF-18: Encabezado en negro con fecha subrayada */}
                         <div className="text-center border-b border-gray-200 pb-4">
                             <h1 className="text-3xl font-bold text-black">
                                 {generateMainTitle(selectedDate, 'TOTALES PARCIALES')}
                             </h1>
-                            <p className="text-lg text-gray-600">
+                            <p className="text-lg text-black underline">
                                 RESUMEN CONSOLIDADO POR RUTAS Y CATEGORÍAS
                             </p>
                         </div>
@@ -78,13 +79,13 @@ export default function PartialTotalsNotebookPreview({
                         <div className="overflow-x-auto">
                             <table className="min-w-full border border-gray-300">
                                 <thead>
-                                    {/* Category Headers */}
+                                    {/* Category Headers - RF-18: Colores de categoría */}
                                     <tr className="bg-gray-100">
                                         <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold">
                                             RUTAS
                                         </th>
                                         {productCategories.map((category) => (
-                                            <th key={category.name} colSpan={category.products.length} className="border border-gray-300 px-3 py-2 text-center text-black font-semibold text-sm">
+                                            <th key={category.name} colSpan={category.products.length} className={`border border-gray-300 px-3 py-2 text-center font-semibold text-sm ${getCategoryColors(category.name).backgroundColor} ${getCategoryColors(category.name).textColor}`}>
                                                 {category.name}
                                             </th>
                                         ))}

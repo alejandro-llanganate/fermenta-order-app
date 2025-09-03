@@ -3,6 +3,7 @@ import { Route, Client, Product, ProductCategory } from '@/types/routeNotebook';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RouteNotebookPDF from './pdf/RouteNotebookPDF';
 import { generateMainTitle } from '@/utils/dateUtils';
+import { getCategoryColors } from '@/utils/categoryColors';
 
 interface RouteNotebookPreviewProps {
     showPreview: boolean;
@@ -107,16 +108,16 @@ export default function RouteNotebookPreview({
                 {/* Print Content */}
                 <div ref={printRef} className="p-6">
                     <div className="space-y-6">
-                        {/* Header */}
+                        {/* Header - RF-18: Encabezado en negro con fecha subrayada */}
                         <div className="text-center border-b border-gray-200 pb-4">
                             <h1 className="text-3xl font-bold text-black">
                                 {generateMainTitle(selectedDate, selectedRoute ? `RUTA ${routes.find(r => r.id === selectedRoute)?.nombre}` : 'TODAS LAS RUTAS')}
                             </h1>
-                            <p className="text-lg text-gray-600">
+                            <p className="text-lg text-black underline">
                                 FILTRADO POR: {dateFilterType === 'registration' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                             </p>
                             {selectedRoute && (
-                                <p className="text-lg text-gray-600">
+                                <p className="text-lg text-black">
                                     RUTA: {routes.find(r => r.id === selectedRoute)?.nombre}
                                 </p>
                             )}

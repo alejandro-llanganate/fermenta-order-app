@@ -2,6 +2,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { ProductCategory, Route, Client, Product } from '@/types/routeNotebook';
 import { generateMainTitle } from '@/utils/dateUtils';
+import { getCategoryPDFStyles } from '@/utils/categoryColors';
 
 // Registrar fuentes
 Font.register({
@@ -247,16 +248,16 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
     return (
         <Document>
             <Page size={pageSize} orientation="landscape" style={styles.page}>
-                {/* Header */}
+                {/* Header - RF-18: Encabezado en negro con fecha subrayada */}
                 <View style={styles.header}>
-                    <Text style={styles.title}>
+                    <Text style={[styles.title, { color: '#000000' }]}>
                         {generateMainTitle(selectedDate, selectedRoute ? `RUTA ${currentRoute?.nombre}` : 'TODAS LAS RUTAS')}
                     </Text>
-                    <Text style={styles.date}>
+                    <Text style={[styles.date, { color: '#000000', textDecoration: 'underline' }]}>
                         FILTRADO POR: {dateFilterType === 'registration' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                     </Text>
                     {currentRoute && (
-                        <Text style={styles.route}>RUTA: {currentRoute.nombre} - {currentRoute.identificador}</Text>
+                        <Text style={[styles.route, { color: '#000000' }]}>RUTA: {currentRoute.nombre} - {currentRoute.identificador}</Text>
                     )}
                 </View>
 
