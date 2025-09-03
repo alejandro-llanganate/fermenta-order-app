@@ -1,6 +1,8 @@
 import { Plus } from 'lucide-react';
 import { Client, ProductCategory, Product, Route } from '@/types/routeNotebook';
 import CategoryNotebookTableLoading from './CategoryNotebookTableLoading';
+import { useFontSize } from '@/contexts/FontSizeContext';
+import FontSizeConfig from './FontSizeConfig';
 
 interface CategoryNotebookTableProps {
     productCategories: ProductCategory[];
@@ -33,6 +35,8 @@ export default function CategoryNotebookTable({
     editingCell,
     isUpdating
 }: CategoryNotebookTableProps) {
+    const { getFontSizeClass, getFontSizeValue } = useFontSize();
+
     if (loading) {
         return <CategoryNotebookTableLoading />;
     }
@@ -116,20 +120,25 @@ export default function CategoryNotebookTable({
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             {/* Category Tabs */}
             <div className="border-b border-gray-200">
-                <nav className="flex space-x-8 px-6 overflow-x-auto">
-                    {productCategories.map((category) => (
-                        <button
-                            key={category.name}
-                            onClick={() => setSelectedCategory(selectedCategory === category.name ? '' : category.name)}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${selectedCategory === category.name
-                                ? 'border-green-500 text-green-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
-                        >
-                            {category.name}
-                        </button>
-                    ))}
-                </nav>
+                <div className="flex items-center justify-between px-6">
+                    <nav className="flex space-x-8 overflow-x-auto">
+                        {productCategories.map((category) => (
+                            <button
+                                key={category.name}
+                                onClick={() => setSelectedCategory(selectedCategory === category.name ? '' : category.name)}
+                                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${selectedCategory === category.name
+                                    ? 'border-green-500 text-green-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    }`}
+                            >
+                                {category.name}
+                            </button>
+                        ))}
+                    </nav>
+
+                    {/* Configuración de tamaño de letra */}
+                    <FontSizeConfig />
+                </div>
             </div>
 
             {/* Content - Multiple Tables by Route */}
@@ -137,7 +146,7 @@ export default function CategoryNotebookTable({
                 {/* Bloque de TOTAL para Pasteles - AL INICIO */}
                 {selectedCategory === 'Pasteles' && (totalsByType.chocolate > 0 || totalsByType.naranja > 0) && (
                     <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mb-6">
-                        <h3 className="text-lg font-semibold text-blue-900 mb-4 text-center">
+                        <h3 className={`font-semibold text-blue-900 mb-4 text-center ${getFontSizeClass('titles')}`}>
                             TOTAL
                         </h3>
 
@@ -155,7 +164,7 @@ export default function CategoryNotebookTable({
                                             })
                                             .map(product => (
                                                 <th key={product.id} className="bg-orange-100 border border-orange-300 px-2 py-2 text-center">
-                                                    <span className="text-xs font-semibold text-orange-800">
+                                                    <span className={`font-semibold text-orange-800 ${getFontSizeClass('cells')}`}>
                                                         {product.name.replace('PASTEL ', '').replace('CHOCO ', '').replace('CHOCOLATE ', '').substring(0, 8)}
                                                     </span>
                                                 </th>
@@ -169,7 +178,7 @@ export default function CategoryNotebookTable({
                                             })
                                             .map(product => (
                                                 <th key={product.id} className="bg-yellow-100 border border-yellow-300 px-2 py-2 text-center">
-                                                    <span className="text-xs font-semibold text-yellow-800">
+                                                    <span className={`font-semibold text-yellow-800 ${getFontSizeClass('cells')}`}>
                                                         {product.name.replace('PASTEL ', '').replace('NARANJA ', '').substring(0, 8)}
                                                     </span>
                                                 </th>
@@ -190,7 +199,7 @@ export default function CategoryNotebookTable({
                                                 const total = getTotalForProductInCategory(product.id);
                                                 return (
                                                     <td key={product.id} className="bg-orange-50 border border-orange-300 px-2 py-2 text-center">
-                                                        <span className="text-lg font-bold text-orange-900">
+                                                        <span className={`font-bold text-orange-900 ${getFontSizeClass('headers')}`}>
                                                             {total}
                                                         </span>
                                                     </td>
@@ -207,7 +216,7 @@ export default function CategoryNotebookTable({
                                                 const total = getTotalForProductInCategory(product.id);
                                                 return (
                                                     <td key={product.id} className="bg-yellow-50 border border-yellow-300 px-2 py-2 text-center">
-                                                        <span className="text-lg font-bold text-yellow-900">
+                                                        <span className={`font-bold text-yellow-900 ${getFontSizeClass('headers')}`}>
                                                             {total}
                                                         </span>
                                                     </td>
@@ -228,8 +237,8 @@ export default function CategoryNotebookTable({
                                             className="bg-orange-200 border border-orange-300 px-3 py-2 text-center"
                                         >
                                             <div className="flex justify-between items-center">
-                                                <span className="text-sm font-semibold text-orange-800">CHOCOLATE</span>
-                                                <span className="text-lg font-bold text-orange-900">{totalsByType.chocolate}</span>
+                                                <span className={`font-semibold text-orange-800 ${getFontSizeClass('cells')}`}>CHOCOLATE</span>
+                                                <span className={`font-bold text-orange-900 ${getFontSizeClass('headers')}`}>{totalsByType.chocolate}</span>
                                             </div>
                                         </td>
 
@@ -244,8 +253,8 @@ export default function CategoryNotebookTable({
                                             className="bg-yellow-200 border border-yellow-300 px-3 py-2 text-center"
                                         >
                                             <div className="flex justify-between items-center">
-                                                <span className="text-sm font-semibold text-yellow-800">NARANJA</span>
-                                                <span className="text-lg font-bold text-yellow-900">{totalsByType.naranja}</span>
+                                                <span className={`font-semibold text-yellow-800 ${getFontSizeClass('cells')}`}>NARANJA</span>
+                                                <span className={`font-bold text-yellow-900 ${getFontSizeClass('headers')}`}>{totalsByType.naranja}</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -262,7 +271,7 @@ export default function CategoryNotebookTable({
                                             }
                                             className="bg-blue-200 border border-blue-300 px-4 py-3 text-center"
                                         >
-                                            <span className="text-xl font-bold text-blue-900">
+                                            <span className={`font-bold text-blue-900 ${getFontSizeClass('titles')}`}>
                                                 TOTAL GENERAL: {totalsByType.chocolate + totalsByType.naranja}
                                             </span>
                                         </td>
@@ -285,7 +294,7 @@ export default function CategoryNotebookTable({
                                 <div key={route.id} className="mb-6">
                                     <div className="bg-white rounded-lg shadow-md overflow-hidden">
                                         <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
-                                            <h3 className="text-lg font-semibold text-gray-900">
+                                            <h3 className={`font-semibold text-gray-900 ${getFontSizeClass('titles')}`}>
                                                 {route.nombre} - {route.identificador}
                                             </h3>
                                         </div>
@@ -293,11 +302,11 @@ export default function CategoryNotebookTable({
                                             <table className="w-full border-collapse">
                                                 <thead>
                                                     <tr className="bg-gray-50">
-                                                        <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold text-xs" style={{ width: '200px' }}>
+                                                        <th className={`border border-gray-300 px-3 py-2 text-left text-black font-semibold ${getFontSizeClass('headers')}`} style={{ width: '200px' }}>
                                                             CLIENTES
                                                         </th>
                                                         {filteredProducts.map((product) => (
-                                                            <th key={product.id} className="border border-gray-300 px-2 py-2 text-center text-black font-semibold text-xs" style={{ width: '100px' }}>
+                                                            <th key={product.id} className={`border border-gray-300 px-2 py-2 text-center text-black font-semibold ${getFontSizeClass('headers')}`} style={{ width: '100px' }}>
                                                                 {product.name}
                                                             </th>
                                                         ))}
@@ -310,7 +319,7 @@ export default function CategoryNotebookTable({
 
                                                         return (
                                                             <tr key={client.id} className="hover:bg-gray-50">
-                                                                <td className="border border-gray-300 px-3 py-2 text-black font-medium">
+                                                                <td className={`border border-gray-300 px-3 py-2 text-black font-medium ${getFontSizeClass('cells')}`}>
                                                                     {client.nombre}
                                                                 </td>
                                                                 {filteredProducts.map((product) => {
@@ -318,7 +327,7 @@ export default function CategoryNotebookTable({
                                                                     const isEditing = editingCell?.clientId === client.id && editingCell?.productId === product.id;
 
                                                                     return (
-                                                                        <td key={product.id} className="border border-gray-300 px-2 py-2 text-center">
+                                                                        <td key={product.id} className={`border border-gray-300 px-2 py-2 text-center ${getFontSizeClass('cells')}`}>
                                                                             {quantity > 0 ? (
                                                                                 <span className="text-black font-medium">{quantity}</span>
                                                                             ) : (
@@ -334,7 +343,7 @@ export default function CategoryNotebookTable({
 
                                                     {/* Route Totals Row */}
                                                     <tr className="bg-gray-100 font-bold">
-                                                        <td className="border border-gray-300 px-3 py-2 text-black font-bold">
+                                                        <td className={`border border-gray-300 px-3 py-2 text-black font-bold ${getFontSizeClass('headers')}`}>
                                                             TOTALES {route.nombre}
                                                         </td>
                                                         {filteredProducts.map((product) => {
@@ -342,7 +351,7 @@ export default function CategoryNotebookTable({
                                                                 return sum + getQuantityForClientAndProduct(client.id, product.id);
                                                             }, 0);
                                                             return (
-                                                                <td key={product.id} className="border border-gray-300 px-2 py-2 text-black font-bold text-center">
+                                                                <td key={product.id} className={`border border-gray-300 px-2 py-2 text-black font-bold text-center ${getFontSizeClass('headers')}`}>
                                                                     {total > 0 ? total : ''}
                                                                 </td>
                                                             );
@@ -366,25 +375,25 @@ export default function CategoryNotebookTable({
                 {/* Category Totals */}
                 {selectedCategory && (
                     <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                        <h3 className="text-lg font-semibold text-green-900 mb-4">
+                        <h3 className={`font-semibold text-green-900 mb-4 ${getFontSizeClass('titles')}`}>
                             TOTALES GENERALES - {selectedCategory}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="text-center">
-                                <p className="text-sm text-green-600">Total Cantidad</p>
-                                <p className="text-2xl font-bold text-green-900">
+                                <p className={`text-green-600 ${getFontSizeClass('cells')}`}>Total Cantidad</p>
+                                <p className={`font-bold text-green-900 ${getFontSizeClass('titles')}`}>
                                     {getTotalForCategory(selectedCategory).quantity}
                                 </p>
                             </div>
                             <div className="text-center">
-                                <p className="text-sm text-green-600">Total Monto</p>
-                                <p className="text-2xl font-bold text-green-900">
+                                <p className={`text-green-600 ${getFontSizeClass('cells')}`}>Total Monto</p>
+                                <p className={`font-bold text-green-900 ${getFontSizeClass('titles')}`}>
                                     ${getTotalForCategory(selectedCategory).amount.toFixed(2)}
                                 </p>
                             </div>
                             <div className="text-center">
-                                <p className="text-sm text-green-600">Rutas Activas</p>
-                                <p className="text-2xl font-bold text-green-900">
+                                <p className={`text-green-600 ${getFontSizeClass('cells')}`}>Rutas Activas</p>
+                                <p className={`font-bold text-green-900 ${getFontSizeClass('titles')}`}>
                                     {routes.filter(route => getClientsByRoute(route.id).length > 0).length}
                                 </p>
                             </div>

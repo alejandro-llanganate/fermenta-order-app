@@ -374,8 +374,8 @@ export default function CategoryNotebookPreview({
                                         </div>
                                     )}
 
-                                    {/* Totales por producto solo en la primera página */}
-                                    {pageIndex === 0 && selectedCategory && (
+                                    {/* Totales por producto solo en la primera página - EXCLUYENDO Pasteles */}
+                                    {pageIndex === 0 && selectedCategory && selectedCategory !== 'Pasteles' && (
                                         <div className="bg-blue-50 rounded p-2 border border-blue-200 mb-2">
                                             <h3 className={`font-semibold text-blue-900 mb-1 ${getFontSizeClass('headers')}`}>
                                                 TOTALES POR PRODUCTO - {selectedCategory}
@@ -394,98 +394,41 @@ export default function CategoryNotebookPreview({
                                         </div>
                                     )}
 
-                                    {/* Category Totals */}
-                                    <div className="bg-green-50 rounded-lg p-4 border border-green-200 mb-4">
-                                        <h3 className="text-lg font-semibold text-green-900 mb-4">
-                                            TOTALES GENERALES - {selectedCategory}
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <div className="text-center">
-                                                <p className="text-sm text-green-600">Total Cantidad</p>
-                                                <p className="text-2xl font-bold text-green-900">
-                                                    {getTotalForCategory(selectedCategory).quantity}
-                                                </p>
-                                            </div>
-                                            <div className="text-center">
-                                                <p className="text-sm text-green-600">Total Monto</p>
-                                                <p className="text-2xl font-bold text-green-900">
-                                                    ${getTotalForCategory(selectedCategory).amount.toFixed(2)}
-                                                </p>
-                                            </div>
-                                            <div className="text-center">
-                                                <p className="text-sm text-green-600">Rutas Activas</p>
-                                                <p className="text-2xl font-bold text-green-900">
-                                                    {routes.filter(route => getClientsByRoute(route.id).length > 0).length}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Totales por Producto - Agrupados por tipo para Pasteles */}
-                                    {selectedCategory === 'Pasteles' && (
-                                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mb-4">
-                                            <h3 className="text-lg font-semibold text-blue-900 mb-4">
-                                                TOTALES POR PRODUCTO - {selectedCategory}
+                                    {/* Category Totals - EXCLUYENDO Pasteles */}
+                                    {selectedCategory !== 'Pasteles' && (
+                                        <div className="bg-green-50 rounded-lg p-4 border border-green-200 mb-4">
+                                            <h3 className="text-lg font-semibold text-green-900 mb-4">
+                                                TOTALES GENERALES - {selectedCategory}
                                             </h3>
-
-                                            {/* Productos de Chocolate */}
-                                            <div className="mb-6">
-                                                <h4 className="text-md font-semibold text-blue-800 mb-3">CHOCOLATE</h4>
-                                                <div className="space-y-2">
-                                                    {categoryProducts
-                                                        .filter(product => {
-                                                            const productName = product.name.toLowerCase();
-                                                            return productName.includes('choco') || productName.includes('chocolate');
-                                                        })
-                                                        .map(product => {
-                                                            const total = getTotalForProduct(product.id, selectedCategory);
-                                                            return (
-                                                                <div key={product.id} className="flex justify-between items-center bg-white rounded px-3 py-2">
-                                                                    <span className="font-medium text-gray-800">{product.name}</span>
-                                                                    <span className="font-bold text-blue-900">{total}</span>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    {/* Total Chocolate */}
-                                                    <div className="flex justify-between items-center bg-blue-100 rounded px-3 py-2 border-t-2 border-blue-300">
-                                                        <span className="font-bold text-blue-900">TOTAL CHOCOLATE</span>
-                                                        <span className="font-bold text-blue-900 text-lg">{totalsByType.chocolate}</span>
-                                                    </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="text-center">
+                                                    <p className="text-sm text-green-600">Total Cantidad</p>
+                                                    <p className="text-2xl font-bold text-green-900">
+                                                        {getTotalForCategory(selectedCategory).quantity}
+                                                    </p>
                                                 </div>
-                                            </div>
-
-                                            {/* Productos de Naranja */}
-                                            <div className="mb-6">
-                                                <h4 className="text-md font-semibold text-blue-800 mb-3">NARANJA</h4>
-                                                <div className="space-y-2">
-                                                    {categoryProducts
-                                                        .filter(product => {
-                                                            const productName = product.name.toLowerCase();
-                                                            return productName.includes('naranja') || productName.includes('orange');
-                                                        })
-                                                        .map(product => {
-                                                            const total = getTotalForProduct(product.id, selectedCategory);
-                                                            return (
-                                                                <div key={product.id} className="flex justify-between items-center bg-white rounded px-3 py-2">
-                                                                    <span className="font-medium text-gray-800">{product.name}</span>
-                                                                    <span className="font-bold text-blue-900">{total}</span>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    {/* Total Naranja */}
-                                                    <div className="flex justify-between items-center bg-blue-100 rounded px-3 py-2 border-t-2 border-blue-300">
-                                                        <span className="font-bold text-blue-900">TOTAL NARANJA</span>
-                                                        <span className="font-bold text-blue-900 text-lg">{totalsByType.naranja}</span>
-                                                    </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm text-green-600">Total Monto</p>
+                                                    <p className="text-2xl font-bold text-green-900">
+                                                        ${getTotalForCategory(selectedCategory).amount.toFixed(2)}
+                                                    </p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm text-green-600">Rutas Activas</p>
+                                                    <p className="text-2xl font-bold text-green-900">
+                                                        {routes.filter(route => getClientsByRoute(route.id).length > 0).length}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
                                     )}
 
+
+
                                     {/* Bloque de TOTAL para Pasteles - AL INICIO */}
                                     {pageIndex === 0 && selectedCategory === 'Pasteles' && (totalsByType.chocolate > 0 || totalsByType.naranja > 0) && (
-                                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mb-6">
-                                            <h3 className="text-lg font-semibold text-blue-900 mb-4 text-center">
+                                        <div className="bg-blue-50 rounded p-2 border border-blue-200 mb-2">
+                                            <h3 className={`font-semibold text-blue-900 mb-2 text-center ${getFontSizeClass('headers')}`}>
                                                 TOTAL
                                             </h3>
 
@@ -502,8 +445,8 @@ export default function CategoryNotebookPreview({
                                                                     return productName.includes('choco') || productName.includes('chocolate');
                                                                 })
                                                                 .map(product => (
-                                                                    <th key={product.id} className="bg-orange-100 border border-orange-300 px-2 py-2 text-center">
-                                                                        <span className="text-xs font-semibold text-orange-800">
+                                                                    <th key={product.id} className="bg-orange-100 border border-orange-300 px-1 py-1 text-center">
+                                                                        <span className={`font-semibold text-orange-800 ${getFontSizeClass('cells')}`}>
                                                                             {product.name.replace('PASTEL ', '').replace('CHOCO ', '').replace('CHOCOLATE ', '').substring(0, 8)}
                                                                         </span>
                                                                     </th>
@@ -516,8 +459,8 @@ export default function CategoryNotebookPreview({
                                                                     return productName.includes('naranja') || productName.includes('orange');
                                                                 })
                                                                 .map(product => (
-                                                                    <th key={product.id} className="bg-yellow-100 border border-yellow-300 px-2 py-2 text-center">
-                                                                        <span className="text-xs font-semibold text-yellow-800">
+                                                                    <th key={product.id} className="bg-yellow-100 border border-yellow-300 px-1 py-1 text-center">
+                                                                        <span className={`font-semibold text-yellow-800 ${getFontSizeClass('cells')}`}>
                                                                             {product.name.replace('PASTEL ', '').replace('NARANJA ', '').substring(0, 8)}
                                                                         </span>
                                                                     </th>
@@ -537,8 +480,8 @@ export default function CategoryNotebookPreview({
                                                                 .map(product => {
                                                                     const total = getTotalForProduct(product.id, selectedCategory);
                                                                     return (
-                                                                        <td key={product.id} className="bg-orange-50 border border-orange-300 px-2 py-2 text-center">
-                                                                            <span className="text-lg font-bold text-orange-900">
+                                                                        <td key={product.id} className="bg-orange-50 border border-orange-300 px-1 py-1 text-center">
+                                                                            <span className={`font-bold text-orange-900 ${getFontSizeClass('headers')}`}>
                                                                                 {total}
                                                                             </span>
                                                                         </td>
@@ -554,8 +497,8 @@ export default function CategoryNotebookPreview({
                                                                 .map(product => {
                                                                     const total = getTotalForProduct(product.id, selectedCategory);
                                                                     return (
-                                                                        <td key={product.id} className="bg-yellow-50 border border-yellow-300 px-2 py-2 text-center">
-                                                                            <span className="text-lg font-bold text-yellow-900">
+                                                                        <td key={product.id} className="bg-yellow-50 border border-yellow-300 px-1 py-1 text-center">
+                                                                            <span className={`font-bold text-yellow-900 ${getFontSizeClass('headers')}`}>
                                                                                 {total}
                                                                             </span>
                                                                         </td>
@@ -573,11 +516,11 @@ export default function CategoryNotebookPreview({
                                                                         return productName.includes('choco') || productName.includes('chocolate');
                                                                     }).length
                                                                 }
-                                                                className="bg-orange-200 border border-orange-300 px-3 py-2 text-center"
+                                                                className="bg-orange-200 border border-orange-300 px-2 py-1 text-center"
                                                             >
                                                                 <div className="flex justify-between items-center">
-                                                                    <span className="text-sm font-semibold text-orange-800">CHOCOLATE</span>
-                                                                    <span className="text-lg font-bold text-orange-900">{totalsByType.chocolate}</span>
+                                                                    <span className={`font-semibold text-orange-800 ${getFontSizeClass('cells')}`}>CHOCOLATE</span>
+                                                                    <span className={`font-bold text-orange-900 ${getFontSizeClass('headers')}`}>{totalsByType.chocolate}</span>
                                                                 </div>
                                                             </td>
 
@@ -589,11 +532,11 @@ export default function CategoryNotebookPreview({
                                                                         return productName.includes('naranja') || productName.includes('orange');
                                                                     }).length
                                                                 }
-                                                                className="bg-yellow-200 border border-yellow-300 px-3 py-2 text-center"
+                                                                className="bg-yellow-200 border border-yellow-300 px-2 py-1 text-center"
                                                             >
                                                                 <div className="flex justify-between items-center">
-                                                                    <span className="text-sm font-semibold text-yellow-800">NARANJA</span>
-                                                                    <span className="text-lg font-bold text-yellow-900">{totalsByType.naranja}</span>
+                                                                    <span className={`font-semibold text-yellow-800 ${getFontSizeClass('cells')}`}>NARANJA</span>
+                                                                    <span className={`font-bold text-yellow-900 ${getFontSizeClass('headers')}`}>{totalsByType.naranja}</span>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -608,9 +551,9 @@ export default function CategoryNotebookPreview({
                                                                             productName.includes('naranja') || productName.includes('orange');
                                                                     }).length
                                                                 }
-                                                                className="bg-blue-200 border border-blue-300 px-4 py-3 text-center"
+                                                                className="bg-blue-200 border border-blue-300 px-3 py-2 text-center"
                                                             >
-                                                                <span className="text-xl font-bold text-blue-900">
+                                                                <span className={`font-bold text-blue-900 ${getFontSizeClass('titles')}`}>
                                                                     TOTAL GENERAL: {totalsByType.chocolate + totalsByType.naranja}
                                                                 </span>
                                                             </td>
