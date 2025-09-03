@@ -5,6 +5,7 @@ import CategoryNotebookPDF from './pdf/CategoryNotebookPDF';
 import { exportToExcel } from '@/utils/excelExport';
 import { useFontSize } from '@/contexts/FontSizeContext';
 import FontSizeConfig from './FontSizeConfig';
+import { generateMainTitle } from '@/utils/dateUtils';
 
 interface CategoryNotebookPreviewProps {
     showPreview: boolean;
@@ -289,6 +290,7 @@ export default function CategoryNotebookPreview({
                                     <CategoryNotebookPDF
                                         selectedDate={selectedDate}
                                         selectedCategory={selectedCategory}
+                                        dateFilterType={dateFilterType}
                                         productCategories={productCategories}
                                         routes={routes}
                                         getClientsWithOrders={getClientsWithOrders}
@@ -358,19 +360,12 @@ export default function CategoryNotebookPreview({
                                     {/* Header solo en la primera página */}
                                     {pageIndex === 0 && (
                                         <div className="text-center border-b border-gray-200 pb-2">
-                                            <h1 className={`font-bold text-black ${getFontSizeClass('titles')}`}>MEGA DONUT</h1>
-                                            <h2 className={`font-semibold text-gray-800 ${getFontSizeClass('headers')}`}>PEDIDOS POR CATEGORÍAS</h2>
-                                            <p className={`text-gray-600 ${getFontSizeClass('cells')}`}>
-                                                DÍA: {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}
-                                            </p>
+                                            <h1 className={`font-bold text-black ${getFontSizeClass('titles')}`}>
+                                                {generateMainTitle(selectedDate, selectedCategory)}
+                                            </h1>
                                             <p className={`text-gray-600 ${getFontSizeClass('cells')}`}>
                                                 FILTRADO POR: {dateFilterType === 'order' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                                             </p>
-                                            {selectedCategory && (
-                                                <p className={`text-gray-600 ${getFontSizeClass('cells')}`}>
-                                                    CATEGORÍA: {selectedCategory}
-                                                </p>
-                                            )}
                                         </div>
                                     )}
 

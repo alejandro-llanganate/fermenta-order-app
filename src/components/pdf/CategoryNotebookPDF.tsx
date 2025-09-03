@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { ProductCategory, Route, Client, Product } from '@/types/routeNotebook';
+import { generateMainTitle } from '@/utils/dateUtils';
 
 // Registrar fuentes (opcional - usar fuentes del sistema)
 Font.register({
@@ -320,6 +321,7 @@ const styles = StyleSheet.create({
 interface CategoryNotebookPDFProps {
     selectedDate: Date;
     selectedCategory: string;
+    dateFilterType: 'order' | 'delivery';
     productCategories: ProductCategory[];
     routes: Route[];
     getClientsWithOrders: (categoryId?: string) => Client[];
@@ -337,6 +339,7 @@ interface CategoryNotebookPDFProps {
 const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
     selectedDate,
     selectedCategory,
+    dateFilterType,
     productCategories,
     routes,
     getClientsWithOrders,
@@ -497,19 +500,12 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                 {/* Header solo en la primera página */}
                 {pageNumber === 1 && (
                     <View style={styles.header}>
-                        <Text style={dynamicStyles.titleText}>MEGA DONUT</Text>
-                        <Text style={dynamicStyles.subtitleText}>PEDIDOS POR CATEGORÍAS</Text>
-                        <Text style={dynamicStyles.dateText}>
-                            DÍA: {selectedDate.toLocaleDateString('es-ES', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            }).toUpperCase()}
+                        <Text style={dynamicStyles.titleText}>
+                            {generateMainTitle(selectedDate, selectedCategory)}
                         </Text>
-                        {selectedCategory && (
-                            <Text style={dynamicStyles.categoryText}>CATEGORÍA: {selectedCategory}</Text>
-                        )}
+                        <Text style={dynamicStyles.dateText}>
+                            FILTRADO POR: {dateFilterType === 'order' ? 'Fecha de Registro' : 'Fecha de Entrega'}
+                        </Text>
                     </View>
                 )}
 

@@ -1,5 +1,6 @@
 import { Printer } from 'lucide-react';
 import { Route, Product } from '@/types/routeNotebook';
+import { generateMainTitle } from '@/utils/dateUtils';
 
 interface PartialTotalsNotebookPreviewProps {
     showPreview: boolean;
@@ -65,13 +66,11 @@ export default function PartialTotalsNotebookPreview({
                     <div className="space-y-6">
                         {/* Header */}
                         <div className="text-center border-b border-gray-200 pb-4">
-                            <h1 className="text-3xl font-bold text-black">MEGA DONUT</h1>
-                            <h2 className="text-2xl font-semibold text-gray-800">TOTALES PARCIALES</h2>
+                            <h1 className="text-3xl font-bold text-black">
+                                {generateMainTitle(selectedDate, 'TOTALES PARCIALES')}
+                            </h1>
                             <p className="text-lg text-gray-600">
                                 RESUMEN CONSOLIDADO POR RUTAS Y CATEGORÍAS
-                            </p>
-                            <p className="text-lg text-gray-600">
-                                DÍA: {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}
                             </p>
                         </div>
 

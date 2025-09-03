@@ -2,6 +2,7 @@ import { Printer } from 'lucide-react';
 import { Route, Client, Product, ProductCategory } from '@/types/routeNotebook';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RouteNotebookPDF from './pdf/RouteNotebookPDF';
+import { generateMainTitle } from '@/utils/dateUtils';
 
 interface RouteNotebookPreviewProps {
     showPreview: boolean;
@@ -108,10 +109,11 @@ export default function RouteNotebookPreview({
                     <div className="space-y-6">
                         {/* Header */}
                         <div className="text-center border-b border-gray-200 pb-4">
-                            <h1 className="text-3xl font-bold text-black">MEGA DONUT</h1>
-                            <h2 className="text-2xl font-semibold text-gray-800">PEDIDOS Y ENTREGAS</h2>
+                            <h1 className="text-3xl font-bold text-black">
+                                {generateMainTitle(selectedDate, selectedRoute ? `RUTA ${routes.find(r => r.id === selectedRoute)?.nombre}` : 'TODAS LAS RUTAS')}
+                            </h1>
                             <p className="text-lg text-gray-600">
-                                {dateFilterType === 'registration' ? 'FECHA DE REGISTRO' : 'FECHA DE ENTREGA'}: {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase()}
+                                FILTRADO POR: {dateFilterType === 'registration' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                             </p>
                             {selectedRoute && (
                                 <p className="text-lg text-gray-600">

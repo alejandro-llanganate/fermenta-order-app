@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { ProductCategory, Route, Client, Product } from '@/types/routeNotebook';
+import { generateMainTitle } from '@/utils/dateUtils';
 
 // Registrar fuentes
 Font.register({
@@ -248,15 +249,11 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
             <Page size={pageSize} orientation="landscape" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Text style={styles.title}>MEGA DONUT</Text>
-                    <Text style={styles.subtitle}>PEDIDOS POR RUTAS</Text>
+                    <Text style={styles.title}>
+                        {generateMainTitle(selectedDate, selectedRoute ? `RUTA ${currentRoute?.nombre}` : 'TODAS LAS RUTAS')}
+                    </Text>
                     <Text style={styles.date}>
-                        {dateFilterType === 'registration' ? 'FECHA DE REGISTRO' : 'FECHA DE ENTREGA'}: {selectedDate.toLocaleDateString('es-ES', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        }).toUpperCase()}
+                        FILTRADO POR: {dateFilterType === 'registration' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                     </Text>
                     {currentRoute && (
                         <Text style={styles.route}>RUTA: {currentRoute.nombre} - {currentRoute.identificador}</Text>
