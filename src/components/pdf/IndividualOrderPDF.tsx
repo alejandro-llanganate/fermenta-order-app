@@ -95,29 +95,39 @@ const styles = StyleSheet.create({
         fontSize: 8,
         textAlign: 'left',
         color: '#000000',
+        paddingLeft: 2,
+        paddingRight: 2,
     },
     quantityCell: {
         flex: 1,
         fontSize: 8,
         textAlign: 'center',
         color: '#000000',
+        paddingLeft: 2,
+        paddingRight: 2,
     },
     priceCell: {
         flex: 1,
         fontSize: 8,
         textAlign: 'right',
         color: '#000000',
+        paddingLeft: 2,
+        paddingRight: 2,
     },
     totalCell: {
         flex: 1,
         fontSize: 8,
         textAlign: 'right',
         color: '#000000',
+        paddingLeft: 2,
+        paddingRight: 2,
     },
     headerCell: {
         fontSize: 8,
         fontWeight: 'bold',
         color: '#374151',
+        paddingLeft: 2,
+        paddingRight: 2,
     },
     totals: {
         marginTop: 6,
@@ -234,10 +244,10 @@ const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, client }
                 <View style={styles.table}>
                     {/* Header de la tabla */}
                     <View style={styles.tableHeader}>
-                        <Text style={[styles.headerCell, { flex: 2 }]}>Producto</Text>
-                        <Text style={[styles.headerCell, { flex: 1 }]}>Cantidad</Text>
-                        <Text style={[styles.headerCell, { flex: 1 }]}>Precio Unit.</Text>
-                        <Text style={[styles.headerCell, { flex: 1 }]}>Total</Text>
+                        <Text style={[styles.productCell, styles.headerCell]}>Producto</Text>
+                        <Text style={[styles.quantityCell, styles.headerCell]}>Cantidad</Text>
+                        <Text style={[styles.priceCell, styles.headerCell]}>Precio Unit.</Text>
+                        <Text style={[styles.totalCell, styles.headerCell]}>Total</Text>
                     </View>
 
                     {/* Filas de productos */}
@@ -258,14 +268,13 @@ const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, client }
                         </View>
                     )}
 
-                    {/* Fila de total */}
-                    <View style={[styles.tableRow, { backgroundColor: '#f3f4f6' }]}>
-                        <Text style={[styles.productCell, { flex: 3, textAlign: 'right', fontWeight: 'bold' }]}>
-                            TOTAL A CANCELAR:
-                        </Text>
-                        <Text style={[styles.totalCell, { fontWeight: 'bold', fontSize: 11 }]}>
-                            ${order.totalAmount.toFixed(2)}
-                        </Text>
+                </View>
+
+                {/* Totales */}
+                <View style={styles.totals}>
+                    <View style={styles.totalRow}>
+                        <Text style={styles.totalLabel}>TOTAL A CANCELAR:</Text>
+                        <Text style={styles.totalValue}>${order.totalAmount.toFixed(2)}</Text>
                     </View>
                 </View>
 
