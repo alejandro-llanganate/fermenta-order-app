@@ -74,6 +74,11 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const [totalOrders, setTotalOrders] = useState(0);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+    // Estados para scroll horizontal
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+    const tableScrollRef = useRef<HTMLDivElement>(null);
+
     // Estados para el formulario de creación
     const [selectedRouteForOrder, setSelectedRouteForOrder] = useState<Route | null>(null);
     const [filteredClients, setFilteredClients] = useState<Client[]>([]);
@@ -253,6 +258,11 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         }
     }, [searchTerm, routeFilter, dateFilterValue, dateFilterType]);
 
+    // Verificar botones de scroll cuando cambien los datos
+    useEffect(() => {
+        checkScrollButtons();
+    }, [orders]);
+
 
 
     // Filtrar clientes cuando cambia la ruta seleccionada
@@ -273,6 +283,31 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, routeFilter, dateFilterValue, dateFilterType]);
+
+    // Funciones para manejar scroll horizontal
+    const checkScrollButtons = () => {
+        if (tableScrollRef.current) {
+            const { scrollLeft, scrollWidth, clientWidth } = tableScrollRef.current;
+            setCanScrollLeft(scrollLeft > 0);
+            setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+        }
+    };
+
+    const scrollTable = (direction: 'left' | 'right') => {
+        if (tableScrollRef.current) {
+            const scrollAmount = 300; // Píxeles a desplazar
+            const currentScroll = tableScrollRef.current.scrollLeft;
+            const newScroll = direction === 'left'
+                ? currentScroll - scrollAmount
+                : currentScroll + scrollAmount;
+
+            tableScrollRef.current.scrollTo({
+                left: newScroll,
+                behavior: 'smooth'
+            });
+        }
+    };
+
 
     // Función para cargar pedidos con paginación del servidor
     const fetchOrdersWithPagination = async (page: number = 1, limit: number = itemsPerPage, reset: boolean = false) => {
@@ -1498,6 +1533,51 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex flex-col">
+            {/* Estilos personalizados para scroll */}
+            <style jsx>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                    height: 12px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: #f1f5f9;
+                    border-radius: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #3b82f6;
+                    border-radius: 6px;
+                    border: 2px solid #f1f5f9;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: #2563eb;
+                }
+                .custom-scrollbar::-webkit-scrollbar-corner {
+                    background: #f1f5f9;
+                }
+                
+                .shadow-left::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 20px;
+                    height: 100%;
+                    background: linear-gradient(to right, rgba(0, 0, 0, 0.1), transparent);
+                    pointer-events: none;
+                    z-index: 10;
+                }
+                
+                .shadow-right::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 20px;
+                    height: 100%;
+                    background: linear-gradient(to left, rgba(0, 0, 0, 0.1), transparent);
+                    pointer-events: none;
+                    z-index: 10;
+                }
+            `}</style>
             <div className="flex-1 p-6">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
@@ -1640,7 +1720,43 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
                     {/* Orders Table */}
                     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                        <div className="overflow-x-auto">
+                        {/* Controles de scroll horizontal */}
+                        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+                            <div className="flex items-center space-x-2">
+                                <span className="text-sm font-medium text-gray-700">Navegación horizontal:</span>
+                                <button
+                                    onClick={() => scrollTable('left')}
+                                    disabled={!canScrollLeft}
+                                    className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                    title="Desplazar hacia la izquierda"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={() => scrollTable('right')}
+                                    disabled={!canScrollRight}
+                                    className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                    title="Desplazar hacia la derecha"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                                Usa los botones o la barra de scroll azul para navegar
+                            </div>
+                        </div>
+
+                        <div
+                            ref={tableScrollRef}
+                            className={`overflow-x-auto custom-scrollbar relative ${canScrollLeft ? 'shadow-left' : ''
+                                } ${canScrollRight ? 'shadow-right' : ''
+                                }`}
+                            onScroll={checkScrollButtons}
+                        >
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
