@@ -10,13 +10,10 @@ WHERE email = 'julissaencarnacion@gmail.com';
 
 -- Si no existe, crear el usuario administrador
 -- Ejecuta esto solo si el usuario no existe:
+
 -- SELECT auth.create_user(
 --   email := 'julissaencarnacion@gmail.com',
 --   password := 'Julis1093$',
 --   email_confirm := true,
 --   user_metadata := '{"role": "admin", "username": "julissaencarnacion"}'::jsonb
 -- );
-
-
-
-

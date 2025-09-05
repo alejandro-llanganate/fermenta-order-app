@@ -1231,46 +1231,37 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     };
 
     const generatePDF = async () => {
-        if (!selectedOrder || !printRef.current) return;
+        if (!selectedOrder) return;
 
         try {
             // Importar dinámicamente para evitar errores de SSR
-            const jsPDF = (await import('jspdf')).default;
-            const html2canvas = (await import('html2canvas')).default;
+            const { pdf } = await import('@react-pdf/renderer');
+            const IndividualOrderPDF = (await import('@/components/pdf/IndividualOrderPDF')).default;
 
-            const canvas = await html2canvas(printRef.current, {
-                scale: 1,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                allowTaint: true,
-                foreignObjectRendering: false,
-                logging: false,
-                removeContainer: true,
-                width: printRef.current.offsetWidth,
-                height: printRef.current.offsetHeight
+            // Obtener datos del cliente
+            const clientData = await supabase
+                .from('clients')
+                .select('nombre, telefono, direccion, cedula')
+                .eq('id', selectedOrder.clientId)
+                .single();
+
+            const pdfDocument = IndividualOrderPDF({
+                order: selectedOrder,
+                client: clientData.data as any
             });
 
-            const imgData = canvas.toDataURL('image/png', 1.0);
-            const pdf = new jsPDF('p', 'mm', 'a4');
+            const blob = await pdf(pdfDocument as any).toBlob();
 
-            const imgWidth = 210;
-            const pageHeight = 295;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let heightLeft = imgHeight;
+            // Crear enlace de descarga
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Pedido-${selectedOrder.orderNumber}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
 
-            let position = 0;
-
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-            }
-
-            pdf.save(`Pedido-${selectedOrder.orderNumber}.pdf`);
         } catch (error) {
             handleError(error, 'generar el PDF');
         }
@@ -1313,10 +1304,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             });
 
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdf = new jsPDF('l', 'mm', 'a5');
 
             const imgWidth = 210;
-            const pageHeight = 295;
+            const pageHeight = 148;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             let heightLeft = imgHeight;
 
@@ -1457,10 +1448,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             });
 
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdf = new jsPDF('l', 'mm', 'a5');
 
             const imgWidth = 210;
-            const pageHeight = 295;
+            const pageHeight = 148;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             let heightLeft = imgHeight;
 
@@ -2467,20 +2458,24 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             color: '#000000',
                             backgroundColor: '#ffffff',
                             fontFamily: 'Arial, sans-serif',
-                            fontSize: '14px',
-                            lineHeight: '1.4',
-                            padding: '32px',
-                            border: '1px solid #d1d5db'
+                            fontSize: '11px',
+                            lineHeight: '1.2',
+                            padding: '15px',
+                            border: '1px solid #d1d5db',
+                            width: '210mm',
+                            minHeight: '148mm',
+                            display: 'flex',
+                            flexDirection: 'column'
                         }}>
                             {/* Header */}
-                            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                                <h1 style={{ color: '#000000', fontSize: '24px', fontWeight: 'bold', margin: '0 0 8px 0' }}>Mega Donut</h1>
-                                <p style={{ color: '#374151', margin: '0' }}>Nota de Pedido</p>
+                            <div style={{ textAlign: 'center', marginBottom: '12px', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px' }}>
+                                <h1 style={{ color: '#000000', fontSize: '20px', fontWeight: 'bold', margin: '0 0 6px 0' }}>Mega Donut</h1>
+                                <p style={{ color: '#374151', margin: '0', fontSize: '14px' }}>Nota de Pedido</p>
                             </div>
 
                             {/* Pedido # */}
-                            <div style={{ textAlign: 'center', marginBottom: '24px', padding: '16px', backgroundColor: '#f3f4f6', borderRadius: '4px' }}>
-                                <h2 style={{ color: '#000000', fontSize: '20px', fontWeight: 'bold', margin: '0' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '10px', padding: '8px', backgroundColor: '#f3f4f6', borderRadius: '4px' }}>
+                                <h2 style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', margin: '0' }}>
                                     Pedido #{(() => {
                                         // Función para generar identificador de 5 dígitos del ID del pedido
                                         const numbers = selectedOrder.id.replace(/\D/g, '');
@@ -2491,52 +2486,52 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             </div>
 
                             {/* Información del Cliente */}
-                            <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '4px' }}>
-                                <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '12px', margin: '0 0 12px 0' }}>Cliente</h3>
-                                <p style={{ color: '#111827', margin: '4px 0' }}><strong>Nombre:</strong> {selectedOrder.clientName || 'No disponible'}</p>
+                            <div style={{ marginBottom: '10px', padding: '8px', backgroundColor: '#f9fafb', borderRadius: '4px' }}>
+                                <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '6px', margin: '0 0 6px 0', fontSize: '12px' }}>Cliente</h3>
+                                <p style={{ color: '#111827', margin: '3px 0', fontSize: '9px' }}><strong>Nombre:</strong> {selectedOrder.clientName || 'No disponible'}</p>
                                 {selectedOrder.deliveryDate && (
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Fecha de entrega:</strong> {selectedOrder.deliveryDate.toLocaleDateString('es-ES')}</p>
+                                    <p style={{ color: '#111827', margin: '3px 0', fontSize: '9px' }}><strong>Fecha de entrega:</strong> {selectedOrder.deliveryDate.toLocaleDateString('es-ES')}</p>
                                 )}
                                 {selectedOrder.clientPhone && (
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Teléfono:</strong> {selectedOrder.clientPhone}</p>
+                                    <p style={{ color: '#111827', margin: '3px 0', fontSize: '9px' }}><strong>Teléfono:</strong> {selectedOrder.clientPhone}</p>
                                 )}
                                 {selectedOrder.clientAddress && (
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Dirección:</strong> {selectedOrder.clientAddress}</p>
+                                    <p style={{ color: '#111827', margin: '3px 0', fontSize: '9px' }}><strong>Dirección:</strong> {selectedOrder.clientAddress}</p>
                                 )}
                                 {selectedOrder.clientCedula && (
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Cédula:</strong> {selectedOrder.clientCedula}</p>
+                                    <p style={{ color: '#111827', margin: '3px 0', fontSize: '9px' }}><strong>Cédula:</strong> {selectedOrder.clientCedula}</p>
                                 )}
                             </div>
 
                             {/* Productos */}
-                            <div style={{ marginBottom: '24px' }}>
-                                <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '12px', margin: '0 0 12px 0' }}>Detalle de Productos</h3>
+                            <div style={{ marginBottom: '10px' }}>
+                                <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '8px', margin: '0 0 8px 0', fontSize: '11px' }}>Detalle de Productos</h3>
                                 <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #d1d5db' }}>
                                     <thead>
                                         <tr style={{ backgroundColor: '#f3f4f6' }}>
-                                            <th style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'left', fontWeight: '600', color: '#000000' }}>Producto</th>
-                                            <th style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'center', fontWeight: '600', color: '#000000' }}>Cantidad</th>
-                                            <th style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'right', fontWeight: '600', color: '#000000' }}>Precio Unit.</th>
-                                            <th style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'right', fontWeight: '600', color: '#000000' }}>Total</th>
+                                            <th style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'left', fontWeight: '600', color: '#000000', fontSize: '9px' }}>Producto</th>
+                                            <th style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'center', fontWeight: '600', color: '#000000', fontSize: '9px' }}>Cantidad</th>
+                                            <th style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', fontWeight: '600', color: '#000000', fontSize: '9px' }}>Precio Unit.</th>
+                                            <th style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', fontWeight: '600', color: '#000000', fontSize: '9px' }}>Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {selectedOrder.items && selectedOrder.items.length > 0 ? (
                                             selectedOrder.items.map((item, index) => (
                                                 <tr key={index}>
-                                                    <td style={{ border: '1px solid #d1d5db', padding: '12px' }}>
+                                                    <td style={{ border: '1px solid #d1d5db', padding: '6px' }}>
                                                         <div>
-                                                            <div style={{ color: '#000000', fontWeight: '500' }}>{item.productName}</div>
+                                                            <div style={{ color: '#000000', fontWeight: '500', fontSize: '9px' }}>{item.productName}</div>
                                                         </div>
                                                     </td>
-                                                    <td style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'center', color: '#000000' }}>{item.quantity}</td>
-                                                    <td style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'right', color: '#000000' }}>${item.unitPrice.toFixed(2)}</td>
-                                                    <td style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'right', fontWeight: '500', color: '#000000' }}>${item.totalPrice.toFixed(2)}</td>
+                                                    <td style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'center', color: '#000000', fontSize: '9px' }}>{item.quantity}</td>
+                                                    <td style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', color: '#000000', fontSize: '9px' }}>${item.unitPrice.toFixed(2)}</td>
+                                                    <td style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', fontWeight: '500', color: '#000000', fontSize: '9px' }}>${item.totalPrice.toFixed(2)}</td>
                                                 </tr>
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan={4} style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'center', color: '#6b7280' }}>
+                                                <td colSpan={4} style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'center', color: '#6b7280', fontSize: '9px' }}>
                                                     No hay productos en este pedido
                                                 </td>
                                             </tr>
@@ -2544,8 +2539,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                     </tbody>
                                     <tfoot>
                                         <tr style={{ backgroundColor: '#f3f4f6' }}>
-                                            <td colSpan={3} style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'right', fontWeight: 'bold', color: '#000000' }}>TOTAL A CANCELAR:</td>
-                                            <td style={{ border: '1px solid #d1d5db', padding: '12px', textAlign: 'right', fontWeight: 'bold', fontSize: '18px', color: '#000000' }}>${selectedOrder.totalAmount.toFixed(2)}</td>
+                                            <td colSpan={3} style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', fontWeight: 'bold', color: '#000000', fontSize: '9px' }}>TOTAL A CANCELAR:</td>
+                                            <td style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', fontWeight: 'bold', fontSize: '11px', color: '#000000' }}>${selectedOrder.totalAmount.toFixed(2)}</td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -2553,19 +2548,19 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
                             {/* Notas */}
                             {selectedOrder.notes && (
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '8px', margin: '0 0 8px 0' }}>Notas adicionales</h3>
-                                    <p style={{ color: '#111827', margin: '0' }}>{selectedOrder.notes}</p>
+                                <div style={{ marginBottom: '10px' }}>
+                                    <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '6px', margin: '0 0 6px 0', fontSize: '11px' }}>Notas adicionales</h3>
+                                    <p style={{ color: '#111827', margin: '0', fontSize: '9px' }}>{selectedOrder.notes}</p>
                                 </div>
                             )}
 
                             {/* Footer */}
-                            <div style={{ marginTop: '32px', paddingTop: '16px', borderTop: '1px solid #d1d5db' }}>
-                                <p style={{ textAlign: 'center', fontSize: '14px', fontWeight: '500', color: '#374151', margin: '0 0 8px 0' }}>
+                            <div style={{ marginTop: '10px', paddingTop: '6px', borderTop: '1px solid #d1d5db' }}>
+                                <p style={{ textAlign: 'center', fontSize: '7px', fontWeight: '500', color: '#374151', margin: '0 0 3px 0', lineHeight: '1.2' }}>
                                     Gracias por su preferencia - Mega Donut<br />
                                     Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
                                 </p>
-                                <p style={{ textAlign: 'center', fontSize: '12px', marginTop: '8px', fontWeight: '500', color: '#dc2626', margin: '8px 0 0 0' }}>
+                                <p style={{ textAlign: 'center', fontSize: '6px', marginTop: '3px', fontWeight: '500', color: '#dc2626', margin: '3px 0 0 0', lineHeight: '1.2' }}>
                                     En caso de incumplimiento en el pago del valor establecido en la nota de pedido emitida por MEGA DONUT, el cliente se someterá a las acciones legales correspondientes.
                                 </p>
                             </div>
