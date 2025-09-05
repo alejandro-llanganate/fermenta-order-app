@@ -194,6 +194,11 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
         return firstFiveNumbers.padStart(5, '0');
     };
 
+    // Función para obtener el nombre del cliente de manera consistente
+    const getClientName = (order: Order, client: Client | undefined): string => {
+        return client?.nombre || order.clientName || 'No disponible';
+    };
+
 
     return (
         <Document>
@@ -219,7 +224,7 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
                         {/* Información del Cliente */}
                         <View style={styles.clientInfo}>
                             <Text style={styles.clientName}>
-                                Cliente: {client?.nombre || order.clientName || 'Cliente no encontrado'}
+                                Cliente: {getClientName(order, client)}
                             </Text>
                             {order.deliveryDate && (
                                 <Text style={styles.clientDetails}>

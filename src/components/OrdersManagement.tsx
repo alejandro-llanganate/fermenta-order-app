@@ -263,6 +263,11 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         checkScrollButtons();
     }, [orders]);
 
+    // Función para obtener el nombre del cliente de manera consistente
+    const getClientName = (order: Order, client: any): string => {
+        return client?.nombre || order.clientName || 'No disponible';
+    };
+
 
 
     // Filtrar clientes cuando cambia la ruta seleccionada
@@ -1210,7 +1215,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             } = {
                 ...order,
                 items: transformedItems,
-                clientName: clientData?.nombre || order.clientName,
+                clientName: getClientName(order, clientData),
                 clientPhone: isValidValue(clientData?.telefono) ? clientData!.telefono : 'No disponible',
                 clientAddress: isValidValue(clientData?.direccion) ? clientData!.direccion : 'No disponible',
                 clientCedula: isValidCedula(clientData?.cedula) ? clientData!.cedula : 'No disponible',
@@ -1533,7 +1538,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex flex-col">
-            {/* Estilos personalizados para scroll */}
+            {/* Estilos personalizados para scroll y zoom */}
             <style jsx>{`
                 .custom-scrollbar::-webkit-scrollbar {
                     height: 12px;
@@ -1576,6 +1581,64 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     background: linear-gradient(to left, rgba(0, 0, 0, 0.1), transparent);
                     pointer-events: none;
                     z-index: 10;
+                }
+                
+                /* Estilos para mejorar la apariencia de la tabla con zoom */
+                .zoom-friendly-table {
+                    border-collapse: separate;
+                    border-spacing: 0;
+                }
+                
+                .zoom-friendly-table th,
+                .zoom-friendly-table td {
+                    border-right: 1px solid #e5e7eb;
+                    border-bottom: 1px solid #e5e7eb;
+                    position: relative;
+                }
+                
+                .zoom-friendly-table th:last-child,
+                .zoom-friendly-table td:last-child {
+                    border-right: none;
+                }
+                
+                .zoom-friendly-table tbody tr:last-child td {
+                    border-bottom: none;
+                }
+                
+                /* Mejorar la apariencia de las líneas divisorias con zoom */
+                .zoom-friendly-table th::after,
+                .zoom-friendly-table td::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 1px;
+                    height: 100%;
+                    background-color: #e5e7eb;
+                    transform: scaleX(0.5);
+                    transform-origin: right center;
+                }
+                
+                .zoom-friendly-table th:last-child::after,
+                .zoom-friendly-table td:last-child::after {
+                    display: none;
+                }
+                
+                /* Ajustar el grosor de las líneas para diferentes niveles de zoom */
+                @media screen and (min-resolution: 1.5dppx) {
+                    .zoom-friendly-table th,
+                    .zoom-friendly-table td {
+                        border-right: 0.5px solid #e5e7eb;
+                        border-bottom: 0.5px solid #e5e7eb;
+                    }
+                }
+                
+                @media screen and (min-resolution: 2dppx) {
+                    .zoom-friendly-table th,
+                    .zoom-friendly-table td {
+                        border-right: 0.5px solid #e5e7eb;
+                        border-bottom: 0.5px solid #e5e7eb;
+                    }
                 }
             `}</style>
             <div className="flex-1 p-6">
@@ -1757,7 +1820,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 }`}
                             onScroll={checkScrollButtons}
                         >
-                            <table className="min-w-full divide-y divide-gray-200">
+                            <table className="min-w-full divide-y divide-gray-200 zoom-friendly-table">
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

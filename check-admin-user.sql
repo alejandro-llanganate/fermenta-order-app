@@ -16,3 +16,7 @@ WHERE email = 'julissaencarnacion@gmail.com';
 --   email_confirm := true,
 --   user_metadata := '{"role": "admin", "username": "julissaencarnacion"}'::jsonb
 -- );
+
+
+
+
