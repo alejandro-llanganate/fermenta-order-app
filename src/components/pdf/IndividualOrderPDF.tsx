@@ -213,19 +213,19 @@ const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, client }
                             Fecha de entrega: {order.deliveryDate.toLocaleDateString('es-ES')}
                         </Text>
                     )}
-                    {order.clientPhone && (
+                    {client?.telefono && (
                         <Text style={styles.clientDetails}>
-                            Teléfono: {order.clientPhone}
+                            Teléfono: {client.telefono}
                         </Text>
                     )}
-                    {order.clientAddress && (
+                    {client?.direccion && (
                         <Text style={styles.clientDetails}>
-                            Dirección: {order.clientAddress}
+                            Dirección: {client.direccion}
                         </Text>
                     )}
-                    {order.clientCedula && (
+                    {client?.cedula && (
                         <Text style={styles.clientDetails}>
-                            Cédula: {order.clientCedula}
+                            Cédula: {client.cedula}
                         </Text>
                     )}
                 </View>
