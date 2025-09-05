@@ -10,6 +10,7 @@ import RouteNotebookPreview from './RouteNotebookPreview';
 import { Route, Client, Product, ProductCategory, Order, OrderItem } from '@/types/routeNotebook';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RouteNotebookPDF from './pdf/RouteNotebookPDF';
+import { sortProductsByCategoryOrder } from '@/utils/productOrderConfig';
 // ColumnOrderModal eliminado - ahora usamos localStorage directamente
 
 interface RouteNotebookProps {
@@ -278,7 +279,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
         const activeCategories = Array.from(categoriesMap.entries()).map(([name, products]) => ({
             name,
-            products
+            products: sortProductsByCategoryOrder(products, name)
         }));
 
         return activeCategories;
@@ -298,7 +299,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
         const allCategories = Array.from(categoriesMap.entries()).map(([name, products]) => ({
             name,
-            products
+            products: sortProductsByCategoryOrder(products, name)
         }));
 
         return allCategories;

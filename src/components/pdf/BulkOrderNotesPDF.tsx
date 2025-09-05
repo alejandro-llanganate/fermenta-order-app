@@ -39,10 +39,12 @@ const styles = StyleSheet.create({
         marginBottom: 6,
         color: '#374151',
     },
-    date: {
-        fontSize: 12,
-        color: '#6b7280',
-        marginBottom: 4,
+    orderNumberSection: {
+        textAlign: 'center',
+        marginBottom: 20,
+        padding: 10,
+        backgroundColor: '#f3f4f6',
+        borderRadius: 4,
     },
     clientInfo: {
         marginBottom: 15,
@@ -61,22 +63,10 @@ const styles = StyleSheet.create({
         color: '#6b7280',
         marginBottom: 2,
     },
-    orderInfo: {
-        marginBottom: 15,
-        padding: 10,
-        backgroundColor: '#f3f4f6',
-        borderRadius: 4,
-    },
     orderNumber: {
-        fontSize: 12,
+        fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 4,
         color: '#1f2937',
-    },
-    orderDetails: {
-        fontSize: 10,
-        color: '#6b7280',
-        marginBottom: 2,
     },
     table: {
         width: '100%',
@@ -192,55 +182,18 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
     routeFilter,
     searchTerm
 }) => {
-    const getStatusInSpanish = (status: string): string => {
-        switch (status) {
-            case 'pending': return 'Pendiente';
-            case 'ready': return 'Listo';
-            case 'delivered': return 'Entregado';
-            case 'cancelled': return 'Cancelado';
-            default: return status;
-        }
+    // Función para generar identificador de 5 dígitos del ID del pedido
+    const generateOrderIdentifier = (orderId: string): string => {
+        // Extraer solo los números del ID
+        const numbers = orderId.replace(/\D/g, '');
+
+        // Tomar los primeros 5 números
+        const firstFiveNumbers = numbers.substring(0, 5);
+
+        // Completar con ceros a la izquierda si es necesario
+        return firstFiveNumbers.padStart(5, '0');
     };
 
-    const getPaymentMethodInSpanish = (method: string): string => {
-        switch (method) {
-            case 'Efectivo': return 'Efectivo';
-            case 'Transferencia': return 'Transferencia';
-            case 'Tarjeta de crédito': return 'Tarjeta de Crédito';
-            case 'Tarjeta de débito': return 'Tarjeta de Débito';
-            case 'Cheque': return 'Cheque';
-            default: return method;
-        }
-    };
-
-    const formatDate = (date: Date): string => {
-        return date.toLocaleDateString('es-ES', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
-
-    const getFilterDescription = (): string => {
-        const filters = [];
-
-        if (searchTerm) {
-            filters.push(`Búsqueda: "${searchTerm}"`);
-        }
-
-        if (routeFilter) {
-            const route = routes.find(r => r.id === routeFilter);
-            filters.push(`Ruta: ${route?.identificador} - ${route?.nombre}`);
-        }
-
-        if (dateFilterValue) {
-            const filterType = dateFilterType === 'order' ? 'Fecha de Registro' : 'Fecha de Entrega';
-            filters.push(`${filterType}: ${formatDate(dateFilterValue)}`);
-        }
-
-        return filters.length > 0 ? filters.join(' | ') : 'Todos los pedidos';
-    };
 
     return (
         <Document>
@@ -254,11 +207,12 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
                         <View style={styles.header}>
                             <Text style={styles.title}>Mega Donut</Text>
                             <Text style={styles.subtitle}>Nota de Pedido</Text>
-                            <Text style={styles.date}>
-                                {getFilterDescription()}
-                            </Text>
-                            <Text style={styles.date}>
-                                Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
+                        </View>
+
+                        {/* Pedido # */}
+                        <View style={styles.orderNumberSection}>
+                            <Text style={styles.orderNumber}>
+                                Pedido #{generateOrderIdentifier(order.id)}
                             </Text>
                         </View>
 
@@ -267,6 +221,11 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
                             <Text style={styles.clientName}>
                                 Cliente: {client?.nombre || order.clientName || 'Cliente no encontrado'}
                             </Text>
+                            {order.deliveryDate && (
+                                <Text style={styles.clientDetails}>
+                                    Fecha de entrega: {order.deliveryDate.toLocaleDateString('es-ES')}
+                                </Text>
+                            )}
                             {client?.direccion && (
                                 <Text style={styles.clientDetails}>
                                     Dirección: {client.direccion}
@@ -282,30 +241,6 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
                                     Cédula: {client.cedula}
                                 </Text>
                             )}
-                        </View>
-
-                        {/* Información del Pedido */}
-                        <View style={styles.orderInfo}>
-                            <Text style={styles.orderNumber}>
-                                Pedido #{order.orderNumber}
-                            </Text>
-                            <Text style={styles.orderDetails}>
-                                Fecha de Registro: {formatDate(order.orderDate)}
-                            </Text>
-                            {order.deliveryDate && (
-                                <Text style={styles.orderDetails}>
-                                    Fecha de Entrega: {formatDate(order.deliveryDate)}
-                                </Text>
-                            )}
-                            <Text style={styles.orderDetails}>
-                                Ruta: {route?.identificador} - {route?.nombre || order.routeName}
-                            </Text>
-                            <Text style={styles.orderDetails}>
-                                Estado: {getStatusInSpanish(order.status)}
-                            </Text>
-                            <Text style={styles.orderDetails}>
-                                Método de Pago: {getPaymentMethodInSpanish(order.paymentMethod)}
-                            </Text>
                         </View>
 
                         {/* Tabla de Productos */}

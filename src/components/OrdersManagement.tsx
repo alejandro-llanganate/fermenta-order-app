@@ -29,6 +29,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import BulkOrderNotesPDF from './pdf/BulkOrderNotesPDF';
+import { handleNumericInputChange, parseNumericValue } from '@/utils/numericValidation';
 
 interface OrdersManagementProps {
     onBack: () => void;
@@ -66,6 +67,12 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const printRef = useRef<HTMLDivElement>(null);
     const routePreviewRef = useRef<HTMLDivElement>(null);
     const exportRef = useRef<HTMLDivElement>(null);
+
+    // Estados para paginación
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(20);
+    const [totalOrders, setTotalOrders] = useState(0);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
 
     // Estados para el formulario de creación
     const [selectedRouteForOrder, setSelectedRouteForOrder] = useState<Route | null>(null);
@@ -239,6 +246,13 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         fetchData();
     }, []);
 
+    // Cargar pedidos cuando cambien los filtros
+    useEffect(() => {
+        if (searchTerm || routeFilter || dateFilterValue) {
+            fetchOrdersWithPagination(1, itemsPerPage, true);
+        }
+    }, [searchTerm, routeFilter, dateFilterValue, dateFilterType]);
+
 
 
     // Filtrar clientes cuando cambia la ruta seleccionada
@@ -255,15 +269,50 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         setFilteredProducts(filtered);
     }, [productSearchTerm, products]);
 
-    const fetchData = async () => {
-        try {
-            setLoading(true);
+    // Resetear página cuando cambien los filtros
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, routeFilter, dateFilterValue, dateFilterType]);
 
-            // Fetch orders
-            const { data: ordersData, error: ordersError } = await supabase
+    // Función para cargar pedidos con paginación del servidor
+    const fetchOrdersWithPagination = async (page: number = 1, limit: number = itemsPerPage, reset: boolean = false) => {
+        try {
+            if (reset) {
+                setLoading(true);
+            } else {
+                setIsLoadingMore(true);
+            }
+
+            // Construir query base
+            let query = supabase
                 .from('orders_summary')
-                .select('*')
+                .select('*', { count: 'exact' })
                 .order('created_at', { ascending: false });
+
+            // Aplicar filtros
+            if (searchTerm) {
+                query = query.or(`client_name.ilike.%${searchTerm}%,order_number.ilike.%${searchTerm}%`);
+            }
+
+            if (routeFilter) {
+                query = query.eq('route_id', routeFilter);
+            }
+
+            if (dateFilterValue) {
+                const dateStr = dateFilterValue.toISOString().split('T')[0];
+                if (dateFilterType === 'order') {
+                    query = query.eq('order_date', dateStr);
+                } else {
+                    query = query.eq('delivery_date', dateStr);
+                }
+            }
+
+            // Aplicar paginación
+            const from = (page - 1) * limit;
+            const to = from + limit - 1;
+            query = query.range(from, to);
+
+            const { data: ordersData, error: ordersError, count } = await query;
 
             if (ordersError) throw ordersError;
 
@@ -318,7 +367,34 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 })
             );
 
-            setOrders(ordersWithItems);
+            // Actualizar estado según si es reset o carga de más datos
+            if (reset) {
+                setOrders(ordersWithItems);
+            } else {
+                setOrders(prevOrders => [...prevOrders, ...ordersWithItems]);
+            }
+
+            setTotalOrders(count || 0);
+
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+        } finally {
+            setLoading(false);
+            setIsLoadingMore(false);
+        }
+    };
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+
+            // Fetch orders
+            const { data: ordersData, error: ordersError } = await supabase
+                .from('orders_summary')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (ordersError) throw ordersError;
 
             // Fetch products with categories
             const { data: productsData, error: productsError } = await supabase
@@ -526,23 +602,26 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         });
     };
 
-    // Función para actualizar cantidad
+    // Función para actualizar cantidad con validación numérica
     const updateQuantity = (productId: string, quantity: string) => {
-        // Actualizar el estado local del input
-        setQuantityInputs(prev => ({
-            ...prev,
-            [productId]: quantity
-        }));
+        // Limpiar automáticamente caracteres no numéricos
+        handleNumericInputChange(quantity, (cleanQuantity) => {
+            // Actualizar el estado local del input con el valor limpio
+            setQuantityInputs(prev => ({
+                ...prev,
+                [productId]: cleanQuantity
+            }));
 
-        // Convertir a número para el cálculo
-        const numQuantity = quantity === '' ? 0 : parseInt(quantity) || 0;
+            // Convertir a número para el cálculo
+            const numQuantity = parseNumericValue(cleanQuantity);
 
-        const updatedItems = selectedItems.map(item =>
-            item.product.id === productId
-                ? { ...item, quantity: numQuantity, totalPrice: item.unitPrice * numQuantity }
-                : item
-        );
-        setSelectedItems(updatedItems);
+            const updatedItems = selectedItems.map(item =>
+                item.product.id === productId
+                    ? { ...item, quantity: numQuantity, totalPrice: item.unitPrice * numQuantity }
+                    : item
+            );
+            setSelectedItems(updatedItems);
+        });
     };
 
     // Función auxiliar para validar el formulario de pedido
@@ -1275,6 +1354,54 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         return `Notas-Pedido-Masivas${filterText}-${orderCount}-pedidos-${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`;
     };
 
+    // Función para manejar la descarga del PDF masivo
+    const handleBulkPDFDownload = async () => {
+        if (isGeneratingBulkPDF) return;
+
+        setIsGeneratingBulkPDF(true);
+
+        try {
+            // Importar dinámicamente para evitar errores de SSR
+            const { pdf } = await import('@react-pdf/renderer');
+            const BulkOrderNotesPDF = (await import('@/components/pdf/BulkOrderNotesPDF')).default;
+
+            // Crear el documento PDF
+            const pdfDocument = (
+                <BulkOrderNotesPDF
+                    orders={filteredOrders}
+                    clients={clients}
+                    routes={routes}
+                    dateFilterType={dateFilterType}
+                    dateFilterValue={dateFilterValue}
+                    routeFilter={routeFilter}
+                    searchTerm={searchTerm}
+                />
+            );
+
+            // Generar y descargar el PDF
+            const blob = await pdf(pdfDocument).toBlob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = generateBulkPDFFileName();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error('Error generando PDF masivo:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Hubo un problema al generar el PDF. Inténtalo de nuevo.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        } finally {
+            setIsGeneratingBulkPDF(false);
+        }
+    };
+
     const generateExportPDF = async () => {
         if (!exportRef.current) return;
 
@@ -1354,16 +1481,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         return filtered;
     };
 
-    // Filtrar y validar pedidos
-    const filteredOrders = orders
-        .filter(order => {
-            const matchesSearch = orderMatchesSearch(order, searchTerm);
-            const matchesRouteFilter = orderMatchesRouteFilter(order, routeFilter);
-            const matchesDateFilter = orderMatchesDateFilter(order, dateFilterValue, dateFilterType);
-            return matchesSearch && matchesRouteFilter && matchesDateFilter;
-        });
-
-
+    // Con paginación del servidor, usamos directamente los pedidos cargados
+    const filteredOrders = orders;
+    const totalPages = Math.ceil(totalOrders / itemsPerPage);
+    const paginatedOrders = orders; // Ya están paginados del servidor
 
     const getStatusColor = (status: Order['status']) => {
         switch (status) {
@@ -1478,30 +1599,16 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
                                     {/* Botón de descarga masiva de notas de pedido */}
                                     {filteredOrders.length > 0 && (
-                                        <PDFDownloadLink
-                                            document={
-                                                <BulkOrderNotesPDF
-                                                    orders={filteredOrders}
-                                                    clients={clients}
-                                                    routes={routes}
-                                                    dateFilterType={dateFilterType}
-                                                    dateFilterValue={dateFilterValue}
-                                                    routeFilter={routeFilter}
-                                                    searchTerm={searchTerm}
-                                                />
-                                            }
-                                            fileName={generateBulkPDFFileName()}
-                                            className="flex items-center justify-center space-x-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm"
+                                        <button
+                                            onClick={handleBulkPDFDownload}
+                                            disabled={isGeneratingBulkPDF}
+                                            className="flex items-center justify-center space-x-2 bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            {({ loading }) => (
-                                                <>
-                                                    <FileText className="h-4 w-4" />
-                                                    <span>
-                                                        {loading ? 'Generando...' : `Descargar Notas (${filteredOrders.length})`}
-                                                    </span>
-                                                </>
-                                            )}
-                                        </PDFDownloadLink>
+                                            <FileText className="h-4 w-4" />
+                                            <span>
+                                                {isGeneratingBulkPDF ? 'Generando PDF...' : `Descargar Notas (${filteredOrders.length})`}
+                                            </span>
+                                        </button>
                                     )}
 
                                     {selectedOrders.length > 0 && (
@@ -1572,7 +1679,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {filteredOrders.map((order) => (
+                                    {paginatedOrders.map((order) => (
                                         <tr key={order.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <input
@@ -1682,6 +1789,113 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* Controles de paginación */}
+                        {totalPages > 1 && (
+                            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                                <div className="flex-1 flex justify-between sm:hidden">
+                                    <button
+                                        onClick={() => {
+                                            const newPage = Math.max(1, currentPage - 1);
+                                            setCurrentPage(newPage);
+                                            fetchOrdersWithPagination(newPage, itemsPerPage, true);
+                                        }}
+                                        disabled={currentPage === 1 || isLoadingMore}
+                                        className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Anterior
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const newPage = Math.min(totalPages, currentPage + 1);
+                                            setCurrentPage(newPage);
+                                            fetchOrdersWithPagination(newPage, itemsPerPage, true);
+                                        }}
+                                        disabled={currentPage === totalPages || isLoadingMore}
+                                        className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isLoadingMore ? 'Cargando...' : 'Siguiente'}
+                                    </button>
+                                </div>
+                                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-700">
+                                            Mostrando{' '}
+                                            <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span>
+                                            {' '}a{' '}
+                                            <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalOrders)}</span>
+                                            {' '}de{' '}
+                                            <span className="font-medium">{totalOrders}</span>
+                                            {' '}resultados
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                            <button
+                                                onClick={() => {
+                                                    const newPage = Math.max(1, currentPage - 1);
+                                                    setCurrentPage(newPage);
+                                                    fetchOrdersWithPagination(newPage, itemsPerPage, true);
+                                                }}
+                                                disabled={currentPage === 1 || isLoadingMore}
+                                                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <span className="sr-only">Anterior</span>
+                                                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                            </button>
+
+                                            {/* Números de página */}
+                                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                                let pageNum;
+                                                if (totalPages <= 5) {
+                                                    pageNum = i + 1;
+                                                } else if (currentPage <= 3) {
+                                                    pageNum = i + 1;
+                                                } else if (currentPage >= totalPages - 2) {
+                                                    pageNum = totalPages - 4 + i;
+                                                } else {
+                                                    pageNum = currentPage - 2 + i;
+                                                }
+
+                                                return (
+                                                    <button
+                                                        key={pageNum}
+                                                        onClick={() => {
+                                                            setCurrentPage(pageNum);
+                                                            fetchOrdersWithPagination(pageNum, itemsPerPage, true);
+                                                        }}
+                                                        disabled={isLoadingMore}
+                                                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === pageNum
+                                                            ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
+                                                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                    >
+                                                        {pageNum}
+                                                    </button>
+                                                );
+                                            })}
+
+                                            <button
+                                                onClick={() => {
+                                                    const newPage = Math.min(totalPages, currentPage + 1);
+                                                    setCurrentPage(newPage);
+                                                    fetchOrdersWithPagination(newPage, itemsPerPage, true);
+                                                }}
+                                                disabled={currentPage === totalPages || isLoadingMore}
+                                                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <span className="sr-only">Siguiente</span>
+                                                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                                </svg>
+                                            </button>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Statistics */}
@@ -2082,32 +2296,37 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             {/* Header */}
                             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                                 <h1 style={{ color: '#000000', fontSize: '24px', fontWeight: 'bold', margin: '0 0 8px 0' }}>Mega Donut</h1>
-                                <p style={{ color: '#374151', margin: '0' }}>Sistema Mega Donut - Nota de Pedido</p>
+                                <p style={{ color: '#374151', margin: '0' }}>Nota de Pedido</p>
                             </div>
 
-                            {/* Información del Cliente y Pedido */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-                                <div>
-                                    <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '8px', margin: '0 0 8px 0' }}>Información del Cliente</h3>
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Nombre:</strong> {selectedOrder.clientName || 'No disponible'}</p>
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Teléfono:</strong> {selectedOrder.clientPhone || 'No disponible'}</p>
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Dirección:</strong> {selectedOrder.clientAddress || 'No disponible'}</p>
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Cédula:</strong> {selectedOrder.clientCedula || 'No disponible'}</p>
-                                </div>
+                            {/* Pedido # */}
+                            <div style={{ textAlign: 'center', marginBottom: '24px', padding: '16px', backgroundColor: '#f3f4f6', borderRadius: '4px' }}>
+                                <h2 style={{ color: '#000000', fontSize: '20px', fontWeight: 'bold', margin: '0' }}>
+                                    Pedido #{(() => {
+                                        // Función para generar identificador de 5 dígitos del ID del pedido
+                                        const numbers = selectedOrder.id.replace(/\D/g, '');
+                                        const firstFiveNumbers = numbers.substring(0, 5);
+                                        return firstFiveNumbers.padStart(5, '0');
+                                    })()}
+                                </h2>
+                            </div>
 
-                                <div>
-                                    <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '8px', margin: '0 0 8px 0' }}>Información del Pedido</h3>
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Número:</strong> {selectedOrder.orderNumber}</p>
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Fecha:</strong> {selectedOrder.orderDate.toLocaleDateString('es-ES')}</p>
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Estado:</strong> {getStatusInSpanish(selectedOrder.status)}</p>
-                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Forma de pago:</strong> {selectedOrder.paymentMethod || 'No disponible'}</p>
-                                    {selectedOrder.routeName && (
-                                        <p style={{ color: '#111827', margin: '4px 0' }}><strong>Ruta:</strong> {selectedOrder.routeName}</p>
-                                    )}
-                                    {selectedOrder.deliveryDate && (
-                                        <p style={{ color: '#111827', margin: '4px 0' }}><strong>Fecha de entrega:</strong> {selectedOrder.deliveryDate.toLocaleDateString('es-ES')}</p>
-                                    )}
-                                </div>
+                            {/* Información del Cliente */}
+                            <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '4px' }}>
+                                <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '12px', margin: '0 0 12px 0' }}>Cliente</h3>
+                                <p style={{ color: '#111827', margin: '4px 0' }}><strong>Nombre:</strong> {selectedOrder.clientName || 'No disponible'}</p>
+                                {selectedOrder.deliveryDate && (
+                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Fecha de entrega:</strong> {selectedOrder.deliveryDate.toLocaleDateString('es-ES')}</p>
+                                )}
+                                {selectedOrder.clientPhone && (
+                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Teléfono:</strong> {selectedOrder.clientPhone}</p>
+                                )}
+                                {selectedOrder.clientAddress && (
+                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Dirección:</strong> {selectedOrder.clientAddress}</p>
+                                )}
+                                {selectedOrder.clientCedula && (
+                                    <p style={{ color: '#111827', margin: '4px 0' }}><strong>Cédula:</strong> {selectedOrder.clientCedula}</p>
+                                )}
                             </div>
 
                             {/* Productos */}

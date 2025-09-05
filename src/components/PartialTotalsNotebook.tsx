@@ -8,6 +8,7 @@ import PartialTotalsNotebookControls from './PartialTotalsNotebookControls';
 import PartialTotalsNotebookTable from './PartialTotalsNotebookTable';
 import PartialTotalsNotebookPreview from './PartialTotalsNotebookPreview';
 import Footer from './Footer';
+import { sortProductsByCategoryOrder } from '@/utils/productOrderConfig';
 
 interface PartialTotalsNotebookProps {
     onBack: () => void;
@@ -184,7 +185,7 @@ export default function PartialTotalsNotebook({ onBack }: PartialTotalsNotebookP
 
         return Array.from(categories.entries()).map(([name, products]) => ({
             name,
-            products: products.sort((a, b) => a.name.localeCompare(b.name))
+            products: sortProductsByCategoryOrder(products, name)
         }));
     };
 

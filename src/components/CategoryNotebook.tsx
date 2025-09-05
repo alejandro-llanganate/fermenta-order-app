@@ -10,6 +10,7 @@ import Footer from './Footer';
 import { Route, Client, Product, ProductCategory, Order, OrderItem } from '@/types/routeNotebook';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import CategoryNotebookPDF from './pdf/CategoryNotebookPDF';
+import { sortProductsByCategoryOrder } from '@/utils/productOrderConfig';
 
 interface CategoryNotebookProps {
     onBack: () => void;
@@ -217,7 +218,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
 
         return Array.from(categoriesMap.entries()).map(([name, products]) => ({
             name,
-            products
+            products: sortProductsByCategoryOrder(products, name)
         }));
     };
 
