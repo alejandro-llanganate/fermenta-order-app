@@ -6,6 +6,8 @@ import { Route, Order } from '@/types/routeNotebook';
 interface PartialTotalsNotebookControlsProps {
     selectedDate: Date;
     setSelectedDate: (date: Date) => void;
+    dateFilterType: 'registration' | 'delivery';
+    setDateFilterType: (type: 'registration' | 'delivery') => void;
     loading: boolean;
     orders: Order[];
     routes: Route[];
@@ -16,6 +18,8 @@ interface PartialTotalsNotebookControlsProps {
 export default function PartialTotalsNotebookControls({
     selectedDate,
     setSelectedDate,
+    dateFilterType,
+    setDateFilterType,
     loading,
     orders,
     routes,
@@ -45,6 +49,15 @@ export default function PartialTotalsNotebookControls({
                         className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         disabled={loading}
                     />
+                    <select
+                        value={dateFilterType}
+                        onChange={(e) => setDateFilterType(e.target.value as 'registration' | 'delivery')}
+                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        disabled={loading}
+                    >
+                        <option value="registration">Fecha de Registro</option>
+                        <option value="delivery">Fecha de Entrega</option>
+                    </select>
                 </div>
 
                 {/* Summary Stats */}

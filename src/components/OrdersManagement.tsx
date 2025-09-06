@@ -2143,9 +2143,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
                         {/* Content */}
                         <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                                {/* Left Column - Route and Client Selection */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+                                {/* Left Column - Route, Client and Order Information */}
                                 <div className="space-y-4 sm:space-y-6">
+                                    <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Información del Pedido</h4>
                                     {/* Route Selection */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2214,13 +2215,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                         )}
                                     </div>
 
-
-                                </div>
-
-                                {/* Middle Column - Order Information */}
-                                <div className="space-y-4 sm:space-y-6">
-                                    <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Información del Pedido</h4>
-
+                                    {/* Order Information */}
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                             <div>
@@ -2276,14 +2271,15 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                 value={notes}
                                                 onChange={(e) => setNotes(e.target.value)}
                                                 rows={3}
-                                                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 text-sm sm:text-base"
+                                                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 text-sm sm:text-base resize-none"
                                                 placeholder="Observaciones especiales del pedido..."
                                             />
                                         </div>
                                     </div>
+
                                 </div>
 
-                                {/* Right Column - Products */}
+                                {/* Second Column - Products */}
                                 <div className="space-y-4 sm:space-y-6">
                                     <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Productos del Pedido</h4>
 

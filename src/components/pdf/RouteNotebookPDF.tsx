@@ -13,51 +13,52 @@ Font.register({
     ]
 });
 
-// Estilos para el PDF
+// Estilos para el PDF - RF-24: A4 con tipografía 10pt/12pt
 const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 15,
+        padding: 10, // Reducido para A4
         fontFamily: 'Helvetica',
+        fontSize: 10, // RF-24: Contenido general 10pt
     },
     header: {
         textAlign: 'center',
-        marginBottom: 15,
+        marginBottom: 10,
         borderBottom: '1 solid #e5e7eb',
-        paddingBottom: 8,
+        paddingBottom: 6,
     },
     title: {
-        fontSize: 20,
+        fontSize: 12, // RF-24: Encabezados 12pt
         fontWeight: 'bold',
-        marginBottom: 6,
+        marginBottom: 4,
         color: '#000000',
     },
     subtitle: {
-        fontSize: 16,
+        fontSize: 12, // RF-24: Encabezados 12pt
         fontWeight: 'bold',
-        marginBottom: 4,
+        marginBottom: 3,
         color: '#374151',
     },
     date: {
-        fontSize: 12,
+        fontSize: 10, // RF-24: Contenido general 10pt
         color: '#6b7280',
-        marginBottom: 3,
+        marginBottom: 2,
     },
     route: {
-        fontSize: 12,
+        fontSize: 10, // RF-24: Contenido general 10pt
         color: '#6b7280',
-        marginBottom: 8,
+        marginBottom: 6,
     },
     section: {
-        marginBottom: 12,
+        marginBottom: 8,
     },
     sectionTitle: {
-        fontSize: 14,
+        fontSize: 12, // RF-24: Encabezados 12pt
         fontWeight: 'bold',
-        marginBottom: 8,
+        marginBottom: 6,
         backgroundColor: '#f3f4f6',
-        padding: 6,
+        padding: 4,
         color: '#1f2937',
     },
     table: {
@@ -65,21 +66,21 @@ const styles = StyleSheet.create({
         borderStyle: 'solid',
         borderWidth: 1,
         borderColor: '#d1d5db',
-        marginBottom: 12,
+        marginBottom: 8,
     },
     tableRow: {
         flexDirection: 'row',
         borderBottomWidth: 1,
         borderBottomColor: '#d1d5db',
-        minHeight: 25,
+        minHeight: 20, // Reducido para A4
     },
     tableHeader: {
         backgroundColor: '#f9fafb',
         fontWeight: 'bold',
     },
     tableCell: {
-        padding: 4,
-        fontSize: 9,
+        padding: 3, // Reducido para A4
+        fontSize: 10, // RF-24: Contenido general 10pt
         textAlign: 'center',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -87,8 +88,8 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     tableCellHeader: {
-        padding: 4,
-        fontSize: 9,
+        padding: 3, // Reducido para A4
+        fontSize: 10, // RF-24: Contenido general 10pt
         fontWeight: 'bold',
         textAlign: 'center',
         borderRightWidth: 1,
@@ -97,8 +98,8 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     clientCell: {
-        padding: 4,
-        fontSize: 9,
+        padding: 3, // Reducido para A4
+        fontSize: 10, // RF-24: Contenido general 10pt
         textAlign: 'left',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -106,8 +107,8 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     totalCell: {
-        padding: 6,
-        fontSize: 10,
+        padding: 4,
+        fontSize: 10, // RF-24: Contenido general 10pt
         fontWeight: 'bold',
         textAlign: 'center',
         borderRightWidth: 1,
@@ -117,51 +118,60 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     routeTitle: {
-        fontSize: 12,
+        fontSize: 12, // RF-24: Encabezados 12pt
         fontWeight: 'bold',
         backgroundColor: '#f3f4f6',
-        padding: 4,
-        marginBottom: 6,
+        padding: 3,
+        marginBottom: 4,
         color: '#374151',
     },
     categorySection: {
-        marginBottom: 8,
+        marginBottom: 6,
     },
-
+    // Estilos para encabezados de categorías con colores
+    categoryHeader: {
+        padding: 3,
+        fontSize: 10, // RF-24: Contenido general 10pt
+        fontWeight: 'bold',
+        textAlign: 'center',
+        borderRightWidth: 1,
+        borderRightColor: '#d1d5db',
+        color: '#000000',
+    },
     productTotals: {
         backgroundColor: '#dbeafe',
-        padding: 6,
-        marginBottom: 10,
+        padding: 4,
+        marginBottom: 8,
         borderRadius: 4,
     },
     productTotalsTitle: {
-        fontSize: 12,
+        fontSize: 12, // RF-24: Encabezados 12pt
         fontWeight: 'bold',
-        marginBottom: 6,
+        marginBottom: 4,
         color: '#1e40af',
     },
     productTotalsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 6,
+        gap: 4,
     },
     productTotalItem: {
         backgroundColor: '#ffffff',
-        padding: 4,
+        padding: 3,
         borderRadius: 4,
         border: '1 solid #bfdbfe',
-        minWidth: 60,
+        minWidth: 50,
         alignItems: 'center',
     },
     productName: {
-        fontSize: 7,
+        fontSize: 8,
         fontWeight: 'bold',
         color: '#1e40af',
         textAlign: 'center',
-        marginBottom: 2,
+        marginBottom: 1,
     },
     productQuantity: {
-        fontSize: 10,
+        fontSize: 10, // RF-24: Contenido general 10pt
         fontWeight: 'bold',
         color: '#1e40af',
     },
@@ -195,13 +205,9 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
     // Obtener la ruta seleccionada
     const currentRoute = selectedRoute ? routes.find(r => r.id === selectedRoute) : null;
 
-    // Filtrar productos que tienen pedidos > 0
+    // RF-24: Mostrar todos los productos y categorías (columnas fijas) como en la vista general
     const getProductsWithOrders = () => {
-        const allProducts = productCategories.flatMap(cat => cat.products);
-        return allProducts.filter(product => {
-            const total = getTotalForProduct(product.id, selectedRoute);
-            return total > 0;
-        });
+        return productCategories.flatMap(cat => cat.products); // Mostrar todos los productos
     };
 
     const filteredProducts = getProductsWithOrders();
@@ -209,37 +215,13 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
     // Obtener clientes con órdenes
     const clientsWithOrders = getClientsWithOrders();
 
-    // Calcular el tamaño de página óptimo basado en los datos
-    const calculatePageSize = () => {
-        const totalColumns = filteredProducts.length + 1; // +1 para CLIENTES (sin TOTAL)
-        const totalRows = routes.reduce((sum, route) => {
-            const routeClients = getClientsWithOrders(route.id);
-            return sum + routeClients.length + 2; // +2 para header y total de ruta
-        }, 0) + 2; // +2 para header general y totales por producto
+    // RF-24: Forzar tamaño A4 para consistencia
+    const pageSize = 'A4';
 
-        // Si hay pocos datos, usar A4
-        if (totalColumns <= 8 && totalRows <= 15) {
-            return 'A4';
-        }
-        // Si hay datos moderados, usar A3
-        else if (totalColumns <= 12 && totalRows <= 25) {
-            return 'A3';
-        }
-        // Si hay muchos datos, usar A2
-        else if (totalColumns <= 18 && totalRows <= 40) {
-            return 'A2';
-        }
-        // Si hay demasiados datos, usar A1
-        else {
-            return 'A1';
-        }
-    };
-
-    const pageSize = calculatePageSize();
-
-    console.log('📏 Tamaño de página calculado:', pageSize);
+    console.log('📏 RF-24: Tamaño de página fijo A4');
     console.log('📊 Datos:', {
         productos: filteredProducts.length,
+        categorias: productCategories.length,
         rutas: routes.length,
         clientes: clientsWithOrders.length,
         columnas: filteredProducts.length + 1
@@ -295,9 +277,32 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                 </Text>
 
                                 <View style={styles.table}>
-                                    {/* Header de la tabla */}
+                                    {/* Primera fila: Encabezados de categorías con colores */}
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={styles.clientCell}>CLIENTES</Text>
+                                        {productCategories.map((category) => {
+                                            const categoryProducts = category.products;
+                                            return (
+                                                <Text
+                                                    key={category.name}
+                                                    style={[
+                                                        styles.categoryHeader,
+                                                        {
+                                                            backgroundColor: getCategoryPDFStyles(category.name).backgroundColor,
+                                                            color: getCategoryPDFStyles(category.name).color,
+                                                            flex: categoryProducts.length
+                                                        }
+                                                    ]}
+                                                >
+                                                    {category.name}
+                                                </Text>
+                                            );
+                                        })}
+                                    </View>
+
+                                    {/* Segunda fila: Encabezados de productos */}
+                                    <View style={[styles.tableRow, styles.tableHeader]}>
+                                        <Text style={styles.clientCell}>&nbsp;</Text>
                                         {filteredProducts.map((product) => (
                                             <Text key={product.id} style={styles.tableCellHeader}>
                                                 {product.name}
@@ -314,7 +319,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                                     const quantity = getQuantityForClientAndProduct(client.id, product.id);
                                                     return (
                                                         <Text key={product.id} style={styles.tableCell}>
-                                                            {quantity > 0 ? quantity : ''}
+                                                            {quantity > 0 ? quantity : '-'}
                                                         </Text>
                                                     );
                                                 })}
@@ -329,7 +334,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                             const total = getTotalForProduct(product.id, selectedRoute);
                                             return (
                                                 <Text key={product.id} style={styles.tableCellHeader}>
-                                                    {total > 0 ? total : ''}
+                                                    {total > 0 ? total : '-'}
                                                 </Text>
                                             );
                                         })}
@@ -344,9 +349,32 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                         <Text style={styles.sectionTitle}>TODOS LOS PEDIDOS</Text>
 
                         <View style={styles.table}>
-                            {/* Header de la tabla */}
+                            {/* Primera fila: Encabezados de categorías con colores */}
                             <View style={[styles.tableRow, styles.tableHeader]}>
                                 <Text style={styles.clientCell}>CLIENTES</Text>
+                                {productCategories.map((category) => {
+                                    const categoryProducts = category.products;
+                                    return (
+                                        <Text
+                                            key={category.name}
+                                            style={[
+                                                styles.categoryHeader,
+                                                {
+                                                    backgroundColor: getCategoryPDFStyles(category.name).backgroundColor,
+                                                    color: getCategoryPDFStyles(category.name).color,
+                                                    flex: categoryProducts.length
+                                                }
+                                            ]}
+                                        >
+                                            {category.name}
+                                        </Text>
+                                    );
+                                })}
+                            </View>
+
+                            {/* Segunda fila: Encabezados de productos */}
+                            <View style={[styles.tableRow, styles.tableHeader]}>
+                                <Text style={styles.clientCell}>&nbsp;</Text>
                                 {filteredProducts.map((product) => (
                                     <Text key={product.id} style={styles.tableCellHeader}>
                                         {product.name}
@@ -363,7 +391,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                             const quantity = getQuantityForClientAndProduct(client.id, product.id);
                                             return (
                                                 <Text key={product.id} style={styles.tableCell}>
-                                                    {quantity > 0 ? quantity : ''}
+                                                    {quantity > 0 ? quantity : '-'}
                                                 </Text>
                                             );
                                         })}
@@ -378,7 +406,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                     const total = getTotalForProduct(product.id);
                                     return (
                                         <Text key={product.id} style={styles.tableCellHeader}>
-                                            {total > 0 ? total : ''}
+                                            {total > 0 ? total : '-'}
                                         </Text>
                                     );
                                 })}

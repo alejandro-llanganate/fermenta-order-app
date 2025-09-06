@@ -85,7 +85,7 @@ export default function RouteNotebookTableBody({
                                         {quantity > 0 ? (
                                             <span className="text-black font-medium">{quantity}</span>
                                         ) : (
-                                            <span className="text-gray-400">-</span>
+                                            <span className="text-gray-300">-</span>
                                         )}
                                     </td>
                                 );
@@ -105,7 +105,7 @@ export default function RouteNotebookTableBody({
                     const total = getFilteredTotalForProduct(product.id);
                     return (
                         <td key={product.id} className="px-2 py-3 text-sm font-bold text-gray-900 text-center border-l border-gray-200">
-                            {total > 0 ? total : ''}
+                            {total > 0 ? total : '-'}
                         </td>
                     );
                 })}

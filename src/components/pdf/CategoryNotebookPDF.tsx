@@ -13,52 +13,52 @@ Font.register({
     ]
 });
 
-// Estilos para el PDF A5
+// Estilos para el PDF A4 - RF-23: A4 con tipografía 10pt/12pt
 const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 8,
+        padding: 10, // Aumentado para A4
         fontFamily: 'Helvetica',
-        fontSize: 11,
+        fontSize: 10, // RF-23: Contenido general 10pt
     },
     header: {
         textAlign: 'center',
-        marginBottom: 8,
+        marginBottom: 10,
         borderBottom: '1 solid #e5e7eb',
-        paddingBottom: 4,
+        paddingBottom: 6,
     },
     title: {
-        fontSize: 18,
+        fontSize: 12, // RF-23: Encabezados 12pt
         fontWeight: 'bold',
-        marginBottom: 3,
+        marginBottom: 4,
         color: '#000000',
     },
     subtitle: {
-        fontSize: 14,
+        fontSize: 12, // RF-23: Encabezados 12pt
         fontWeight: 'bold',
-        marginBottom: 2,
+        marginBottom: 3,
         color: '#374151',
     },
     date: {
-        fontSize: 11,
+        fontSize: 10, // RF-23: Contenido general 10pt
         color: '#6b7280',
         marginBottom: 2,
     },
     category: {
-        fontSize: 11,
+        fontSize: 10, // RF-23: Contenido general 10pt
         color: '#6b7280',
-        marginBottom: 5,
+        marginBottom: 6,
     },
     section: {
         marginBottom: 8,
     },
     sectionTitle: {
-        fontSize: 12,
+        fontSize: 12, // RF-23: Encabezados 12pt
         fontWeight: 'bold',
         marginBottom: 6,
         backgroundColor: '#f3f4f6',
-        padding: 5,
+        padding: 4,
         color: '#1f2937',
     },
     table: {
@@ -66,20 +66,20 @@ const styles = StyleSheet.create({
         borderStyle: 'solid',
         borderWidth: 1,
         borderColor: '#d1d5db',
-        marginBottom: 10,
+        marginBottom: 8,
     },
     tableRow: {
         flexDirection: 'row',
         borderBottomWidth: 1,
         borderBottomColor: '#d1d5db',
-        minHeight: 22,
+        minHeight: 20, // Ajustado para A4
     },
     tableHeader: {
         backgroundColor: '#f9fafb',
     },
     tableCell: {
-        padding: 2,
-        fontSize: 11,
+        padding: 3, // Aumentado para A4
+        fontSize: 10, // RF-23: Contenido general 10pt
         textAlign: 'center',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     tableCellHeader: {
-        padding: 2,
-        fontSize: 10,
+        padding: 3, // Aumentado para A4
+        fontSize: 10, // RF-23: Contenido general 10pt
         fontWeight: 'bold',
         textAlign: 'center',
         borderRightWidth: 1,
@@ -97,8 +97,8 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     clientCell: {
-        padding: 2,
-        fontSize: 11,
+        padding: 3, // Aumentado para A4
+        fontSize: 10, // RF-23: Contenido general 10pt
         textAlign: 'left',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -108,25 +108,25 @@ const styles = StyleSheet.create({
     },
     productTotals: {
         backgroundColor: '#dbeafe',
-        padding: 3,
-        marginBottom: 5,
-        borderRadius: 3,
+        padding: 4,
+        marginBottom: 8,
+        borderRadius: 4,
     },
     productTotalsTitle: {
-        fontSize: 12,
+        fontSize: 12, // RF-23: Encabezados 12pt
         fontWeight: 'bold',
-        marginBottom: 3,
+        marginBottom: 4,
         color: '#1e40af',
     },
     productTotalsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 2,
+        gap: 4,
     },
     productTotalItem: {
         backgroundColor: '#ffffff',
-        padding: 2,
-        borderRadius: 3,
+        padding: 3,
+        borderRadius: 4,
         border: '1 solid #bfdbfe',
         minWidth: 50,
         alignItems: 'center',
@@ -139,24 +139,24 @@ const styles = StyleSheet.create({
         marginBottom: 1,
     },
     productQuantity: {
-        fontSize: 12,
+        fontSize: 10, // RF-23: Contenido general 10pt
         fontWeight: 'bold',
         color: '#1e40af',
     },
     routeTitle: {
-        fontSize: 12,
+        fontSize: 12, // RF-23: Encabezados 12pt
         fontWeight: 'bold',
         backgroundColor: '#f3f4f6',
-        padding: 3,
-        marginBottom: 3,
+        padding: 4,
+        marginBottom: 4,
         color: '#374151',
     },
     // Estilos para el footer de página
     pageFooter: {
         position: 'absolute',
-        bottom: 8,
-        left: 8,
-        right: 8,
+        bottom: 10,
+        left: 10,
+        right: 10,
         textAlign: 'center',
         fontSize: 9,
         color: '#6b7280',
@@ -165,26 +165,26 @@ const styles = StyleSheet.create({
     },
     categoryTotals: {
         backgroundColor: '#f3f4f6',
-        padding: 5,
+        padding: 6,
         marginTop: 10,
-        borderRadius: 3,
+        borderRadius: 4,
     },
     categoryTotalsGrid: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginTop: 5,
+        marginTop: 6,
     },
     categoryTotalItem: {
         alignItems: 'center',
     },
     categoryTotalLabel: {
-        fontSize: 10,
+        fontSize: 10, // RF-23: Contenido general 10pt
         fontWeight: 'bold',
         color: '#374151',
         marginBottom: 2,
     },
     categoryTotalValue: {
-        fontSize: 12,
+        fontSize: 10, // RF-23: Contenido general 10pt
         fontWeight: 'bold',
         color: '#1e40af',
     },
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
         border: '1 solid #93c5fd',
     },
     finalTotalTitle: {
-        fontSize: 14,
+        fontSize: 12, // RF-23: Encabezados 12pt
         fontWeight: 'bold',
         marginBottom: 5,
         color: '#1e40af',
@@ -396,14 +396,14 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
 
     // Función para obtener estilos dinámicos según la configuración de tamaños
     const getDynamicStyles = () => {
-        // Usar configuración personalizada si está disponible, sino usar valores por defecto
-        const baseFontSize = fontSizeConfig.cells;
-        const headerFontSize = fontSizeConfig.headers;
-        const titleFontSize = fontSizeConfig.titles;
+        // RF-23: Usar tipografía fija: contenido general 10pt, encabezados 12pt
+        const baseFontSize = 10; // RF-23: Contenido general 10pt
+        const headerFontSize = 12; // RF-23: Encabezados 12pt
+        const titleFontSize = 12; // RF-23: Encabezados 12pt
 
         return {
             tableCell: {
-                padding: 2,
+                padding: 3, // Aumentado para A4
                 fontSize: baseFontSize,
                 textAlign: 'center' as const,
                 borderRightWidth: 1,
@@ -412,7 +412,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                 color: '#000000',
             },
             tableCellHeader: {
-                padding: 2,
+                padding: 3, // Aumentado para A4
                 fontSize: headerFontSize,
                 fontWeight: 'bold' as const,
                 textAlign: 'center' as const,
@@ -497,7 +497,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
         const dynamicStyles = getDynamicStyles();
 
         return (
-            <Page key={pageNumber} size="A5" orientation="portrait" style={styles.page}>
+            <Page key={pageNumber} size="A4" orientation="portrait" style={styles.page}>
                 {/* Header solo en la primera página - RF-18: Encabezado en negro con fecha subrayada */}
                 {pageNumber === 1 && (
                     <View style={styles.header}>
@@ -711,7 +711,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                         Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
                     </Text>
                     <Text style={{ fontSize: 6, color: '#999', marginTop: 2 }}>
-                        ✓ Formato A5 optimizado - Sin tablas cortadas
+                        ✓ Formato A4 optimizado - RF-23: Tipografía 10pt/12pt
                     </Text>
                 </View>
             </Page>

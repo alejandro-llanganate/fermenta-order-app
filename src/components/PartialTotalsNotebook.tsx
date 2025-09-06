@@ -20,6 +20,7 @@ export default function PartialTotalsNotebook({ onBack }: PartialTotalsNotebookP
     const [products, setProducts] = useState<Product[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [dateFilterType, setDateFilterType] = useState<'registration' | 'delivery'>('registration');
     const [loading, setLoading] = useState(true);
     const [showPreview, setShowPreview] = useState(false);
     const printRef = useRef<HTMLDivElement>(null);
@@ -73,6 +74,7 @@ export default function PartialTotalsNotebook({ onBack }: PartialTotalsNotebookP
     // Fetch orders by date
     const fetchOrdersByDate = async (date: Date) => {
         console.log('🔄 useEffect triggered - fetching orders for date:', date.toISOString().split('T')[0]);
+        console.log('🔍 Tipo de filtro:', dateFilterType);
 
         const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
@@ -85,15 +87,30 @@ export default function PartialTotalsNotebook({ onBack }: PartialTotalsNotebookP
 
         try {
             // Fetch orders with client and route joins
-            const { data: ordersData, error: ordersError } = await supabase
+            let query = supabase
                 .from('orders')
                 .select(`
                     *,
                     clients:client_id(id, nombre, route_id, is_active),
                     routes:route_id(id, nombre, identificador, is_active)
-                `)
-                .gte('order_date', startOfDay.toISOString().split('T')[0])
-                .lte('order_date', endOfDay.toISOString().split('T')[0]);
+                `);
+
+            // Aplicar filtro según el tipo seleccionado
+            if (dateFilterType === 'registration') {
+                // Filtrar por fecha de registro (order_date)
+                query = query
+                    .gte('order_date', startOfDay.toISOString().split('T')[0])
+                    .lte('order_date', endOfDay.toISOString().split('T')[0]);
+                console.log('📅 Filtrando por fecha de registro');
+            } else {
+                // Filtrar por fecha de entrega (delivery_date)
+                query = query
+                    .gte('delivery_date', startOfDay.toISOString().split('T')[0])
+                    .lte('delivery_date', endOfDay.toISOString().split('T')[0]);
+                console.log('📅 Filtrando por fecha de entrega');
+            }
+
+            const { data: ordersData, error: ordersError } = await query;
 
             if (ordersError) throw ordersError;
 
@@ -170,7 +187,7 @@ export default function PartialTotalsNotebook({ onBack }: PartialTotalsNotebookP
         if (routes.length > 0 && clients.length > 0 && products.length > 0) {
             fetchOrdersByDate(selectedDate);
         }
-    }, [selectedDate, routes.length, clients.length, products.length]);
+    }, [selectedDate, dateFilterType, routes.length, clients.length, products.length]);
 
     // Helper functions
     const getProductCategories = (): { name: string; products: Product[] }[] => {
@@ -212,10 +229,17 @@ export default function PartialTotalsNotebook({ onBack }: PartialTotalsNotebookP
     };
 
     const getTotalForProduct = (productId: string): number => {
-        return orders.reduce((sum, order) => {
+        const total = orders.reduce((sum, order) => {
             const productItems = order.items.filter(item => item.productId === productId);
             return sum + productItems.reduce((itemSum, item) => itemSum + item.quantity, 0);
         }, 0);
+
+        // Logging para debugging
+        if (total > 0) {
+            console.log(`🔢 PartialTotalsNotebook getTotalForProduct - Producto: ${productId}, Total: ${total}, Filtro: ${dateFilterType}`);
+        }
+
+        return total;
     };
 
     const getTotalForCategory = (categoryName: string): { quantity: number; amount: number } => {
@@ -299,6 +323,8 @@ export default function PartialTotalsNotebook({ onBack }: PartialTotalsNotebookP
                     <PartialTotalsNotebookControls
                         selectedDate={selectedDate}
                         setSelectedDate={setSelectedDate}
+                        dateFilterType={dateFilterType}
+                        setDateFilterType={setDateFilterType}
                         loading={loading}
                         orders={orders}
                         routes={routes}

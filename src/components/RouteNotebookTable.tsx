@@ -61,12 +61,9 @@ export default function RouteNotebookTable({
         setIsVerticalText(!isVerticalText);
     };
 
-    // Filtrar productos que tienen pedidos > 0
+    // Mostrar todos los productos (columnas fijas)
     const getProductsWithOrders = () => {
-        return unifiedProducts.filter(product => {
-            const total = getTotalForProduct(product.id, selectedRoute);
-            return total > 0;
-        });
+        return unifiedProducts; // Mostrar todos los productos
     };
 
     const filteredProducts = getProductsWithOrders();
@@ -285,15 +282,9 @@ export default function RouteNotebookTable({
         }
     };
 
-    // Filtrar categorías que tienen productos con pedidos
+    // Mostrar todas las categorías (columnas fijas)
     const getCategoriesWithOrders = () => {
-        return productCategories.filter(category => {
-            const categoryProducts = category.products.filter(product => {
-                const total = getTotalForProduct(product.id, selectedRoute);
-                return total > 0;
-            });
-            return categoryProducts.length > 0;
-        });
+        return productCategories; // Mostrar todas las categorías
     };
 
     const filteredCategories = getCategoriesWithOrders();
@@ -327,8 +318,8 @@ export default function RouteNotebookTable({
                         <button
                             onClick={toggleVerticalText}
                             className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${isVerticalText
-                                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
                             title={isVerticalText ? 'Cambiar a texto horizontal' : 'Cambiar a texto vertical'}
                         >

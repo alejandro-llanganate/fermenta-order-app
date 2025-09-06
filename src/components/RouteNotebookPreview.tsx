@@ -38,26 +38,16 @@ export default function RouteNotebookPreview({
     getTotalForRoute,
     printRef
 }: RouteNotebookPreviewProps) {
-    // Filtrar productos que tienen pedidos > 0
+    // RF-24: Mostrar todos los productos y categorías (columnas fijas) como en la vista general
     const getProductsWithOrders = () => {
-        const allProducts = productCategories.flatMap(category => category.products);
-        return allProducts.filter(product => {
-            const total = getTotalForProduct(product.id);
-            return total > 0;
-        });
+        return productCategories.flatMap(category => category.products); // Mostrar todos los productos
     };
 
     const filteredProducts = getProductsWithOrders();
 
-    // Filtrar categorías que tienen productos con pedidos
+    // RF-24: Mostrar todas las categorías (columnas fijas) como en la vista general
     const getCategoriesWithOrders = () => {
-        return productCategories.filter(category => {
-            const categoryProducts = category.products.filter(product => {
-                const total = getTotalForProduct(product.id);
-                return total > 0;
-            });
-            return categoryProducts.length > 0;
-        });
+        return productCategories; // Mostrar todas las categorías
     };
 
     const filteredCategories = getCategoriesWithOrders();
@@ -149,10 +139,7 @@ export default function RouteNotebookPreview({
                                             &nbsp;
                                         </th>
                                         {filteredCategories.map((category) => (
-                                            category.products.filter(product => {
-                                                const total = getTotalForProduct(product.id);
-                                                return total > 0;
-                                            }).map((product) => (
+                                            category.products.map((product) => (
                                                 <th key={product.id} className="border border-gray-300 px-2 py-2 text-center text-black font-semibold text-xs">
                                                     {product.name}
                                                 </th>
@@ -176,14 +163,11 @@ export default function RouteNotebookPreview({
                                                             {client.nombre}
                                                         </td>
                                                         {filteredCategories.map((category) => (
-                                                            category.products.filter(product => {
-                                                                const total = getTotalForProduct(product.id);
-                                                                return total > 0;
-                                                            }).map((product) => {
+                                                            category.products.map((product) => {
                                                                 const quantity = getQuantityForClientAndProduct(client.id, product.id);
                                                                 return (
                                                                     <td key={product.id} className="border border-gray-300 px-2 py-2 text-black text-center">
-                                                                        {quantity > 0 ? quantity : ''}
+                                                                        {quantity > 0 ? quantity : '-'}
                                                                     </td>
                                                                 );
                                                             })
@@ -204,7 +188,7 @@ export default function RouteNotebookPreview({
                                                 const total = getTotalForProduct(product.id);
                                                 return (
                                                     <td key={product.id} className="border border-gray-300 px-2 py-2 text-black font-bold text-center">
-                                                        {total > 0 ? total : ''}
+                                                        {total > 0 ? total : '-'}
                                                     </td>
                                                 );
                                             }))

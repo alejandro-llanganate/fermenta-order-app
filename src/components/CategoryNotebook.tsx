@@ -284,10 +284,17 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
             );
         }
 
-        return filteredOrders.reduce((sum, order) => {
+        const total = filteredOrders.reduce((sum, order) => {
             const productItems = order.items.filter(item => item.productId === productId);
             return sum + productItems.reduce((itemSum, item) => itemSum + item.quantity, 0);
         }, 0);
+
+        // Logging para debugging
+        if (total > 0) {
+            console.log(`🔢 CategoryNotebook getTotalForProduct - Producto: ${productId}, Categoría: ${categoryId || 'Todas'}, Total: ${total}, Filtro: ${dateFilterType}`);
+        }
+
+        return total;
     };
 
     const getTotalForCategory = (categoryId: string): { quantity: number; amount: number } => {

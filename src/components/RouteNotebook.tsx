@@ -182,6 +182,12 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                 throw ordersError;
             }
 
+            console.log('🔍 RouteNotebook: Consulta SQL ejecutada');
+            console.log('🔍 RouteNotebook: Fecha inicio:', startDate.toISOString().split('T')[0]);
+            console.log('🔍 RouteNotebook: Fecha fin:', endDate.toISOString().split('T')[0]);
+            console.log('🔍 RouteNotebook: Tipo de filtro:', dateFilterType);
+            console.log('🔍 RouteNotebook: Órdenes encontradas en BD:', ordersData?.length || 0);
+
             // Fetch order items for each order
             const ordersWithItems = await Promise.all(
                 (ordersData || []).map(async (order) => {
@@ -226,6 +232,8 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
             const validOrders = ordersWithItems.filter(order => order !== null) as Order[];
             console.log('📊 RouteNotebook: Órdenes cargadas:', validOrders.length);
+            console.log('📊 RouteNotebook: Filtro aplicado - Fecha:', selectedDate.toLocaleDateString('es-ES'), 'Tipo:', dateFilterType);
+            console.log('📊 RouteNotebook: Total de pedidos únicos:', validOrders.length);
             setOrders(validOrders);
         } catch (error) {
             console.error('❌ Error fetching orders by date:', error);
@@ -493,10 +501,17 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
             filteredOrders = orders.filter(order => order.routeId === routeId);
         }
 
-        return filteredOrders.reduce((sum, order) => {
+        const total = filteredOrders.reduce((sum, order) => {
             const productItems = order.items.filter(item => item.productId === productId);
             return sum + productItems.reduce((itemSum, item) => itemSum + item.quantity, 0);
         }, 0);
+
+        // Logging para debugging
+        if (total > 0) {
+            console.log(`🔢 getTotalForProduct - Producto: ${productId}, Ruta: ${routeId || 'Todas'}, Total: ${total}, Filtro: ${dateFilterType}`);
+        }
+
+        return total;
     };
 
     const getTotalForRoute = (routeId: string): { quantity: number; amount: number } => {
@@ -506,6 +521,17 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
         }, 0);
         const amount = routeOrders.reduce((sum, order) => sum + order.totalAmount, 0);
         return { quantity, amount };
+    };
+
+    // Nueva función para obtener el número de pedidos únicos por ruta
+    const getOrderCountForRoute = (routeId: string): number => {
+        const routeOrders = orders.filter(order => order.routeId === routeId);
+        return routeOrders.length;
+    };
+
+    // Nueva función para obtener el número total de pedidos únicos
+    const getTotalOrderCount = (): number => {
+        return orders.length;
     };
 
     const handleQuantityChange = async (clientId: string, productId: string, newQuantity: number) => {

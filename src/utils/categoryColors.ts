@@ -9,35 +9,65 @@ export interface CategoryColorConfig {
 }
 
 export const CATEGORY_COLORS: Record<string, CategoryColorConfig> = {
-    'PIZZAS': {
+    'Pizzas': {
+        backgroundColor: 'bg-red-400',
+        textColor: 'text-white',
+        hexColor: '#F87171'
+    },
+    'Panes de chocolate': {
         backgroundColor: 'bg-yellow-400',
         textColor: 'text-black',
-        hexColor: '#FFFF00'
+        hexColor: '#FBBF24'
     },
-    'PANES CHOCO': {
-        backgroundColor: 'bg-sky-400',
-        textColor: 'text-black',
-        hexColor: '#00BFFF'
+    'Pasteles': {
+        backgroundColor: 'bg-pink-400',
+        textColor: 'text-white',
+        hexColor: '#F472B6'
     },
-    'HOT DOG / HAMB / GUSANO': {
-        backgroundColor: 'bg-green-500',
-        textColor: 'text-black',
-        hexColor: '#00FF00'
+    'Melvas': {
+        backgroundColor: 'bg-orange-400',
+        textColor: 'text-white',
+        hexColor: '#FB923C'
     },
-    'MELVAS': {
-        backgroundColor: 'bg-orange-300',
-        textColor: 'text-black',
-        hexColor: '#FFA07A'
+    'Varios': {
+        backgroundColor: 'bg-gray-400',
+        textColor: 'text-white',
+        hexColor: '#9CA3AF'
     },
-    'VARIOS': {
-        backgroundColor: 'bg-orange-300',
-        textColor: 'text-black',
-        hexColor: '#FFA07A'
+    'Orejas': {
+        backgroundColor: 'bg-purple-400',
+        textColor: 'text-white',
+        hexColor: '#C084FC'
     },
-    'PASTELES': {
-        backgroundColor: 'bg-green-300',
+    'Muffins': {
+        backgroundColor: 'bg-blue-400',
+        textColor: 'text-white',
+        hexColor: '#60A5FA'
+    },
+    'Mini Panes': {
+        backgroundColor: 'bg-green-400',
+        textColor: 'text-white',
+        hexColor: '#4ADE80'
+    },
+    'Donas': {
+        backgroundColor: 'bg-indigo-400',
+        textColor: 'text-white',
+        hexColor: '#818CF8'
+    },
+    'Panes': {
+        backgroundColor: 'bg-amber-400',
         textColor: 'text-black',
-        hexColor: '#90EE90'
+        hexColor: '#FBBF24'
+    },
+    'Masa Pizza': {
+        backgroundColor: 'bg-red-500',
+        textColor: 'text-white',
+        hexColor: '#EF4444'
+    },
+    'Página': {
+        backgroundColor: 'bg-teal-400',
+        textColor: 'text-white',
+        hexColor: '#2DD4BF'
     }
 };
 
