@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     tableCell: {
-        padding: 3, // Reducido para A4
-        fontSize: 10, // RF-24: Contenido general 10pt
+        padding: 2, // Más reducido para columnas pequeñas
+        fontSize: 8, // Letra más pequeña para columnas
         textAlign: 'center',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -88,8 +88,8 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     tableCellHeader: {
-        padding: 3, // Reducido para A4
-        fontSize: 10, // RF-24: Contenido general 10pt
+        padding: 2, // Más reducido para columnas pequeñas
+        fontSize: 8, // Letra más pequeña para columnas
         fontWeight: 'bold',
         textAlign: 'center',
         borderRightWidth: 1,
@@ -97,13 +97,43 @@ const styles = StyleSheet.create({
         flex: 1,
         color: '#000000',
     },
+    tableCellHeaderVertical: {
+        padding: 2, // Más reducido para columnas pequeñas
+        fontSize: 7, // Letra aún más pequeña para texto vertical
+        fontWeight: 'bold',
+        textAlign: 'center',
+        borderRightWidth: 1,
+        borderRightColor: '#d1d5db',
+        flex: 1,
+        color: '#000000',
+        writingMode: 'vertical-rl',
+        textOrientation: 'mixed',
+    },
     clientCell: {
+        padding: 2, // Más reducido para columnas pequeñas
+        fontSize: 8, // Letra más pequeña para columnas
+        textAlign: 'left',
+        borderRightWidth: 1,
+        borderRightColor: '#d1d5db',
+        flex: 2,
+        color: '#000000',
+    },
+    productCell: {
         padding: 3, // Reducido para A4
         fontSize: 10, // RF-24: Contenido general 10pt
         textAlign: 'left',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
-        flex: 2,
+        flex: 3,
+        color: '#000000',
+    },
+    quantityCell: {
+        padding: 3, // Reducido para A4
+        fontSize: 10, // RF-24: Contenido general 10pt
+        textAlign: 'center',
+        borderRightWidth: 1,
+        borderRightColor: '#d1d5db',
+        flex: 1,
         color: '#000000',
     },
     totalCell: {
@@ -243,53 +273,41 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                     )}
                 </View>
 
-                {/* Totales por producto */}
-                <View style={styles.productTotals}>
-                    <Text style={styles.productTotalsTitle}>
-                        TOTALES POR PRODUCTO
-                    </Text>
-                    <View style={styles.productTotalsGrid}>
-                        {filteredProducts.map((product) => {
-                            const total = getTotalForProduct(product.id);
-                            return (
-                                <View key={product.id} style={styles.productTotalItem}>
-                                    <Text style={styles.productName}>{product.name}</Text>
-                                    <Text style={styles.productQuantity}>{total}</Text>
-                                </View>
-                            );
-                        })}
-                    </View>
-                </View>
 
-                {/* Tabla según selección */}
-                {selectedRoute ? (
-                    // Tabla para ruta específica
-                    (() => {
-                        const route = routes.find(r => r.id === selectedRoute);
-                        const routeClients = getClientsWithOrders(selectedRoute);
+                {/* Tablas separadas por ruta con estructura horizontal */}
+                {(() => {
+                    const routesToShow = selectedRoute
+                        ? routes.filter(route => route.id === selectedRoute)
+                        : routes;
 
-                        if (!route || routeClients.length === 0) return null;
+                    return routesToShow.map((route) => {
+                        const routeClients = getClientsWithOrders(route.id);
+
+                        if (routeClients.length === 0) return null;
 
                         return (
-                            <View style={styles.section}>
+                            <View key={route.id} style={styles.section}>
                                 <Text style={styles.routeTitle}>
                                     {route.nombre} - {route.identificador}
                                 </Text>
 
+                                {/* Tabla horizontal con productos como columnas */}
                                 <View style={styles.table}>
                                     {/* Primera fila: Encabezados de categorías con colores */}
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={styles.clientCell}>CLIENTES</Text>
                                         {productCategories.map((category) => {
                                             const categoryProducts = category.products;
+                                            const categoryColors = getCategoryPDFStyles(category.name);
+
                                             return (
                                                 <Text
                                                     key={category.name}
                                                     style={[
                                                         styles.categoryHeader,
                                                         {
-                                                            backgroundColor: getCategoryPDFStyles(category.name).backgroundColor,
-                                                            color: getCategoryPDFStyles(category.name).color,
+                                                            backgroundColor: categoryColors.backgroundColor,
+                                                            color: categoryColors.color,
                                                             flex: categoryProducts.length
                                                         }
                                                     ]}
@@ -300,11 +318,11 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                         })}
                                     </View>
 
-                                    {/* Segunda fila: Encabezados de productos */}
+                                    {/* Segunda fila: Encabezados de productos verticales */}
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={styles.clientCell}>&nbsp;</Text>
                                         {filteredProducts.map((product) => (
-                                            <Text key={product.id} style={styles.tableCellHeader}>
+                                            <Text key={product.id} style={styles.tableCellHeaderVertical}>
                                                 {product.name}
                                             </Text>
                                         ))}
@@ -326,94 +344,11 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                             </View>
                                         );
                                     })}
-
-                                    {/* Fila de totales de ruta */}
-                                    <View style={[styles.tableRow, styles.tableHeader]}>
-                                        <Text style={styles.tableCellHeader}>TOTAL {route.nombre}</Text>
-                                        {filteredProducts.map((product) => {
-                                            const total = getTotalForProduct(product.id, selectedRoute);
-                                            return (
-                                                <Text key={product.id} style={styles.tableCellHeader}>
-                                                    {total > 0 ? total : '-'}
-                                                </Text>
-                                            );
-                                        })}
-                                    </View>
                                 </View>
                             </View>
                         );
-                    })()
-                ) : (
-                    // Tabla general para todas las rutas
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>TODOS LOS PEDIDOS</Text>
-
-                        <View style={styles.table}>
-                            {/* Primera fila: Encabezados de categorías con colores */}
-                            <View style={[styles.tableRow, styles.tableHeader]}>
-                                <Text style={styles.clientCell}>CLIENTES</Text>
-                                {productCategories.map((category) => {
-                                    const categoryProducts = category.products;
-                                    return (
-                                        <Text
-                                            key={category.name}
-                                            style={[
-                                                styles.categoryHeader,
-                                                {
-                                                    backgroundColor: getCategoryPDFStyles(category.name).backgroundColor,
-                                                    color: getCategoryPDFStyles(category.name).color,
-                                                    flex: categoryProducts.length
-                                                }
-                                            ]}
-                                        >
-                                            {category.name}
-                                        </Text>
-                                    );
-                                })}
-                            </View>
-
-                            {/* Segunda fila: Encabezados de productos */}
-                            <View style={[styles.tableRow, styles.tableHeader]}>
-                                <Text style={styles.clientCell}>&nbsp;</Text>
-                                {filteredProducts.map((product) => (
-                                    <Text key={product.id} style={styles.tableCellHeader}>
-                                        {product.name}
-                                    </Text>
-                                ))}
-                            </View>
-
-                            {/* Filas de clientes */}
-                            {clientsWithOrders.map((client) => {
-                                return (
-                                    <View key={client.id} style={styles.tableRow}>
-                                        <Text style={styles.clientCell}>{client.nombre}</Text>
-                                        {filteredProducts.map((product) => {
-                                            const quantity = getQuantityForClientAndProduct(client.id, product.id);
-                                            return (
-                                                <Text key={product.id} style={styles.tableCell}>
-                                                    {quantity > 0 ? quantity : '-'}
-                                                </Text>
-                                            );
-                                        })}
-                                    </View>
-                                );
-                            })}
-
-                            {/* Fila de totales generales */}
-                            <View style={[styles.tableRow, styles.tableHeader]}>
-                                <Text style={styles.tableCellHeader}>TOTAL GENERAL</Text>
-                                {filteredProducts.map((product) => {
-                                    const total = getTotalForProduct(product.id);
-                                    return (
-                                        <Text key={product.id} style={styles.tableCellHeader}>
-                                            {total > 0 ? total : '-'}
-                                        </Text>
-                                    );
-                                })}
-                            </View>
-                        </View>
-                    </View>
-                )}
+                    });
+                })()}
 
 
             </Page>

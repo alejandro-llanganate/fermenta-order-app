@@ -96,21 +96,6 @@ export default function RouteNotebookTableBody({
                 });
             })}
 
-            {/* Totals Row */}
-            <tr className="bg-gray-100 font-bold">
-                <td className="px-3 py-3 text-sm font-bold text-gray-900 sticky left-0 bg-gray-100 z-10 border-r border-gray-200">
-                    TOTALES
-                </td>
-                {unifiedProducts.map((product) => {
-                    const total = getFilteredTotalForProduct(product.id);
-                    return (
-                        <td key={product.id} className="px-2 py-3 text-sm font-bold text-gray-900 text-center border-l border-gray-200">
-                            {total > 0 ? total : '-'}
-                        </td>
-                    );
-                })}
-
-            </tr>
         </>
     );
 }

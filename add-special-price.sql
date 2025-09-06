@@ -9,7 +9,7 @@ COMMENT ON COLUMN products.special_price IS 'Precio especial opcional para el pr
 CREATE INDEX IF NOT EXISTS idx_products_special_price ON products(special_price) WHERE special_price IS NOT NULL;
 
 -- Agregar campo uses_special_price a la tabla order_items
-ALTER TABLE order_items 
+ALTER TABLE order_items
 ADD COLUMN IF NOT EXISTS uses_special_price BOOLEAN DEFAULT FALSE;
 
 -- Agregar comentario para documentar el campo

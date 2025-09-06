@@ -122,12 +122,9 @@ export default function RouteNotebookPreview({
                                             CLIENTES
                                         </th>
                                         {filteredCategories.map((category) => {
-                                            const categoryProductsWithOrders = category.products.filter(product => {
-                                                const total = getTotalForProduct(product.id);
-                                                return total > 0;
-                                            });
+                                            const categoryProductsWithOrders = category.products;
                                             return (
-                                                <th key={category.name} colSpan={categoryProductsWithOrders.length} className="border border-gray-300 px-3 py-2 text-center text-black font-semibold">
+                                                <th key={category.name} colSpan={categoryProductsWithOrders.length} className={`border border-gray-300 px-3 py-2 text-center font-semibold ${getCategoryColors(category.name).backgroundColor} ${getCategoryColors(category.name).textColor}`}>
                                                     {category.name}
                                                 </th>
                                             );
@@ -178,23 +175,6 @@ export default function RouteNotebookPreview({
                                             });
                                         })}
 
-                                    {/* Totals Row */}
-                                    <tr className="bg-gray-100 font-bold">
-                                        <td className="border border-gray-300 px-3 py-2 text-black font-bold sticky left-0 bg-gray-100">
-                                            TOTALES
-                                        </td>
-                                        {productCategories.map((category) => (
-                                            category.products.map((product) => {
-                                                const total = getTotalForProduct(product.id);
-                                                return (
-                                                    <td key={product.id} className="border border-gray-300 px-2 py-2 text-black font-bold text-center">
-                                                        {total > 0 ? total : '-'}
-                                                    </td>
-                                                );
-                                            }))
-                                        )}
-
-                                    </tr>
                                 </tbody>
                             </table>
                         </div>

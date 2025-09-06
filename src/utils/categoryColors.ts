@@ -9,62 +9,52 @@ export interface CategoryColorConfig {
 }
 
 export const CATEGORY_COLORS: Record<string, CategoryColorConfig> = {
-    'Pizzas': {
-        backgroundColor: 'bg-red-400',
-        textColor: 'text-white',
-        hexColor: '#F87171'
-    },
-    'Panes de chocolate': {
-        backgroundColor: 'bg-yellow-400',
-        textColor: 'text-black',
-        hexColor: '#FBBF24'
-    },
-    'Pasteles': {
-        backgroundColor: 'bg-pink-400',
-        textColor: 'text-white',
-        hexColor: '#F472B6'
-    },
-    'Melvas': {
-        backgroundColor: 'bg-orange-400',
-        textColor: 'text-white',
-        hexColor: '#FB923C'
-    },
-    'Varios': {
-        backgroundColor: 'bg-gray-400',
-        textColor: 'text-white',
-        hexColor: '#9CA3AF'
-    },
-    'Orejas': {
-        backgroundColor: 'bg-purple-400',
-        textColor: 'text-white',
-        hexColor: '#C084FC'
-    },
-    'Muffins': {
-        backgroundColor: 'bg-blue-400',
-        textColor: 'text-white',
-        hexColor: '#60A5FA'
-    },
-    'Mini Panes': {
-        backgroundColor: 'bg-green-400',
-        textColor: 'text-white',
-        hexColor: '#4ADE80'
-    },
-    'Donas': {
+    'DONUTS': {
         backgroundColor: 'bg-indigo-400',
         textColor: 'text-white',
         hexColor: '#818CF8'
     },
-    'Panes': {
+    'MELVAS': {
+        backgroundColor: 'bg-orange-400',
+        textColor: 'text-white',
+        hexColor: '#FB923C'
+    },
+    'MUFFINS': {
+        backgroundColor: 'bg-blue-400',
+        textColor: 'text-white',
+        hexColor: '#60A5FA'
+    },
+    'OREJAS': {
+        backgroundColor: 'bg-purple-400',
+        textColor: 'text-white',
+        hexColor: '#C084FC'
+    },
+    'PANES': {
         backgroundColor: 'bg-amber-400',
         textColor: 'text-black',
         hexColor: '#FBBF24'
     },
-    'Masa Pizza': {
-        backgroundColor: 'bg-red-500',
-        textColor: 'text-white',
-        hexColor: '#EF4444'
+    'PANES CHOCOLATE': {
+        backgroundColor: 'bg-yellow-400',
+        textColor: 'text-black',
+        hexColor: '#FBBF24'
     },
-    'Página': {
+    'PASTELES': {
+        backgroundColor: 'bg-pink-400',
+        textColor: 'text-white',
+        hexColor: '#F472B6'
+    },
+    'PIZZAS': {
+        backgroundColor: 'bg-red-400',
+        textColor: 'text-white',
+        hexColor: '#F87171'
+    },
+    'VARIOS': {
+        backgroundColor: 'bg-gray-400',
+        textColor: 'text-white',
+        hexColor: '#9CA3AF'
+    },
+    'PAGINA': {
         backgroundColor: 'bg-teal-400',
         textColor: 'text-white',
         hexColor: '#2DD4BF'
@@ -120,6 +110,6 @@ export function getCategoryPDFStyles(categoryName: string) {
     const colors = getCategoryColors(categoryName);
     return {
         backgroundColor: colors.hexColor,
-        color: '#000000'
+        color: colors.textColor === 'text-white' ? '#FFFFFF' : '#000000'
     };
 }

@@ -57,9 +57,6 @@ export default function RouteNotebookTableHeader({
                         </th>
                     );
                 })}
-                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200" style={{ width: '120px' }}>
-                    TOTAL
-                </th>
             </tr>
             {/* Segunda fila: Encabezados de productos */}
             <tr>
@@ -68,14 +65,11 @@ export default function RouteNotebookTableHeader({
                 </th>
                 {filteredProducts.map((product, productIndex) => (
                     <th key={product.id} className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200" style={{ width: '80px' }}>
-                        <span className={`text-xs ${isVerticalText ? 'writing-mode-vertical-rl transform-rotate-45 origin-center' : ''}`}>
+                        <span className={`text-xs ${isVerticalText ? 'writing-mode-vertical-rl' : ''}`}>
                             {product.name}
                         </span>
                     </th>
                 ))}
-                <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200" style={{ width: '120px' }}>
-                    CANT. | $
-                </th>
             </tr>
         </>
     );
