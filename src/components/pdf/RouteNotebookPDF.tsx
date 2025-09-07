@@ -18,9 +18,9 @@ const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 10, // Reducido para A4
+        padding: 8, // Más reducido para evitar sobrepasar
         fontFamily: 'Helvetica',
-        fontSize: 10, // RF-24: Contenido general 10pt
+        fontSize: 9, // Reducido de 10 a 9
     },
     header: {
         textAlign: 'center',
@@ -29,24 +29,24 @@ const styles = StyleSheet.create({
         paddingBottom: 6,
     },
     title: {
-        fontSize: 12, // RF-24: Encabezados 12pt
+        fontSize: 11, // Reducido de 12 a 11
         fontWeight: 'bold',
         marginBottom: 4,
         color: '#000000',
     },
     subtitle: {
-        fontSize: 12, // RF-24: Encabezados 12pt
+        fontSize: 11, // Reducido de 12 a 11
         fontWeight: 'bold',
         marginBottom: 3,
         color: '#374151',
     },
     date: {
-        fontSize: 10, // RF-24: Contenido general 10pt
+        fontSize: 9, // Reducido de 10 a 9
         color: '#6b7280',
         marginBottom: 2,
     },
     route: {
-        fontSize: 10, // RF-24: Contenido general 10pt
+        fontSize: 9, // Reducido de 10 a 9
         color: '#6b7280',
         marginBottom: 6,
     },
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     sectionTitle: {
-        fontSize: 12, // RF-24: Encabezados 12pt
+        fontSize: 11, // Reducido de 12 a 11
         fontWeight: 'bold',
         marginBottom: 6,
         backgroundColor: '#f3f4f6',
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         borderBottomWidth: 1,
         borderBottomColor: '#d1d5db',
-        minHeight: 20, // Reducido para A4
+        minHeight: 18, // Más reducido para evitar sobrepasar
     },
     tableHeader: {
         backgroundColor: '#f9fafb',
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     },
     tableCell: {
         padding: 2, // Más reducido para columnas pequeñas
-        fontSize: 8, // Letra más pequeña para columnas
+        fontSize: 7, // Reducido de 8 a 7
         textAlign: 'center',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     },
     tableCellHeader: {
         padding: 2, // Más reducido para columnas pequeñas
-        fontSize: 8, // Letra más pequeña para columnas
+        fontSize: 5, // Reducido de 6 a 5
         fontWeight: 'bold',
         textAlign: 'center',
         borderRightWidth: 1,
@@ -99,18 +99,18 @@ const styles = StyleSheet.create({
     },
     tableCellHeaderVertical: {
         padding: 2, // Más reducido para columnas pequeñas
-        fontSize: 8, // Tamaño normal para legibilidad
+        fontSize: 5, // Reducido de 6 a 5
         fontWeight: 'bold',
         textAlign: 'center',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
         flex: 1,
         color: '#000000',
-        lineHeight: 1.2, // Espaciado entre líneas
+        lineHeight: 1.0, // Más compacto
     },
     clientCell: {
         padding: 2, // Más reducido para columnas pequeñas
-        fontSize: 8, // Letra más pequeña para columnas
+        fontSize: 7, // Reducido de 8 a 7
         textAlign: 'left',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     },
     productCell: {
         padding: 3, // Reducido para A4
-        fontSize: 10, // RF-24: Contenido general 10pt
+        fontSize: 9, // Reducido de 10 a 9
         textAlign: 'left',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     },
     quantityCell: {
         padding: 3, // Reducido para A4
-        fontSize: 10, // RF-24: Contenido general 10pt
+        fontSize: 9, // Reducido de 10 a 9
         textAlign: 'center',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     },
     totalCell: {
         padding: 4,
-        fontSize: 10, // RF-24: Contenido general 10pt
+        fontSize: 9, // Reducido de 10 a 9
         fontWeight: 'bold',
         textAlign: 'center',
         borderRightWidth: 1,
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     routeTitle: {
-        fontSize: 12, // RF-24: Encabezados 12pt
+        fontSize: 11, // Reducido de 12 a 11
         fontWeight: 'bold',
         backgroundColor: '#f3f4f6',
         padding: 3,
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     // Estilos para encabezados de categorías con colores
     categoryHeader: {
         padding: 3,
-        fontSize: 10, // RF-24: Contenido general 10pt
+        fontSize: 7, // Reducido de 8 a 7
         fontWeight: 'bold',
         textAlign: 'center',
         borderRightWidth: 1,
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
         borderRadius: 4,
     },
     productTotalsTitle: {
-        fontSize: 12, // RF-24: Encabezados 12pt
+        fontSize: 11, // Reducido de 12 a 11
         fontWeight: 'bold',
         marginBottom: 4,
         color: '#1e40af',
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
         marginBottom: 1,
     },
     productQuantity: {
-        fontSize: 10, // RF-24: Contenido general 10pt
+        fontSize: 9, // Reducido de 10 a 9
         fontWeight: 'bold',
         color: '#1e40af',
     },
@@ -239,46 +239,96 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
             return text;
         }
 
+        // Validar que el texto no esté vacío
+        if (!text || text.trim() === '') {
+            return (
+                <Text style={{ fontSize: 5, lineHeight: 1.0 }}>
+                    &nbsp;
+                </Text>
+            );
+        }
+
         // Dividir el texto en caracteres y crear elementos Text separados
         return text.split('').map((char, index) => (
-            <Text key={index} style={{ fontSize: 8, lineHeight: 1.2 }}>
+            <Text key={index} style={{ fontSize: 5, lineHeight: 1.0 }}>
                 {char}
             </Text>
         ));
     };
+
+    // Función para dividir texto horizontal con saltos de línea inteligentes
+    const renderHorizontalText = (text: string) => {
+        if (isVerticalText) {
+            return text;
+        }
+
+        // Validar que el texto no esté vacío
+        if (!text || text.trim() === '') {
+            return (
+                <Text style={{ fontSize: 5, lineHeight: 1.0, textAlign: 'center' }}>
+                    &nbsp;
+                </Text>
+            );
+        }
+
+        // Si el texto es muy largo, dividirlo en palabras y crear saltos de línea
+        if (text.length > 8) {
+            const words = text.split(' ');
+            if (words.length > 1) {
+                // Dividir en dos líneas si hay múltiples palabras
+                const midPoint = Math.ceil(words.length / 2);
+                const firstLine = words.slice(0, midPoint).join(' ');
+                const secondLine = words.slice(midPoint).join(' ');
+
+                return (
+                    <View style={{ alignItems: 'center' }}>
+                        <Text style={{ fontSize: 5, lineHeight: 1.0, textAlign: 'center' }}>
+                            {firstLine}
+                        </Text>
+                        <Text style={{ fontSize: 5, lineHeight: 1.0, textAlign: 'center' }}>
+                            {secondLine}
+                        </Text>
+                    </View>
+                );
+            } else {
+                // Para palabras muy largas, dividir por caracteres
+                const midPoint = Math.ceil(text.length / 2);
+                const firstPart = text.substring(0, midPoint);
+                const secondPart = text.substring(midPoint);
+
+                return (
+                    <View style={{ alignItems: 'center' }}>
+                        <Text style={{ fontSize: 5, lineHeight: 1.0, textAlign: 'center' }}>
+                            {firstPart}
+                        </Text>
+                        <Text style={{ fontSize: 5, lineHeight: 1.0, textAlign: 'center' }}>
+                            {secondPart}
+                        </Text>
+                    </View>
+                );
+            }
+        }
+
+        // Para textos cortos, devolver como elemento Text
+        return (
+            <Text style={{ fontSize: 5, lineHeight: 1.0, textAlign: 'center' }}>
+                {text}
+            </Text>
+        );
+    };
     // Obtener la ruta seleccionada
     const currentRoute = selectedRoute ? routes.find(r => r.id === selectedRoute) : null;
 
-    // Filtrar solo productos que tienen cantidades > 0 en alguna fila
-    const getProductsWithOrders = () => {
-        const allProducts = productCategories.flatMap(cat => cat.products);
+    // Usar directamente los productos filtrados que vienen del componente padre
+    // (ya están filtrados para mostrar solo los que tienen cantidades > 0)
+    // Filtrar adicionalmente para asegurar que tengan nombres válidos
+    const filteredProducts = productCategories
+        .flatMap(cat => cat.products)
+        .filter(product => product && product.name && product.name.trim() !== '');
 
-        // Filtrar solo productos que tienen al menos una cantidad > 0
-        return allProducts.filter(product => {
-            const clientsWithOrders = getClientsWithOrders();
-            return clientsWithOrders.some(client => {
-                const quantity = getQuantityForClientAndProduct(client.id, product.id);
-                return quantity > 0;
-            });
-        });
-    };
-
-    const filteredProducts = getProductsWithOrders();
-
-    // Filtrar categorías que tienen al menos un producto con cantidades > 0
-    const getCategoriesWithOrders = () => {
-        return productCategories.filter(category => {
-            return category.products.some(product => {
-                const clientsWithOrders = getClientsWithOrders();
-                return clientsWithOrders.some(client => {
-                    const quantity = getQuantityForClientAndProduct(client.id, product.id);
-                    return quantity > 0;
-                });
-            });
-        });
-    };
-
-    const filteredCategories = getCategoriesWithOrders();
+    // Usar directamente las categorías filtradas que vienen del componente padre
+    // (ya están filtradas para mostrar solo las que tienen productos con cantidades > 0)
+    const filteredCategories = productCategories;
 
     // Obtener clientes con órdenes
     const clientsWithOrders = getClientsWithOrders();
@@ -299,17 +349,11 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
     return (
         <Document>
             <Page size={pageSize} orientation="landscape" style={styles.page}>
-                {/* Header - RF-18: Encabezado en negro con fecha subrayada */}
+                {/* Header - Encabezado simplificado */}
                 <View style={styles.header}>
                     <Text style={[styles.title, { color: '#000000' }]}>
-                        {generateMainTitle(selectedDate, selectedRoute ? currentRoute?.nombre : 'TODAS LAS RUTAS')}
+                        FECHA ({selectedDate.toLocaleDateString('es-ES')}) — {selectedRoute ? currentRoute?.nombre : 'TODAS LAS RUTAS'} - FILTRADO POR: {dateFilterType === 'registration' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                     </Text>
-                    <Text style={[styles.date, { color: '#000000', textDecoration: 'underline' }]}>
-                        FILTRADO POR: {dateFilterType === 'registration' ? 'Fecha de Registro' : 'Fecha de Entrega'}
-                    </Text>
-                    {currentRoute && (
-                        <Text style={[styles.route, { color: '#000000' }]}>{currentRoute.identificador}</Text>
-                    )}
                 </View>
 
 
@@ -326,23 +370,13 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
 
                         return (
                             <View key={route.id} style={styles.section}>
-                                <Text style={styles.routeTitle}>
-                                    {route.nombre} - {route.identificador}
-                                </Text>
-
                                 {/* Tabla horizontal con productos como columnas */}
                                 <View style={styles.table}>
                                     {/* Primera fila: Encabezados de categorías con colores */}
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={styles.clientCell}>CLIENTES</Text>
                                         {filteredCategories.map((category) => {
-                                            // Solo contar productos que tienen cantidades > 0
-                                            const categoryProductsWithOrders = category.products.filter(product => {
-                                                return clientsWithOrders.some(client => {
-                                                    const quantity = getQuantityForClientAndProduct(client.id, product.id);
-                                                    return quantity > 0;
-                                                });
-                                            });
+                                            // Usar directamente los productos de la categoría (ya están filtrados)
                                             const categoryColors = getCategoryPDFStyles(category.name);
 
                                             return (
@@ -353,7 +387,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                                         {
                                                             backgroundColor: categoryColors.backgroundColor,
                                                             color: categoryColors.color,
-                                                            flex: categoryProductsWithOrders.length
+                                                            flex: category.products.length
                                                         }
                                                     ]}
                                                 >
@@ -363,20 +397,36 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                         })}
                                     </View>
 
-                                    {/* Segunda fila: Encabezados de productos */}
+                                    {/* Segunda fila: Encabezados de productos con colores de categoría */}
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={styles.clientCell}>&nbsp;</Text>
-                                        {filteredProducts.map((product) => (
-                                            <View key={product.id} style={isVerticalText ? styles.tableCellHeaderVertical : styles.tableCellHeader}>
-                                                {isVerticalText ? (
-                                                    <View style={{ alignItems: 'center' }}>
-                                                        {renderVerticalText(product.name)}
-                                                    </View>
-                                                ) : (
-                                                    <Text>{product.name}</Text>
-                                                )}
-                                            </View>
-                                        ))}
+                                        {filteredProducts.map((product) => {
+                                            // Encontrar la categoría del producto para obtener su color
+                                            const productCategory = filteredCategories.find(cat =>
+                                                cat.products.some(p => p.id === product.id)
+                                            );
+                                            const categoryColors = productCategory ? getCategoryPDFStyles(productCategory.name) : { backgroundColor: '#f9fafb', color: '#000000' };
+
+                                            return (
+                                                <View key={product.id} style={[
+                                                    isVerticalText ? styles.tableCellHeaderVertical : styles.tableCellHeader,
+                                                    {
+                                                        backgroundColor: categoryColors.backgroundColor,
+                                                        color: categoryColors.color
+                                                    }
+                                                ]}>
+                                                    {isVerticalText ? (
+                                                        <View style={{ alignItems: 'center' }}>
+                                                            {renderVerticalText(product.name)}
+                                                        </View>
+                                                    ) : (
+                                                        <View style={{ alignItems: 'center' }}>
+                                                            {renderHorizontalText(product.name)}
+                                                        </View>
+                                                    )}
+                                                </View>
+                                            );
+                                        })}
                                     </View>
 
                                     {/* Filas de clientes */}

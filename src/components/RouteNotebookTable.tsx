@@ -62,10 +62,10 @@ export default function RouteNotebookTable({
         }
     }, [propsHash]);
 
-    // Estado para la orientación vertical del texto
+    // Estado para la orientación vertical del texto (por defecto activado)
     const [isVerticalText, setIsVerticalText] = useState(() => {
         const saved = localStorage.getItem('routeNotebookVerticalText');
-        return saved ? JSON.parse(saved) : false;
+        return saved ? JSON.parse(saved) : true; // Por defecto true (vertical)
     });
 
     // Guardar en localStorage cuando cambie

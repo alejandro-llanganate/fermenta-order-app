@@ -34,10 +34,10 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     const [columnOrderVersion, setColumnOrderVersion] = useState(0); // Para forzar re-render
     const printRef = useRef<HTMLDivElement>(null);
 
-    // Estado para la orientación vertical del texto
+    // Estado para la orientación vertical del texto (por defecto activado)
     const [isVerticalText, setIsVerticalText] = useState(() => {
         const saved = localStorage.getItem('routeNotebookVerticalText');
-        return saved ? JSON.parse(saved) : false;
+        return saved ? JSON.parse(saved) : true; // Por defecto true (vertical)
     });
 
     // Sincronizar con localStorage cuando cambie
@@ -302,7 +302,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
         }));
     };
 
-    // Función para obtener solo categorías y productos que tienen valores
+    // Función para obtener solo categorías y productos que tienen valores (filtrado por ruta seleccionada)
     const getActiveProductCategories = (): ProductCategory[] => {
         // Si no hay órdenes, retornar array vacío
         if (orders.length === 0) {
@@ -312,8 +312,12 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
         const categoriesMap = new Map<string, Product[]>();
         const activeProducts = new Set<string>();
 
-        // Obtener todos los productos que tienen cantidades > 0
+        // Obtener productos que tienen cantidades > 0 en la ruta seleccionada
         orders.forEach(order => {
+            // Si hay una ruta seleccionada, solo considerar órdenes de esa ruta
+            if (selectedRoute && order.routeId !== selectedRoute) {
+                return;
+            }
             order.items.forEach(item => {
                 if (item.quantity > 0) {
                     activeProducts.add(item.productId);
@@ -410,11 +414,15 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
 
 
-    // Función para obtener categorías y productos ordenados localmente
+    // Función para obtener categorías y productos ordenados localmente (filtrado por ruta seleccionada)
     const getOrderedProductCategories = useMemo((): ProductCategory[] => {
-        // Obtener productos activos (con pedidos > 0)
+        // Obtener productos activos (con pedidos > 0) en la ruta seleccionada
         const activeProducts = new Set<string>();
         orders.forEach(order => {
+            // Si hay una ruta seleccionada, solo considerar órdenes de esa ruta
+            if (selectedRoute && order.routeId !== selectedRoute) {
+                return;
+            }
             order.items.forEach(item => {
                 if (item.quantity > 0) {
                     activeProducts.add(item.productId);
@@ -461,20 +469,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
         // Si no hay orden guardado, usar orden por defecto
         return getActiveProductCategories();
-    }, [products, orders, columnOrderVersion]);
-
-    // Función helper para generar array unificado de productos
-    const getUnifiedProductArray = useMemo((): Product[] => {
-        const orderedCategories = getOrderedProductCategories;
-        const unifiedProducts = orderedCategories.flatMap(category => category.products);
-        // console.log('🔗 Array unificado de productos:', unifiedProducts.map(p => p.name));
-        // console.log('📊 Resumen:', {
-        //     categorías: orderedCategories.length,
-        //     productos: unifiedProducts.length,
-        //     categoríasDetalle: orderedCategories.map(c => ({ nombre: c.name, productos: c.products.length }))
-        // });
-        return unifiedProducts;
-    }, [getOrderedProductCategories]);
+    }, [products, orders, columnOrderVersion, selectedRoute]);
 
     const getClientsWithOrders = (routeId?: string): Client[] => {
         // Solo mostrar clientes que tienen pedidos
@@ -500,6 +495,41 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
         return clientsWithOrders;
     };
 
+    const getQuantityForClientAndProduct = (clientId: string, productId: string): number => {
+        const clientOrders = orders.filter(order => order.clientId === clientId);
+        const quantity = clientOrders.reduce((sum, order) => {
+            const productItems = order.items.filter(item => item.productId === productId);
+            return sum + productItems.reduce((itemSum, item) => itemSum + item.quantity, 0);
+        }, 0);
+
+        return quantity;
+    };
+
+    // Función helper para generar array unificado de productos (solo con cantidades > 0 en la ruta seleccionada)
+    const getUnifiedProductArray = useMemo((): Product[] => {
+        const orderedCategories = getOrderedProductCategories;
+        const allProducts = orderedCategories.flatMap(category => category.products);
+
+        // Filtrar solo productos que tienen al menos una cantidad > 0 en la ruta seleccionada
+        const productsWithQuantities = allProducts.filter(product => {
+            const clientsWithOrders = getClientsWithOrders(selectedRoute); // Filtrar por ruta seleccionada
+            return clientsWithOrders.some(client => {
+                const quantity = getQuantityForClientAndProduct(client.id, product.id);
+                return quantity > 0;
+            });
+        });
+
+        // console.log('🔗 Array unificado de productos (con cantidades en ruta):', productsWithQuantities.map(p => p.name));
+        // console.log('📊 Resumen:', {
+        //     rutaSeleccionada: selectedRoute,
+        //     categorías: orderedCategories.length,
+        //     productosTotales: allProducts.length,
+        //     productosConCantidades: productsWithQuantities.length,
+        //     categoríasDetalle: orderedCategories.map(c => ({ nombre: c.name, productos: c.products.length }))
+        // });
+        return productsWithQuantities;
+    }, [getOrderedProductCategories, orders, clients, selectedRoute]);
+
     const getOrderItemsForClient = (clientId: string): OrderItem[] => {
         const clientOrders = orders.filter(order => order.clientId === clientId);
         console.log(`📋 Órdenes para cliente ${clientId}:`, clientOrders.length, clientOrders.map(o => o.orderNumber));
@@ -512,16 +542,6 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
         console.log(`📦 Total items para cliente ${clientId}:`, allItems.length);
         return allItems;
-    };
-
-    const getQuantityForClientAndProduct = (clientId: string, productId: string): number => {
-        const clientOrders = orders.filter(order => order.clientId === clientId);
-        const quantity = clientOrders.reduce((sum, order) => {
-            const productItems = order.items.filter(item => item.productId === productId);
-            return sum + productItems.reduce((itemSum, item) => itemSum + item.quantity, 0);
-        }, 0);
-
-        return quantity;
     };
 
     const getTotalForClient = (clientId: string): { quantity: number; amount: number } => {

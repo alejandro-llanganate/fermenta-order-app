@@ -1,9 +1,10 @@
-import { Printer } from 'lucide-react';
+import { Printer, RotateCcw, RotateCw } from 'lucide-react';
 import { Route, Client, Product, ProductCategory } from '@/types/routeNotebook';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
 import RouteNotebookPDF from './pdf/RouteNotebookPDF';
 import { generateMainTitle } from '@/utils/dateUtils';
 import { getCategoryColors } from '@/utils/categoryColors';
+import { useState } from 'react';
 
 interface RouteNotebookPreviewProps {
     showPreview: boolean;
@@ -40,9 +41,49 @@ export default function RouteNotebookPreview({
     printRef,
     isVerticalText = false
 }: RouteNotebookPreviewProps) {
+    // Estado local para controlar el modo vertical/horizontal en la vista previa
+    // Por defecto vertical (true) como solicitado
+    const [previewVerticalText, setPreviewVerticalText] = useState(true);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+    // Función para generar y descargar PDF
+    const handleDownloadPDF = async () => {
+        try {
+            setIsGeneratingPDF(true);
+            const doc = (
+                <RouteNotebookPDF
+                    selectedDate={selectedDate}
+                    dateFilterType={dateFilterType}
+                    selectedRoute={selectedRoute}
+                    productCategories={productCategories}
+                    routes={routes}
+                    getClientsWithOrders={getClientsWithOrders}
+                    getQuantityForClientAndProduct={getQuantityForClientAndProduct}
+                    getTotalForClient={getTotalForClient}
+                    getTotalForProduct={getTotalForProduct}
+                    getTotalForRoute={getTotalForRoute}
+                    isVerticalText={previewVerticalText}
+                />
+            );
+
+            const blob = await pdf(doc).toBlob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Mega-Donut-Rutas-${selectedRoute ? routes.find(r => r.id === selectedRoute)?.nombre : 'Todas'}-${dateFilterType === 'registration' ? 'Registro' : 'Entrega'}-${selectedDate.toLocaleDateString('es-ES')}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error generando PDF:', error);
+        } finally {
+            setIsGeneratingPDF(false);
+        }
+    };
     // Función para convertir texto en letras verticales (una letra por línea)
     const renderVerticalText = (text: string) => {
-        if (!isVerticalText) {
+        if (!previewVerticalText) {
             return text;
         }
 
@@ -53,36 +94,16 @@ export default function RouteNotebookPreview({
             </span>
         ));
     };
-    // Filtrar solo productos que tienen cantidades > 0 en alguna fila
-    const getProductsWithOrders = () => {
-        const allProducts = productCategories.flatMap(category => category.products);
+    // Usar directamente los productos filtrados que vienen del componente padre
+    // (ya están filtrados para mostrar solo los que tienen cantidades > 0)
+    // Filtrar adicionalmente para asegurar que tengan nombres válidos
+    const filteredProducts = productCategories
+        .flatMap(category => category.products)
+        .filter(product => product && product.name && product.name.trim() !== '');
 
-        // Filtrar solo productos que tienen al menos una cantidad > 0
-        return allProducts.filter(product => {
-            const clientsWithOrders = getClientsWithOrders();
-            return clientsWithOrders.some(client => {
-                const quantity = getQuantityForClientAndProduct(client.id, product.id);
-                return quantity > 0;
-            });
-        });
-    };
-
-    const filteredProducts = getProductsWithOrders();
-
-    // Filtrar categorías que tienen al menos un producto con cantidades > 0
-    const getCategoriesWithOrders = () => {
-        return productCategories.filter(category => {
-            return category.products.some(product => {
-                const clientsWithOrders = getClientsWithOrders();
-                return clientsWithOrders.some(client => {
-                    const quantity = getQuantityForClientAndProduct(client.id, product.id);
-                    return quantity > 0;
-                });
-            });
-        });
-    };
-
-    const filteredCategories = getCategoriesWithOrders();
+    // Usar directamente las categorías filtradas que vienen del componente padre
+    // (ya están filtradas para mostrar solo las que tienen productos con cantidades > 0)
+    const filteredCategories = productCategories;
     if (!showPreview) return null;
 
     return (
@@ -92,32 +113,39 @@ export default function RouteNotebookPreview({
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-semibold text-gray-900">Vista Previa - MEGA DONUT PEDIDOS Y ENTREGAS</h2>
                         <div className="flex items-center space-x-3">
-                            <PDFDownloadLink
-                                document={
-                                    <RouteNotebookPDF
-                                        selectedDate={selectedDate}
-                                        dateFilterType={dateFilterType}
-                                        selectedRoute={selectedRoute}
-                                        productCategories={productCategories}
-                                        routes={routes}
-                                        getClientsWithOrders={getClientsWithOrders}
-                                        getQuantityForClientAndProduct={getQuantityForClientAndProduct}
-                                        getTotalForClient={getTotalForClient}
-                                        getTotalForProduct={getTotalForProduct}
-                                        getTotalForRoute={getTotalForRoute}
-                                        isVerticalText={isVerticalText}
-                                    />
-                                }
-                                fileName={`Mega-Donut-Rutas-${selectedRoute ? routes.find(r => r.id === selectedRoute)?.nombre : 'Todas'}-${dateFilterType === 'registration' ? 'Registro' : 'Entrega'}-${selectedDate.toLocaleDateString('es-ES')}.pdf`}
-                                className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                            {/* Toggle para modo vertical/horizontal */}
+                            <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+                                <button
+                                    onClick={() => setPreviewVerticalText(false)}
+                                    className={`flex items-center space-x-1 px-3 py-1 rounded-md transition-colors ${!previewVerticalText
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                        }`}
+                                    title="Modo horizontal"
+                                >
+                                    <RotateCcw className="h-4 w-4" />
+                                    <span className="text-sm">Horizontal</span>
+                                </button>
+                                <button
+                                    onClick={() => setPreviewVerticalText(true)}
+                                    className={`flex items-center space-x-1 px-3 py-1 rounded-md transition-colors ${previewVerticalText
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                        }`}
+                                    title="Modo vertical"
+                                >
+                                    <RotateCw className="h-4 w-4" />
+                                    <span className="text-sm">Vertical</span>
+                                </button>
+                            </div>
+                            <button
+                                onClick={handleDownloadPDF}
+                                disabled={isGeneratingPDF}
+                                className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {({ loading }) => (
-                                    <>
-                                        <Printer className="h-4 w-4" />
-                                        <span>{loading ? 'Generando PDF...' : 'Descargar PDF'}</span>
-                                    </>
-                                )}
-                            </PDFDownloadLink>
+                                <Printer className="h-4 w-4" />
+                                <span>{isGeneratingPDF ? 'Generando PDF...' : 'Descargar PDF'}</span>
+                            </button>
                             <button
                                 onClick={() => setShowPreview(false)}
                                 className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
@@ -155,16 +183,9 @@ export default function RouteNotebookPreview({
                                             CLIENTES
                                         </th>
                                         {filteredCategories.map((category) => {
-                                            // Solo contar productos que tienen cantidades > 0
-                                            const categoryProductsWithOrders = category.products.filter(product => {
-                                                const clientsWithOrders = getClientsWithOrders();
-                                                return clientsWithOrders.some(client => {
-                                                    const quantity = getQuantityForClientAndProduct(client.id, product.id);
-                                                    return quantity > 0;
-                                                });
-                                            });
+                                            // Usar directamente los productos de la categoría (ya están filtrados)
                                             return (
-                                                <th key={category.name} colSpan={categoryProductsWithOrders.length} className={`border border-gray-300 px-3 py-2 text-center font-semibold ${getCategoryColors(category.name).backgroundColor} ${getCategoryColors(category.name).textColor}`}>
+                                                <th key={category.name} colSpan={category.products.length} className={`border border-gray-300 px-3 py-2 text-center font-semibold ${getCategoryColors(category.name).backgroundColor} ${getCategoryColors(category.name).textColor}`}>
                                                     {category.name}
                                                 </th>
                                             );
@@ -178,7 +199,7 @@ export default function RouteNotebookPreview({
                                         {filteredCategories.map((category) => (
                                             category.products.map((product) => (
                                                 <th key={product.id} className="border border-gray-300 px-2 py-2 text-center text-black font-semibold text-xs">
-                                                    {isVerticalText ? (
+                                                    {previewVerticalText ? (
                                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                                             {renderVerticalText(product.name)}
                                                         </div>
