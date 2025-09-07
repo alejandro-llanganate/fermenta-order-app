@@ -282,6 +282,47 @@ export default function CategoryNotebookTable({
                     </div>
                 )}
 
+                {/* Resumen de Cantidades por Producto - Diseño de Recuadros */}
+                {selectedCategory && (
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200 mb-6">
+                        <h3 className={`font-bold text-green-900 mb-6 text-center ${getFontSizeClass('titles')}`}>
+                            TOTALES POR PRODUCTO - {selectedCategory.toUpperCase()}
+                        </h3>
+
+                        {/* Grid de recuadros de productos */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            {filteredProducts.map((product) => {
+                                const totalQuantity = getTotalForProduct(product.id);
+
+                                return (
+                                    <div
+                                        key={product.id}
+                                        className="bg-white rounded-lg p-4 shadow-md border border-gray-200 hover:shadow-lg transition-shadow"
+                                    >
+                                        <div className="text-center">
+                                            <div className={`font-bold text-gray-800 mb-2 ${getFontSizeClass('cells')}`}>
+                                                {product.name}
+                                            </div>
+                                            <div className={`font-bold text-green-600 ${getFontSizeClass('headers')}`}>
+                                                {totalQuantity}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Total General */}
+                        <div className="mt-6 text-center">
+                            <div className="inline-block bg-green-200 rounded-lg px-6 py-3 border border-green-300">
+                                <div className={`font-bold text-green-900 ${getFontSizeClass('headers')}`}>
+                                    TOTAL GENERAL: {filteredProducts.reduce((sum, product) => sum + getTotalForProduct(product.id), 0)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Tablas por ruta */}
                 {selectedCategory ? (
                     <>
