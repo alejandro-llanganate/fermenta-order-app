@@ -1,5 +1,6 @@
 import { Route, ProductCategory, Product } from '@/types/routeNotebook';
 import { getCategoryColors } from '@/utils/categoryColors';
+import { useEffect } from 'react';
 
 interface RouteNotebookTableHeaderProps {
     routes: Route[];
@@ -28,6 +29,22 @@ export default function RouteNotebookTableHeader({
     onMoveProductRight,
     isVerticalText
 }: RouteNotebookTableHeaderProps) {
+    // 🔍 DEBUG: Log de props recibidas en el header - solo cuando cambien
+    const headerPropsHash = `${routes.length}-${selectedRoute}-${productCategories.length}-${unifiedProducts.length}`;
+
+    useEffect(() => {
+        if (!(window as any).lastHeaderPropsHash || (window as any).lastHeaderPropsHash !== headerPropsHash) {
+            console.log('🔍 RouteNotebookTableHeader - Props recibidas:', {
+                rutas: routes.length,
+                rutaSeleccionada: selectedRoute,
+                categorias: productCategories.length,
+                productosUnificados: unifiedProducts.length,
+                productosNombres: unifiedProducts.map(p => p.name).slice(0, 5)
+            });
+            (window as any).lastHeaderPropsHash = headerPropsHash;
+        }
+    }, [headerPropsHash]);
+
     // Mostrar todos los productos (columnas fijas)
     const getProductsWithOrders = () => {
         return unifiedProducts; // Mostrar todos los productos

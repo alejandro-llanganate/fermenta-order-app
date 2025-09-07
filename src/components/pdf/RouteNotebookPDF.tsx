@@ -99,15 +99,14 @@ const styles = StyleSheet.create({
     },
     tableCellHeaderVertical: {
         padding: 2, // Más reducido para columnas pequeñas
-        fontSize: 7, // Letra aún más pequeña para texto vertical
+        fontSize: 8, // Tamaño normal para legibilidad
         fontWeight: 'bold',
         textAlign: 'center',
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
         flex: 1,
         color: '#000000',
-        writingMode: 'vertical-rl',
-        textOrientation: 'mixed',
+        lineHeight: 1.2, // Espaciado entre líneas
     },
     clientCell: {
         padding: 2, // Más reducido para columnas pequeñas
@@ -218,6 +217,7 @@ interface RouteNotebookPDFProps {
     getTotalForClient: (clientId: string) => { quantity: number; amount: number };
     getTotalForProduct: (productId: string, categoryId?: string) => number;
     getTotalForRoute: (routeId: string) => { quantity: number; amount: number };
+    isVerticalText?: boolean;
 }
 
 const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
@@ -231,16 +231,54 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
     getTotalForClient,
     getTotalForProduct,
     getTotalForRoute,
+    isVerticalText = false,
 }) => {
+    // Función para convertir texto en letras verticales (una letra por línea)
+    const renderVerticalText = (text: string) => {
+        if (!isVerticalText) {
+            return text;
+        }
+
+        // Dividir el texto en caracteres y crear elementos Text separados
+        return text.split('').map((char, index) => (
+            <Text key={index} style={{ fontSize: 8, lineHeight: 1.2 }}>
+                {char}
+            </Text>
+        ));
+    };
     // Obtener la ruta seleccionada
     const currentRoute = selectedRoute ? routes.find(r => r.id === selectedRoute) : null;
 
-    // RF-24: Mostrar todos los productos y categorías (columnas fijas) como en la vista general
+    // Filtrar solo productos que tienen cantidades > 0 en alguna fila
     const getProductsWithOrders = () => {
-        return productCategories.flatMap(cat => cat.products); // Mostrar todos los productos
+        const allProducts = productCategories.flatMap(cat => cat.products);
+
+        // Filtrar solo productos que tienen al menos una cantidad > 0
+        return allProducts.filter(product => {
+            const clientsWithOrders = getClientsWithOrders();
+            return clientsWithOrders.some(client => {
+                const quantity = getQuantityForClientAndProduct(client.id, product.id);
+                return quantity > 0;
+            });
+        });
     };
 
     const filteredProducts = getProductsWithOrders();
+
+    // Filtrar categorías que tienen al menos un producto con cantidades > 0
+    const getCategoriesWithOrders = () => {
+        return productCategories.filter(category => {
+            return category.products.some(product => {
+                const clientsWithOrders = getClientsWithOrders();
+                return clientsWithOrders.some(client => {
+                    const quantity = getQuantityForClientAndProduct(client.id, product.id);
+                    return quantity > 0;
+                });
+            });
+        });
+    };
+
+    const filteredCategories = getCategoriesWithOrders();
 
     // Obtener clientes con órdenes
     const clientsWithOrders = getClientsWithOrders();
@@ -254,7 +292,8 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
         categorias: productCategories.length,
         rutas: routes.length,
         clientes: clientsWithOrders.length,
-        columnas: filteredProducts.length + 1
+        columnas: filteredProducts.length + 1,
+        textoVertical: isVerticalText
     });
 
     return (
@@ -263,13 +302,13 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                 {/* Header - RF-18: Encabezado en negro con fecha subrayada */}
                 <View style={styles.header}>
                     <Text style={[styles.title, { color: '#000000' }]}>
-                        {generateMainTitle(selectedDate, selectedRoute ? `RUTA ${currentRoute?.nombre}` : 'TODAS LAS RUTAS')}
+                        {generateMainTitle(selectedDate, selectedRoute ? currentRoute?.nombre : 'TODAS LAS RUTAS')}
                     </Text>
                     <Text style={[styles.date, { color: '#000000', textDecoration: 'underline' }]}>
                         FILTRADO POR: {dateFilterType === 'registration' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                     </Text>
                     {currentRoute && (
-                        <Text style={[styles.route, { color: '#000000' }]}>RUTA: {currentRoute.nombre} - {currentRoute.identificador}</Text>
+                        <Text style={[styles.route, { color: '#000000' }]}>{currentRoute.identificador}</Text>
                     )}
                 </View>
 
@@ -296,8 +335,14 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                     {/* Primera fila: Encabezados de categorías con colores */}
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={styles.clientCell}>CLIENTES</Text>
-                                        {productCategories.map((category) => {
-                                            const categoryProducts = category.products;
+                                        {filteredCategories.map((category) => {
+                                            // Solo contar productos que tienen cantidades > 0
+                                            const categoryProductsWithOrders = category.products.filter(product => {
+                                                return clientsWithOrders.some(client => {
+                                                    const quantity = getQuantityForClientAndProduct(client.id, product.id);
+                                                    return quantity > 0;
+                                                });
+                                            });
                                             const categoryColors = getCategoryPDFStyles(category.name);
 
                                             return (
@@ -308,7 +353,7 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                                         {
                                                             backgroundColor: categoryColors.backgroundColor,
                                                             color: categoryColors.color,
-                                                            flex: categoryProducts.length
+                                                            flex: categoryProductsWithOrders.length
                                                         }
                                                     ]}
                                                 >
@@ -318,13 +363,19 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                         })}
                                     </View>
 
-                                    {/* Segunda fila: Encabezados de productos verticales */}
+                                    {/* Segunda fila: Encabezados de productos */}
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={styles.clientCell}>&nbsp;</Text>
                                         {filteredProducts.map((product) => (
-                                            <Text key={product.id} style={styles.tableCellHeaderVertical}>
-                                                {product.name}
-                                            </Text>
+                                            <View key={product.id} style={isVerticalText ? styles.tableCellHeaderVertical : styles.tableCellHeader}>
+                                                {isVerticalText ? (
+                                                    <View style={{ alignItems: 'center' }}>
+                                                        {renderVerticalText(product.name)}
+                                                    </View>
+                                                ) : (
+                                                    <Text>{product.name}</Text>
+                                                )}
+                                            </View>
                                         ))}
                                     </View>
 

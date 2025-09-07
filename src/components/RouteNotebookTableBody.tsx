@@ -1,4 +1,5 @@
 import { Route, Client, ProductCategory, Product } from '@/types/routeNotebook';
+import { useEffect } from 'react';
 
 interface RouteNotebookTableBodyProps {
     routes: Route[];
@@ -31,6 +32,30 @@ export default function RouteNotebookTableBody({
     isUpdating,
     isVerticalText
 }: RouteNotebookTableBodyProps) {
+    // 🔍 DEBUG: Log de datos recibidos - solo cuando cambien
+    const dataHash = `${routes.length}-${selectedRoute}-${productCategories.length}-${unifiedProducts.length}`;
+
+    useEffect(() => {
+        if (!(window as any).lastTableBodyHash || (window as any).lastTableBodyHash !== dataHash) {
+            console.log('🔍 RouteNotebookTableBody - Datos recibidos:', {
+                rutas: routes.length,
+                rutaSeleccionada: selectedRoute,
+                categorias: productCategories.length,
+                productosUnificados: unifiedProducts.length,
+                productosUnificadosNombres: unifiedProducts.map(p => p.name).slice(0, 5)
+            });
+
+            // 🔍 DEBUG: Verificar si hay datos pero no se renderizan
+            if (unifiedProducts.length === 0) {
+                console.log('🚨 PROBLEMA: No hay productos unificados para renderizar');
+            } else {
+                console.log('✅ OK: Hay productos unificados para renderizar');
+            }
+
+            (window as any).lastTableBodyHash = dataHash;
+        }
+    }, [dataHash]);
+
     // Filtrar rutas según la selección
     const filteredRoutes = selectedRoute
         ? routes.filter(route => route.id === selectedRoute)
@@ -79,6 +104,11 @@ export default function RouteNotebookTableBody({
                             </td>
                             {unifiedProducts.map((product) => {
                                 const quantity = getQuantityForClientAndProduct(client.id, product.id);
+
+                                // 🔍 DEBUG: Log solo para el primer cliente y primer producto (evitar spam)
+                                if (routeClients.indexOf(client) === 0 && unifiedProducts.indexOf(product) === 0) {
+                                    console.log(`🔍 RouteNotebookTableBody - Renderizando primera columna: Cliente: ${client.nombre}, Producto: ${product.name}, Cantidad: ${quantity}`);
+                                }
 
                                 return (
                                     <td key={product.id} className="px-2 py-3 text-sm text-gray-900 text-center border-l border-gray-200">

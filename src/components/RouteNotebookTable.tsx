@@ -45,6 +45,23 @@ export default function RouteNotebookTable({
     onReorderCategories,
     onReorderProducts
 }: RouteNotebookTableProps) {
+    // 🔍 DEBUG: Log de props recibidas - solo cuando cambien
+    const propsHash = `${routes.length}-${selectedRoute}-${loading}-${productCategories.length}-${unifiedProducts.length}`;
+
+    useEffect(() => {
+        if (!(window as any).lastRouteTablePropsHash || (window as any).lastRouteTablePropsHash !== propsHash) {
+            console.log('🔍 RouteNotebookTable - Props recibidas:', {
+                rutas: routes.length,
+                rutaSeleccionada: selectedRoute,
+                loading: loading,
+                categorias: productCategories.length,
+                productosUnificados: unifiedProducts.length,
+                productosUnificadosNombres: unifiedProducts.map(p => p.name).slice(0, 5)
+            });
+            (window as any).lastRouteTablePropsHash = propsHash;
+        }
+    }, [propsHash]);
+
     // Estado para la orientación vertical del texto
     const [isVerticalText, setIsVerticalText] = useState(() => {
         const saved = localStorage.getItem('routeNotebookVerticalText');

@@ -34,6 +34,52 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     const [columnOrderVersion, setColumnOrderVersion] = useState(0); // Para forzar re-render
     const printRef = useRef<HTMLDivElement>(null);
 
+    // Estado para la orientación vertical del texto
+    const [isVerticalText, setIsVerticalText] = useState(() => {
+        const saved = localStorage.getItem('routeNotebookVerticalText');
+        return saved ? JSON.parse(saved) : false;
+    });
+
+    // Sincronizar con localStorage cuando cambie
+    useEffect(() => {
+        localStorage.setItem('routeNotebookVerticalText', JSON.stringify(isVerticalText));
+    }, [isVerticalText]);
+
+    // 🔍 DEBUG: Obtener información del usuario actual (solo una vez)
+    const [userInfo, setUserInfo] = useState<any>(null);
+
+    useEffect(() => {
+        try {
+            const currentUser = sessionStorage.getItem('currentUser');
+            if (currentUser) {
+                const userData = JSON.parse(currentUser);
+                console.log('🔍 RouteNotebook - Usuario actual:', {
+                    id: userData.id,
+                    username: userData.username,
+                    role: userData.role,
+                    type: userData.type,
+                    first_name: userData.first_name,
+                    last_name: userData.last_name
+                });
+                setUserInfo(userData);
+
+                // 🔧 FIX: Limpiar caché específico del usuario para evitar conflictos
+                const userCacheKey = `routeNotebookCache_${userData.id}`;
+                const lastCache = localStorage.getItem(userCacheKey);
+                if (lastCache) {
+                    console.log('🔧 Limpiando caché anterior del usuario:', userData.role);
+                    localStorage.removeItem(userCacheKey);
+                }
+            } else {
+                console.log('🔍 RouteNotebook - No hay usuario en sessionStorage');
+                setUserInfo(null);
+            }
+        } catch (error) {
+            console.error('🔍 RouteNotebook - Error obteniendo usuario:', error);
+            setUserInfo(null);
+        }
+    }, []); // Solo se ejecuta una vez al montar el componente
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -442,7 +488,6 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                 orderClientIds.includes(client.id) && client.isActive
             );
 
-            // console.log(`👥 Clientes con pedidos en ruta ${routeId}:`, clientsWithOrders.length, clientsWithOrders.map(c => c.nombre));
             return clientsWithOrders;
         }
 
@@ -452,7 +497,6 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
             allOrderClientIds.includes(client.id) && client.isActive
         );
 
-        // console.log(`👥 Todos los clientes con pedidos:`, clientsWithOrders.length, clientsWithOrders.map(c => c.nombre));
         return clientsWithOrders;
     };
 
@@ -476,10 +520,6 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
             const productItems = order.items.filter(item => item.productId === productId);
             return sum + productItems.reduce((itemSum, item) => itemSum + item.quantity, 0);
         }, 0);
-
-        if (quantity > 0) {
-            // console.log(`🔢 Cantidad para cliente ${clientId} y producto ${productId}:`, quantity);
-        }
 
         return quantity;
     };
@@ -577,6 +617,30 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         setShowPreview={setShowPreview}
                     />
 
+                    {/* 🔍 DEBUG: Log antes del renderizado de la tabla - solo cuando cambien los datos */}
+                    {(() => {
+                        // Solo hacer log cuando cambien los datos importantes
+                        const userSpecificHash = `user_${userInfo?.id}_${routes.length}-${clients.length}-${products.length}-${orders.length}-${getUnifiedProductArray.length}-${selectedDate.toISOString().split('T')[0]}-${dateFilterType}`;
+
+                        if (!(window as any)[`lastDataHash_${userInfo?.id}`] || (window as any)[`lastDataHash_${userInfo?.id}`] !== userSpecificHash) {
+                            console.log('🔍 RouteNotebook - Renderizando tabla con datos:', {
+                                usuario: userInfo?.role,
+                                usuarioId: userInfo?.id,
+                                rutas: routes.length,
+                                clientes: clients.length,
+                                productos: products.length,
+                                ordenes: orders.length,
+                                categorias: getOrderedProductCategories.length,
+                                productosUnificados: getUnifiedProductArray.length,
+                                fechaSeleccionada: selectedDate.toISOString().split('T')[0],
+                                tipoFiltro: dateFilterType,
+                                rutaSeleccionada: selectedRoute
+                            });
+                            (window as any)[`lastDataHash_${userInfo?.id}`] = userSpecificHash;
+                        }
+                        return null;
+                    })()}
+
                     <RouteNotebookTable
                         routes={routes}
                         selectedRoute={selectedRoute}
@@ -615,6 +679,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                 getTotalForProduct={getTotalForProduct}
                 getTotalForRoute={getTotalForRoute}
                 printRef={printRef}
+                isVerticalText={isVerticalText}
             />
 
             {/* Modal eliminado - ahora se maneja directamente en la tabla */}

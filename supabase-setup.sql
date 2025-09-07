@@ -89,6 +89,47 @@ ORDER BY created_at DESC;
 GRANT SELECT ON user_management TO authenticated;
 GRANT ALL ON register_users TO authenticated;
 
+-- Create usuarios table for regular users (auxiliares and secretarias)
+CREATE TABLE IF NOT EXISTS usuarios (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_number VARCHAR(50) UNIQUE NOT NULL,
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  cedula VARCHAR(20) UNIQUE NOT NULL,
+  role VARCHAR(20) NOT NULL CHECK (role IN ('Administrador', 'Auxiliar', 'Secretaria')),
+  is_active BOOLEAN DEFAULT true,
+  created_by UUID,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for usuarios
+CREATE INDEX IF NOT EXISTS idx_usuarios_cedula ON usuarios(cedula);
+CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
+CREATE INDEX IF NOT EXISTS idx_usuarios_role ON usuarios(role);
+CREATE INDEX IF NOT EXISTS idx_usuarios_active ON usuarios(is_active);
+CREATE INDEX IF NOT EXISTS idx_usuarios_user_number ON usuarios(user_number);
+
+-- Enable RLS for usuarios
+ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for usuarios
+CREATE POLICY "Anyone can read active usuarios" ON usuarios
+  FOR SELECT USING (is_active = true);
+
+CREATE POLICY "Authenticated users can manage usuarios" ON usuarios
+  FOR ALL USING (auth.role() = 'authenticated');
+
+-- Create trigger for usuarios updated_at
+CREATE TRIGGER update_usuarios_updated_at
+  BEFORE UPDATE ON usuarios
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Grant permissions for usuarios
+GRANT ALL ON usuarios TO authenticated;
+
 -- Create product_categories table
 CREATE TABLE IF NOT EXISTS product_categories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

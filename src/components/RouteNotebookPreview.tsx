@@ -20,6 +20,7 @@ interface RouteNotebookPreviewProps {
     getTotalForProduct: (productId: string) => number;
     getTotalForRoute: (routeId: string) => { quantity: number; amount: number };
     printRef: React.RefObject<HTMLDivElement>;
+    isVerticalText?: boolean;
 }
 
 export default function RouteNotebookPreview({
@@ -36,18 +37,49 @@ export default function RouteNotebookPreview({
     getTotalForClient,
     getTotalForProduct,
     getTotalForRoute,
-    printRef
+    printRef,
+    isVerticalText = false
 }: RouteNotebookPreviewProps) {
-    // RF-24: Mostrar todos los productos y categorías (columnas fijas) como en la vista general
+    // Función para convertir texto en letras verticales (una letra por línea)
+    const renderVerticalText = (text: string) => {
+        if (!isVerticalText) {
+            return text;
+        }
+
+        // Dividir el texto en caracteres y crear elementos span separados
+        return text.split('').map((char, index) => (
+            <span key={index} style={{ display: 'block', lineHeight: '1.2' }}>
+                {char}
+            </span>
+        ));
+    };
+    // Filtrar solo productos que tienen cantidades > 0 en alguna fila
     const getProductsWithOrders = () => {
-        return productCategories.flatMap(category => category.products); // Mostrar todos los productos
+        const allProducts = productCategories.flatMap(category => category.products);
+
+        // Filtrar solo productos que tienen al menos una cantidad > 0
+        return allProducts.filter(product => {
+            const clientsWithOrders = getClientsWithOrders();
+            return clientsWithOrders.some(client => {
+                const quantity = getQuantityForClientAndProduct(client.id, product.id);
+                return quantity > 0;
+            });
+        });
     };
 
     const filteredProducts = getProductsWithOrders();
 
-    // RF-24: Mostrar todas las categorías (columnas fijas) como en la vista general
+    // Filtrar categorías que tienen al menos un producto con cantidades > 0
     const getCategoriesWithOrders = () => {
-        return productCategories; // Mostrar todas las categorías
+        return productCategories.filter(category => {
+            return category.products.some(product => {
+                const clientsWithOrders = getClientsWithOrders();
+                return clientsWithOrders.some(client => {
+                    const quantity = getQuantityForClientAndProduct(client.id, product.id);
+                    return quantity > 0;
+                });
+            });
+        });
     };
 
     const filteredCategories = getCategoriesWithOrders();
@@ -73,6 +105,7 @@ export default function RouteNotebookPreview({
                                         getTotalForClient={getTotalForClient}
                                         getTotalForProduct={getTotalForProduct}
                                         getTotalForRoute={getTotalForRoute}
+                                        isVerticalText={isVerticalText}
                                     />
                                 }
                                 fileName={`Mega-Donut-Rutas-${selectedRoute ? routes.find(r => r.id === selectedRoute)?.nombre : 'Todas'}-${dateFilterType === 'registration' ? 'Registro' : 'Entrega'}-${selectedDate.toLocaleDateString('es-ES')}.pdf`}
@@ -101,14 +134,14 @@ export default function RouteNotebookPreview({
                         {/* Header - RF-18: Encabezado en negro con fecha subrayada */}
                         <div className="text-center border-b border-gray-200 pb-4">
                             <h1 className="text-3xl font-bold text-black">
-                                {generateMainTitle(selectedDate, selectedRoute ? `RUTA ${routes.find(r => r.id === selectedRoute)?.nombre}` : 'TODAS LAS RUTAS')}
+                                {generateMainTitle(selectedDate, selectedRoute ? routes.find(r => r.id === selectedRoute)?.nombre : 'TODAS LAS RUTAS')}
                             </h1>
                             <p className="text-lg text-black underline">
                                 FILTRADO POR: {dateFilterType === 'registration' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                             </p>
                             {selectedRoute && (
                                 <p className="text-lg text-black">
-                                    RUTA: {routes.find(r => r.id === selectedRoute)?.nombre}
+                                    {routes.find(r => r.id === selectedRoute)?.identificador}
                                 </p>
                             )}
                         </div>
@@ -122,7 +155,14 @@ export default function RouteNotebookPreview({
                                             CLIENTES
                                         </th>
                                         {filteredCategories.map((category) => {
-                                            const categoryProductsWithOrders = category.products;
+                                            // Solo contar productos que tienen cantidades > 0
+                                            const categoryProductsWithOrders = category.products.filter(product => {
+                                                const clientsWithOrders = getClientsWithOrders();
+                                                return clientsWithOrders.some(client => {
+                                                    const quantity = getQuantityForClientAndProduct(client.id, product.id);
+                                                    return quantity > 0;
+                                                });
+                                            });
                                             return (
                                                 <th key={category.name} colSpan={categoryProductsWithOrders.length} className={`border border-gray-300 px-3 py-2 text-center font-semibold ${getCategoryColors(category.name).backgroundColor} ${getCategoryColors(category.name).textColor}`}>
                                                     {category.name}
@@ -138,7 +178,13 @@ export default function RouteNotebookPreview({
                                         {filteredCategories.map((category) => (
                                             category.products.map((product) => (
                                                 <th key={product.id} className="border border-gray-300 px-2 py-2 text-center text-black font-semibold text-xs">
-                                                    {product.name}
+                                                    {isVerticalText ? (
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                            {renderVerticalText(product.name)}
+                                                        </div>
+                                                    ) : (
+                                                        product.name
+                                                    )}
                                                 </th>
                                             ))
                                         ))}
