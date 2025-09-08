@@ -808,8 +808,8 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
     // Función para dividir el contenido en páginas
     // OPTIMIZADO: Balance entre no cortar tablas y aprovechar máximo espacio
     const paginateContent = () => {
-        const pages = [];
-        let currentPage = [];
+        const pages: any[][] = [];
+        let currentPage: any[] = [];
         let currentPageHeight = 0;
         const maxPageHeight = 200; // OPTIMIZADO: Balance entre seguridad y aprovechamiento
 
@@ -828,8 +828,8 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
         }
 
         // Agrupar tablas pequeñas para mejor distribución
-        const groupedRoutes = [];
-        let currentGroup = [];
+        const groupedRoutes: any[] = [];
+        let currentGroup: any[] = [];
         let currentGroupHeight = 0;
 
         for (const { route, clients } of clientsByRoute) {
@@ -870,12 +870,12 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
         for (const item of groupedRoutes) {
             if (item.type === 'group' && item.tables) {
                 // Calcular altura total del grupo
-                const groupHeight = item.tables.reduce((sum, table) => sum + table.tableHeight, 0);
+                const groupHeight = item.tables.reduce((sum: number, table: any) => sum + table.tableHeight, 0);
 
                 // Para DONUTS: cada tabla del grupo debe ir en su propia página
                 if (isDonuts) {
                     // Agregar cada tabla del grupo en su propia página
-                    item.tables.forEach((table, index) => {
+                    item.tables.forEach((table: any, index: number) => {
                         // Si no es la primera tabla del grupo, crear nueva página
                         if (index > 0 || currentPage.length > 0) {
                             pages.push([...currentPage]);
@@ -900,7 +900,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                     }
 
                     // Agregar todas las tablas del grupo
-                    item.tables.forEach(table => {
+                    item.tables.forEach((table: any) => {
                         currentPage.push({ type: 'route', route: table.route, clients: table.clients });
                     });
                     currentPageHeight += groupHeight;
