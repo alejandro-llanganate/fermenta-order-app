@@ -239,7 +239,7 @@ export default function CategoryNotebookPreview({
 
     // Calcular totales por tipo para Pasteles
     const getTotalsByType = (): { chocolate: number; naranja: number } => {
-        if (selectedCategory !== 'Pasteles') {
+        if (selectedCategory.toLowerCase() !== 'pasteles') {
             return { chocolate: 0, naranja: 0 };
         }
 
@@ -251,9 +251,9 @@ export default function CategoryNotebookPreview({
 
             // Identificar productos de chocolate y naranja por nombre
             const productName = product.name.toLowerCase();
-            if (productName.includes('choco') || productName.includes('chocolate')) {
+            if (productName.includes('pastelchoco') || productName.includes('choco') || productName.includes('chocolate')) {
                 chocolateTotal += total;
-            } else if (productName.includes('naranja') || productName.includes('orange')) {
+            } else if (productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange')) {
                 naranjaTotal += total;
             }
         });
@@ -265,7 +265,7 @@ export default function CategoryNotebookPreview({
 
     // Filtrar productos que tienen pedidos para Pasteles
     const getProductsWithOrders = () => {
-        if (selectedCategory === 'Pasteles') {
+        if (selectedCategory.toLowerCase() === 'pasteles') {
             return categoryProducts.filter(product => {
                 const total = getTotalForProduct(product.id, selectedCategory);
                 return total > 0;
@@ -275,6 +275,21 @@ export default function CategoryNotebookPreview({
     };
 
     const filteredProducts = getProductsWithOrders();
+
+    // Función para obtener productos con valores > 0 para las tablas por ruta
+    const getProductsWithValues = (clients: any[]) => {
+        if (selectedCategory.toLowerCase() !== 'pasteles') {
+            return filteredProducts;
+        }
+
+        return filteredProducts.filter(product => {
+            // Verificar si al menos un cliente tiene cantidad > 0 para este producto
+            return clients.some(client => {
+                const quantity = getQuantityForClientAndProduct(client.id, product.id);
+                return quantity > 0;
+            });
+        });
+    };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -371,7 +386,7 @@ export default function CategoryNotebookPreview({
                                     )}
 
                                     {/* Totales por producto solo en la primera página - EXCLUYENDO Pasteles - RF-18: Colores de categoría */}
-                                    {pageIndex === 0 && selectedCategory && selectedCategory !== 'Pasteles' && (
+                                    {pageIndex === 0 && selectedCategory && selectedCategory.toLowerCase() !== 'pasteles' && (
                                         <div className={`rounded p-2 border mb-2 ${getCategoryColors(selectedCategory).backgroundColor} border-gray-300`}>
                                             <h3 className={`font-semibold mb-1 ${getFontSizeClass('headers')} ${getCategoryColors(selectedCategory).textColor}`}>
                                                 TOTALES POR PRODUCTO - {selectedCategory}
@@ -391,7 +406,7 @@ export default function CategoryNotebookPreview({
                                     )}
 
                                     {/* Category Totals - EXCLUYENDO Pasteles - RF-18: Colores de categoría */}
-                                    {selectedCategory !== 'Pasteles' && (
+                                    {selectedCategory.toLowerCase() !== 'pasteles' && (
                                         <div className={`rounded-lg p-4 border mb-4 ${getCategoryColors(selectedCategory).backgroundColor} border-gray-300`}>
                                             <h3 className={`text-lg font-semibold mb-4 ${getCategoryColors(selectedCategory).textColor}`}>
                                                 TOTALES GENERALES - {selectedCategory}
@@ -422,7 +437,7 @@ export default function CategoryNotebookPreview({
 
 
                                     {/* Bloque de TOTAL para Pasteles - AL INICIO */}
-                                    {pageIndex === 0 && selectedCategory === 'Pasteles' && (totalsByType.chocolate > 0 || totalsByType.naranja > 0) && (
+                                    {pageIndex === 0 && selectedCategory.toLowerCase() === 'pasteles' && (
                                         <div className="bg-blue-50 rounded p-2 border border-blue-200 mb-2">
                                             <h3 className={`font-semibold text-blue-900 mb-2 text-center ${getFontSizeClass('headers')}`}>
                                                 TOTAL
@@ -433,34 +448,112 @@ export default function CategoryNotebookPreview({
                                                 <table className="w-full border-collapse">
                                                     {/* Headers de productos */}
                                                     <thead>
+                                                        {/* Fila de categorías CHOCOLATE y NARANJA */}
+                                                        <tr>
+                                                            {/* Categoría Chocolate */}
+                                                            <th
+                                                                colSpan={
+                                                                    filteredProducts.filter(product => {
+                                                                        const productName = product.name.toLowerCase();
+                                                                        const total = getTotalForProduct(product.id, selectedCategory);
+                                                                        return (productName.includes('pastelchoco') || productName.includes('choco') || productName.includes('chocolate')) && total > 0;
+                                                                    }).length
+                                                                }
+                                                                className="bg-orange-200 border border-orange-300 px-2 py-1 text-center"
+                                                            >
+                                                                <span className={`font-bold text-orange-900 ${getFontSizeClass('titles')}`}>
+                                                                    CHOCOLATE
+                                                                </span>
+                                                            </th>
+
+                                                            {/* Categoría Naranja */}
+                                                            <th
+                                                                colSpan={
+                                                                    filteredProducts.filter(product => {
+                                                                        const productName = product.name.toLowerCase();
+                                                                        const total = getTotalForProduct(product.id, selectedCategory);
+                                                                        return (productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange')) && total > 0;
+                                                                    }).length
+                                                                }
+                                                                className="bg-yellow-200 border border-yellow-300 px-2 py-1 text-center"
+                                                            >
+                                                                <span className={`font-bold text-yellow-900 ${getFontSizeClass('titles')}`}>
+                                                                    NARANJA
+                                                                </span>
+                                                            </th>
+                                                        </tr>
+
+                                                        {/* Fila de headers de productos */}
                                                         <tr>
                                                             {/* Headers Chocolate */}
                                                             {filteredProducts
                                                                 .filter(product => {
                                                                     const productName = product.name.toLowerCase();
-                                                                    return productName.includes('choco') || productName.includes('chocolate');
+                                                                    const total = getTotalForProduct(product.id, selectedCategory);
+                                                                    return (productName.includes('pastelchoco') || productName.includes('choco') || productName.includes('chocolate')) && total > 0;
                                                                 })
-                                                                .map(product => (
-                                                                    <th key={product.id} className="bg-orange-100 border border-orange-300 px-1 py-1 text-center">
-                                                                        <span className={`font-semibold text-orange-800 ${getFontSizeClass('cells')}`}>
-                                                                            {product.name.replace('PASTEL ', '').replace('CHOCO ', '').replace('CHOCOLATE ', '').substring(0, 8)}
-                                                                        </span>
-                                                                    </th>
-                                                                ))}
+                                                                .map(product => {
+                                                                    // Mapear nombres de productos a abreviaciones como en la imagen
+                                                                    const getProductAbbreviation = (name: string) => {
+                                                                        const lowerName = name.toLowerCase();
+                                                                        if (lowerName.includes('pastelchoco') && !lowerName.includes('/')) return 'CHOC';
+                                                                        if (lowerName.includes('graj')) return 'CHOCO GRAJ';
+                                                                        if (lowerName.includes('s/c') && !lowerName.includes('cober')) return 'S/C';
+                                                                        if (lowerName.includes('x12')) return 'X 12';
+                                                                        if (lowerName.includes('deco')) return 'DECO';
+                                                                        if (lowerName.includes('s/cober')) return 'S/COBER';
+                                                                        if (lowerName.includes('seña')) return 'SEÑA';
+                                                                        if (lowerName.includes('x14')) return 'X14';
+                                                                        return name.substring(0, 8);
+                                                                    };
+
+                                                                    return (
+                                                                        <th
+                                                                            key={product.id}
+                                                                            className="bg-orange-100 border border-orange-300 px-1 py-1 text-center"
+                                                                            title={product.name}
+                                                                        >
+                                                                            <span className={`font-bold text-orange-800 ${getFontSizeClass('cells')}`}>
+                                                                                {getProductAbbreviation(product.name)}
+                                                                            </span>
+                                                                        </th>
+                                                                    );
+                                                                })}
 
                                                             {/* Headers Naranja */}
                                                             {filteredProducts
                                                                 .filter(product => {
                                                                     const productName = product.name.toLowerCase();
-                                                                    return productName.includes('naranja') || productName.includes('orange');
+                                                                    const total = getTotalForProduct(product.id, selectedCategory);
+                                                                    return (productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange')) && total > 0;
                                                                 })
-                                                                .map(product => (
-                                                                    <th key={product.id} className="bg-yellow-100 border border-yellow-300 px-1 py-1 text-center">
-                                                                        <span className={`font-semibold text-yellow-800 ${getFontSizeClass('cells')}`}>
-                                                                            {product.name.replace('PASTEL ', '').replace('NARANJA ', '').substring(0, 8)}
-                                                                        </span>
-                                                                    </th>
-                                                                ))}
+                                                                .map(product => {
+                                                                    // Mapear nombres de productos a abreviaciones como en la imagen
+                                                                    const getProductAbbreviation = (name: string) => {
+                                                                        const lowerName = name.toLowerCase();
+                                                                        if (lowerName.includes('pastelnaranj') && !lowerName.includes('/') && !lowerName.includes('-')) return 'N';
+                                                                        if (lowerName.includes('s/c')) return 'S/C';
+                                                                        if (lowerName.includes('x10')) return 'X10';
+                                                                        if (lowerName.includes('x12')) return 'X12';
+                                                                        if (lowerName.includes('x14')) return 'X14';
+                                                                        if (lowerName.includes('deco')) return 'DECO';
+                                                                        if (lowerName.includes('seña')) return 'SEÑA';
+                                                                        if (lowerName.includes('sn/azucar')) return 'SN/AZUCAR';
+                                                                        return name.substring(0, 8);
+                                                                    };
+
+                                                                    return (
+                                                                        <th
+                                                                            key={product.id}
+                                                                            className="bg-yellow-100 border border-yellow-300 px-1 py-1 text-center"
+                                                                            title={product.name}
+                                                                        >
+                                                                            <span className={`font-bold text-yellow-800 ${getFontSizeClass('cells')}`}>
+                                                                                {getProductAbbreviation(product.name)}
+                                                                            </span>
+                                                                        </th>
+                                                                    );
+                                                                })}
                                                         </tr>
                                                     </thead>
 
@@ -471,12 +564,17 @@ export default function CategoryNotebookPreview({
                                                             {filteredProducts
                                                                 .filter(product => {
                                                                     const productName = product.name.toLowerCase();
-                                                                    return productName.includes('choco') || productName.includes('chocolate');
+                                                                    const total = getTotalForProduct(product.id, selectedCategory);
+                                                                    return (productName.includes('pastelchoco') || productName.includes('choco') || productName.includes('chocolate')) && total > 0;
                                                                 })
                                                                 .map(product => {
                                                                     const total = getTotalForProduct(product.id, selectedCategory);
                                                                     return (
-                                                                        <td key={product.id} className="bg-orange-50 border border-orange-300 px-1 py-1 text-center">
+                                                                        <td
+                                                                            key={product.id}
+                                                                            className="bg-orange-50 border border-orange-300 px-1 py-1 text-center"
+                                                                            title={`${product.name}: ${total}`}
+                                                                        >
                                                                             <span className={`font-bold text-orange-900 ${getFontSizeClass('headers')}`}>
                                                                                 {total}
                                                                             </span>
@@ -488,12 +586,17 @@ export default function CategoryNotebookPreview({
                                                             {filteredProducts
                                                                 .filter(product => {
                                                                     const productName = product.name.toLowerCase();
-                                                                    return productName.includes('naranja') || productName.includes('orange');
+                                                                    const total = getTotalForProduct(product.id, selectedCategory);
+                                                                    return (productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange')) && total > 0;
                                                                 })
                                                                 .map(product => {
                                                                     const total = getTotalForProduct(product.id, selectedCategory);
                                                                     return (
-                                                                        <td key={product.id} className="bg-yellow-50 border border-yellow-300 px-1 py-1 text-center">
+                                                                        <td
+                                                                            key={product.id}
+                                                                            className="bg-yellow-50 border border-yellow-300 px-1 py-1 text-center"
+                                                                            title={`${product.name}: ${total}`}
+                                                                        >
                                                                             <span className={`font-bold text-yellow-900 ${getFontSizeClass('headers')}`}>
                                                                                 {total}
                                                                             </span>
@@ -509,7 +612,8 @@ export default function CategoryNotebookPreview({
                                                                 colSpan={
                                                                     filteredProducts.filter(product => {
                                                                         const productName = product.name.toLowerCase();
-                                                                        return productName.includes('choco') || productName.includes('chocolate');
+                                                                        const total = getTotalForProduct(product.id, selectedCategory);
+                                                                        return (productName.includes('pastelchoco') || productName.includes('choco') || productName.includes('chocolate')) && total > 0;
                                                                     }).length
                                                                 }
                                                                 className="bg-orange-200 border border-orange-300 px-2 py-1 text-center"
@@ -525,7 +629,8 @@ export default function CategoryNotebookPreview({
                                                                 colSpan={
                                                                     filteredProducts.filter(product => {
                                                                         const productName = product.name.toLowerCase();
-                                                                        return productName.includes('naranja') || productName.includes('orange');
+                                                                        const total = getTotalForProduct(product.id, selectedCategory);
+                                                                        return (productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange')) && total > 0;
                                                                     }).length
                                                                 }
                                                                 className="bg-yellow-200 border border-yellow-300 px-2 py-1 text-center"
@@ -579,11 +684,45 @@ export default function CategoryNotebookPreview({
                                                                     <th className={`border border-gray-300 px-1 py-1 text-left text-black font-semibold w-1/3 ${getFontSizeClass('headers')}`}>
                                                                         CLIENTES
                                                                     </th>
-                                                                    {filteredProducts.map((product) => (
-                                                                        <th key={product.id} className={`border border-gray-300 px-0.5 py-1 text-center text-black font-semibold ${getFontSizeClass('headers')}`}>
-                                                                            {product.name}
-                                                                        </th>
-                                                                    ))}
+                                                                    {getProductsWithValues(clients).map((product) => {
+                                                                        // Función para obtener abreviación del producto (solo para Pasteles)
+                                                                        const getProductAbbreviation = (name: string) => {
+                                                                            if (selectedCategory.toLowerCase() !== 'pasteles') {
+                                                                                return name;
+                                                                            }
+
+                                                                            const lowerName = name.toLowerCase();
+
+                                                                            // Abreviaciones para productos de chocolate
+                                                                            if (lowerName.includes('pastelchoco') && !lowerName.includes('/')) return 'CHOC';
+                                                                            if (lowerName.includes('graj')) return 'CHOCO GRAJ';
+                                                                            if (lowerName.includes('s/c') && !lowerName.includes('cober')) return 'S/C';
+                                                                            if (lowerName.includes('x12')) return 'X 12';
+                                                                            if (lowerName.includes('deco')) return 'DECO';
+                                                                            if (lowerName.includes('s/cober')) return 'S/COBER';
+                                                                            if (lowerName.includes('seña')) return 'SEÑA';
+                                                                            if (lowerName.includes('x14')) return 'X14';
+
+                                                                            // Abreviaciones para productos de naranja
+                                                                            if (lowerName.includes('pastelnaranj') && !lowerName.includes('/') && !lowerName.includes('-')) return 'N';
+                                                                            if (lowerName.includes('x10')) return 'X10';
+                                                                            if (lowerName.includes('x12')) return 'X12';
+                                                                            if (lowerName.includes('x14')) return 'X14';
+                                                                            if (lowerName.includes('sn/azucar')) return 'SN/AZUCAR';
+
+                                                                            return name;
+                                                                        };
+
+                                                                        return (
+                                                                            <th
+                                                                                key={product.id}
+                                                                                className={`border border-gray-300 px-0.5 py-1 text-center text-black font-semibold ${getFontSizeClass('headers')}`}
+                                                                                title={product.name}
+                                                                            >
+                                                                                {getProductAbbreviation(product.name)}
+                                                                            </th>
+                                                                        );
+                                                                    })}
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
@@ -593,7 +732,7 @@ export default function CategoryNotebookPreview({
                                                                             <td className={`border border-gray-300 px-1 py-1 text-black font-medium ${getFontSizeClass('cells')}`}>
                                                                                 {client.nombre}
                                                                             </td>
-                                                                            {filteredProducts.map((product) => {
+                                                                            {getProductsWithValues(clients).map((product) => {
                                                                                 const quantity = getQuantityForClientAndProduct(client.id, product.id);
                                                                                 return (
                                                                                     <td key={product.id} className={`border border-gray-300 px-0.5 py-1 text-black text-center ${getFontSizeClass('cells')}`}>

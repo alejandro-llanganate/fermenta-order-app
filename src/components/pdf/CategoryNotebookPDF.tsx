@@ -465,7 +465,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
 
     // Calcular totales por tipo para Pasteles
     const getTotalsByType = (): { chocolate: number; naranja: number } => {
-        if (selectedCategory !== 'Pasteles') {
+        if (selectedCategory.toLowerCase() !== 'pasteles') {
             return { chocolate: 0, naranja: 0 };
         }
 
@@ -477,9 +477,9 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
 
             // Identificar productos de chocolate y naranja por nombre
             const productName = product.name.toLowerCase();
-            if (productName.includes('choco') || productName.includes('chocolate')) {
+            if (productName.includes('pastelchoco') || productName.includes('choco') || productName.includes('chocolate')) {
                 chocolateTotal += total;
-            } else if (productName.includes('naranja') || productName.includes('orange')) {
+            } else if (productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange')) {
                 naranjaTotal += total;
             }
         });
@@ -491,6 +491,21 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
 
     // Usar categoryProducts que ya están filtrados por getProductsWithOrders() anterior
     const filteredProducts = categoryProducts;
+
+    // Función para obtener productos con valores > 0 para las tablas por ruta
+    const getProductsWithValues = (clients: any[]) => {
+        if (selectedCategory.toLowerCase() !== 'pasteles') {
+            return filteredProducts;
+        }
+
+        return filteredProducts.filter(product => {
+            // Verificar si al menos un cliente tiene cantidad > 0 para este producto
+            return clients.some(client => {
+                const quantity = getQuantityForClientAndProduct(client.id, product.id);
+                return quantity > 0;
+            });
+        });
+    };
 
     // Función para calcular el contenido de una página
     const createPageContent = (pageData: any[], pageNumber: number, totalPages: number) => {
@@ -511,7 +526,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                 )}
 
                 {/* Bloque de TOTAL para Pasteles - AL INICIO */}
-                {pageNumber === 1 && selectedCategory === 'Pasteles' && (totalsByType.chocolate > 0 || totalsByType.naranja > 0) && (
+                {pageNumber === 1 && selectedCategory.toLowerCase() === 'pasteles' && (
                     <View style={styles.finalTotal}>
                         <Text style={{
                             ...styles.finalTotalTitle,
@@ -528,29 +543,61 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                 {filteredProducts
                                     .filter(product => {
                                         const productName = product.name.toLowerCase();
-                                        return productName.includes('choco') || productName.includes('chocolate');
+                                        return productName.includes('pastelchoco') || productName.includes('choco') || productName.includes('chocolate');
                                     })
-                                    .map(product => (
-                                        <View key={product.id} style={styles.finalTotalHeaderCell}>
-                                            <Text style={styles.finalTotalProductHeader}>
-                                                {product.name.replace('PASTEL ', '').replace('CHOCO ', '').replace('CHOCOLATE ', '').substring(0, 8)}
-                                            </Text>
-                                        </View>
-                                    ))}
+                                    .map(product => {
+                                        // Mapear nombres de productos a abreviaciones como en la imagen
+                                        const getProductAbbreviation = (name: string) => {
+                                            const lowerName = name.toLowerCase();
+                                            if (lowerName.includes('pastelchoco') && !lowerName.includes('/')) return 'CHOC';
+                                            if (lowerName.includes('graj')) return 'CHOCO GRAJ';
+                                            if (lowerName.includes('s/c') && !lowerName.includes('cober')) return 'S/C';
+                                            if (lowerName.includes('x12')) return 'X 12';
+                                            if (lowerName.includes('deco')) return 'DECO';
+                                            if (lowerName.includes('s/cober')) return 'S/COBER';
+                                            if (lowerName.includes('seña')) return 'SEÑA';
+                                            if (lowerName.includes('x14')) return 'X14';
+                                            return name.substring(0, 8);
+                                        };
+
+                                        return (
+                                            <View key={product.id} style={styles.finalTotalHeaderCell}>
+                                                <Text style={styles.finalTotalProductHeader}>
+                                                    {getProductAbbreviation(product.name)}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
 
                                 {/* Headers Naranja */}
                                 {filteredProducts
                                     .filter(product => {
                                         const productName = product.name.toLowerCase();
-                                        return productName.includes('naranja') || productName.includes('orange');
+                                        return productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange');
                                     })
-                                    .map(product => (
-                                        <View key={product.id} style={styles.finalTotalHeaderCell}>
-                                            <Text style={styles.finalTotalProductHeader}>
-                                                {product.name.replace('PASTEL ', '').replace('NARANJA ', '').substring(0, 8)}
-                                            </Text>
-                                        </View>
-                                    ))}
+                                    .map(product => {
+                                        // Mapear nombres de productos a abreviaciones como en la imagen
+                                        const getProductAbbreviation = (name: string) => {
+                                            const lowerName = name.toLowerCase();
+                                            if (lowerName.includes('pastelnaranj') && !lowerName.includes('/') && !lowerName.includes('-')) return 'N';
+                                            if (lowerName.includes('s/c')) return 'S/C';
+                                            if (lowerName.includes('x10')) return 'X10';
+                                            if (lowerName.includes('x12')) return 'X12';
+                                            if (lowerName.includes('x14')) return 'X14';
+                                            if (lowerName.includes('deco')) return 'DECO';
+                                            if (lowerName.includes('seña')) return 'SEÑA';
+                                            if (lowerName.includes('sn/azucar')) return 'SN/AZUCAR';
+                                            return name.substring(0, 8);
+                                        };
+
+                                        return (
+                                            <View key={product.id} style={styles.finalTotalHeaderCell}>
+                                                <Text style={styles.finalTotalProductHeader}>
+                                                    {getProductAbbreviation(product.name)}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
                             </View>
 
                             {/* Fila de datos */}
@@ -559,7 +606,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                 {filteredProducts
                                     .filter(product => {
                                         const productName = product.name.toLowerCase();
-                                        return productName.includes('choco') || productName.includes('chocolate');
+                                        return productName.includes('pastelchoco') || productName.includes('choco') || productName.includes('chocolate');
                                     })
                                     .map(product => {
                                         const total = getTotalForProduct(product.id, selectedCategory);
@@ -576,7 +623,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                 {filteredProducts
                                     .filter(product => {
                                         const productName = product.name.toLowerCase();
-                                        return productName.includes('naranja') || productName.includes('orange');
+                                        return productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange');
                                     })
                                     .map(product => {
                                         const total = getTotalForProduct(product.id, selectedCategory);
@@ -622,7 +669,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                 )}
 
                 {/* Totales por producto para otras categorías - RF-18: Colores de categoría */}
-                {pageNumber === 1 && selectedCategory && selectedCategory !== 'Pasteles' && (
+                {pageNumber === 1 && selectedCategory && selectedCategory.toLowerCase() !== 'pasteles' && (
                     <View style={[styles.productTotals, getCategoryPDFStyles(selectedCategory)]}>
                         <Text style={{
                             ...styles.productTotalsTitle,
@@ -673,11 +720,41 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                     {/* Header de la tabla */}
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={dynamicStyles.clientCell}>CLIENTES</Text>
-                                        {filteredProducts.map((product) => (
-                                            <Text key={product.id} style={dynamicStyles.tableCellHeader}>
-                                                {product.name}
-                                            </Text>
-                                        ))}
+                                        {getProductsWithValues(clients).map((product) => {
+                                            // Función para obtener abreviación del producto (solo para Pasteles)
+                                            const getProductAbbreviation = (name: string) => {
+                                                if (selectedCategory.toLowerCase() !== 'pasteles') {
+                                                    return name;
+                                                }
+
+                                                const lowerName = name.toLowerCase();
+
+                                                // Abreviaciones para productos de chocolate
+                                                if (lowerName.includes('pastelchoco') && !lowerName.includes('/')) return 'CHOC';
+                                                if (lowerName.includes('graj')) return 'CHOCO GRAJ';
+                                                if (lowerName.includes('s/c') && !lowerName.includes('cober')) return 'S/C';
+                                                if (lowerName.includes('x12')) return 'X 12';
+                                                if (lowerName.includes('deco')) return 'DECO';
+                                                if (lowerName.includes('s/cober')) return 'S/COBER';
+                                                if (lowerName.includes('seña')) return 'SEÑA';
+                                                if (lowerName.includes('x14')) return 'X14';
+
+                                                // Abreviaciones para productos de naranja
+                                                if (lowerName.includes('pastelnaranj') && !lowerName.includes('/') && !lowerName.includes('-')) return 'N';
+                                                if (lowerName.includes('x10')) return 'X10';
+                                                if (lowerName.includes('x12')) return 'X12';
+                                                if (lowerName.includes('x14')) return 'X14';
+                                                if (lowerName.includes('sn/azucar')) return 'SN/AZUCAR';
+
+                                                return name;
+                                            };
+
+                                            return (
+                                                <Text key={product.id} style={dynamicStyles.tableCellHeader}>
+                                                    {getProductAbbreviation(product.name)}
+                                                </Text>
+                                            );
+                                        })}
                                     </View>
 
                                     {/* Filas de clientes */}
@@ -686,7 +763,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                             <Text style={dynamicStyles.clientCell}>
                                                 {client.nombre}
                                             </Text>
-                                            {filteredProducts.map((product) => {
+                                            {getProductsWithValues(clients).map((product) => {
                                                 const quantity = getQuantityForClientAndProduct(client.id, product.id);
                                                 return (
                                                     <Text key={product.id} style={dynamicStyles.tableCell}>
