@@ -3,6 +3,7 @@ import { Client, ProductCategory, Product, Route } from '@/types/routeNotebook';
 import CategoryNotebookTableLoading from './CategoryNotebookTableLoading';
 import { useFontSize } from '@/contexts/FontSizeContext';
 import FontSizeConfig from './FontSizeConfig';
+import { getOptimizedTableText } from '@/utils/textHandling';
 
 interface CategoryNotebookTableProps {
     productCategories: ProductCategory[];
@@ -114,9 +115,9 @@ export default function CategoryNotebookTable({
         naranjaProducts: categoryProducts.filter(p => p.name.toLowerCase().includes('pastelnaranj') || p.name.toLowerCase().includes('naranja') || p.name.toLowerCase().includes('orange'))
     });
 
-    // Filtrar productos que tienen pedidos para Pasteles
+    // Filtrar productos que tienen pedidos para Pasteles y Donuts
     const getProductsWithOrders = () => {
-        if (selectedCategory.toLowerCase() === 'pasteles') {
+        if (selectedCategory.toLowerCase() === 'pasteles' || selectedCategory.toLowerCase() === 'donuts') {
             return categoryProducts.filter(product => {
                 const total = getTotalForProductInCategory(product.id);
                 return total > 0;
@@ -220,28 +221,21 @@ export default function CategoryNotebookTable({
                                                 return productName.includes('pastelchoco') || productName.includes('choco') || productName.includes('chocolate');
                                             })
                                             .map(product => {
-                                                // Mapear nombres de productos a abreviaciones como en la imagen
-                                                const getProductAbbreviation = (name: string) => {
-                                                    const lowerName = name.toLowerCase();
-                                                    if (lowerName.includes('pastelchoco') && !lowerName.includes('/')) return 'CHOC';
-                                                    if (lowerName.includes('graj')) return 'CHOCO GRAJ';
-                                                    if (lowerName.includes('s/c') && !lowerName.includes('cober')) return 'S/C';
-                                                    if (lowerName.includes('x12')) return 'X 12';
-                                                    if (lowerName.includes('deco')) return 'DECO';
-                                                    if (lowerName.includes('s/cober')) return 'S/COBER';
-                                                    if (lowerName.includes('seña')) return 'SEÑA';
-                                                    if (lowerName.includes('x14')) return 'X14';
-                                                    return name.substring(0, 8);
-                                                };
+                                                // Usar la nueva estrategia de manejo de texto
+                                                const textOptimization = getOptimizedTableText(
+                                                    product.name,
+                                                    selectedCategory,
+                                                    { maxLength: 10, maxWords: 2 }
+                                                );
 
                                                 return (
                                                     <th
                                                         key={product.id}
                                                         className="bg-orange-100 border border-orange-300 px-2 py-2 text-center"
-                                                        title={product.name}
+                                                        title={textOptimization.fullText}
                                                     >
-                                                        <span className={`font-bold text-orange-800 ${getFontSizeClass('cells')}`}>
-                                                            {getProductAbbreviation(product.name)}
+                                                        <span className={`font-bold text-orange-800 ${getFontSizeClass('cells')} ${textOptimization.classes}`} style={textOptimization.styles}>
+                                                            {textOptimization.displayText}
                                                         </span>
                                                     </th>
                                                 );
@@ -254,28 +248,21 @@ export default function CategoryNotebookTable({
                                                 return productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange');
                                             })
                                             .map(product => {
-                                                // Mapear nombres de productos a abreviaciones como en la imagen
-                                                const getProductAbbreviation = (name: string) => {
-                                                    const lowerName = name.toLowerCase();
-                                                    if (lowerName.includes('pastelnaranj') && !lowerName.includes('/') && !lowerName.includes('-')) return 'N';
-                                                    if (lowerName.includes('s/c')) return 'S/C';
-                                                    if (lowerName.includes('x10')) return 'X10';
-                                                    if (lowerName.includes('x12')) return 'X12';
-                                                    if (lowerName.includes('x14')) return 'X14';
-                                                    if (lowerName.includes('deco')) return 'DECO';
-                                                    if (lowerName.includes('seña')) return 'SEÑA';
-                                                    if (lowerName.includes('sn/azucar')) return 'SN/AZUCAR';
-                                                    return name.substring(0, 8);
-                                                };
+                                                // Usar la nueva estrategia de manejo de texto
+                                                const textOptimization = getOptimizedTableText(
+                                                    product.name,
+                                                    selectedCategory,
+                                                    { maxLength: 10, maxWords: 2 }
+                                                );
 
                                                 return (
                                                     <th
                                                         key={product.id}
                                                         className="bg-yellow-100 border border-yellow-300 px-2 py-2 text-center"
-                                                        title={product.name}
+                                                        title={textOptimization.fullText}
                                                     >
-                                                        <span className={`font-bold text-yellow-800 ${getFontSizeClass('cells')}`}>
-                                                            {getProductAbbreviation(product.name)}
+                                                        <span className={`font-bold text-yellow-800 ${getFontSizeClass('cells')} ${textOptimization.classes}`} style={textOptimization.styles}>
+                                                            {textOptimization.displayText}
                                                         </span>
                                                     </th>
                                                 );
@@ -429,41 +416,21 @@ export default function CategoryNotebookTable({
                                                         </th>
                                                         {filteredProducts.map((product) => {
                                                             // Función para obtener abreviación del producto (solo para Pasteles)
-                                                            const getProductAbbreviation = (name: string) => {
-                                                                if (selectedCategory.toLowerCase() !== 'pasteles') {
-                                                                    return name;
-                                                                }
-
-                                                                const lowerName = name.toLowerCase();
-
-                                                                // Abreviaciones para productos de chocolate
-                                                                if (lowerName.includes('pastelchoco') && !lowerName.includes('/')) return 'CHOC';
-                                                                if (lowerName.includes('graj')) return 'CHOCO GRAJ';
-                                                                if (lowerName.includes('s/c') && !lowerName.includes('cober')) return 'S/C';
-                                                                if (lowerName.includes('x12')) return 'X 12';
-                                                                if (lowerName.includes('deco')) return 'DECO';
-                                                                if (lowerName.includes('s/cober')) return 'S/COBER';
-                                                                if (lowerName.includes('seña')) return 'SEÑA';
-                                                                if (lowerName.includes('x14')) return 'X14';
-
-                                                                // Abreviaciones para productos de naranja
-                                                                if (lowerName.includes('pastelnaranj') && !lowerName.includes('/') && !lowerName.includes('-')) return 'N';
-                                                                if (lowerName.includes('x10')) return 'X10';
-                                                                if (lowerName.includes('x12')) return 'X12';
-                                                                if (lowerName.includes('x14')) return 'X14';
-                                                                if (lowerName.includes('sn/azucar')) return 'SN/AZUCAR';
-
-                                                                return name;
-                                                            };
+                                                            // Usar la nueva estrategia de manejo de texto
+                                                            const textOptimization = getOptimizedTableText(
+                                                                product.name,
+                                                                selectedCategory,
+                                                                { maxLength: 12, maxWords: 2 }
+                                                            );
 
                                                             return (
                                                                 <th
                                                                     key={product.id}
-                                                                    className={`border border-gray-300 px-2 py-2 text-center text-black font-semibold ${getFontSizeClass('headers')}`}
-                                                                    style={{ width: '100px' }}
-                                                                    title={product.name}
+                                                                    className={`border border-gray-300 px-2 py-2 text-center text-black font-semibold ${getFontSizeClass('headers')} ${textOptimization.classes}`}
+                                                                    style={{ width: '100px', ...textOptimization.styles }}
+                                                                    title={textOptimization.fullText}
                                                                 >
-                                                                    {getProductAbbreviation(product.name)}
+                                                                    {textOptimization.displayText}
                                                                 </th>
                                                             );
                                                         })}

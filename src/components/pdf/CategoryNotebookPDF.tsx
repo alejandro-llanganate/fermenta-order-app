@@ -3,6 +3,7 @@ import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/rendere
 import { ProductCategory, Route, Client, Product } from '@/types/routeNotebook';
 import { generateMainTitle } from '@/utils/dateUtils';
 import { getCategoryPDFStyles } from '@/utils/categoryColors';
+import { getOptimizedTableText } from '@/utils/textHandling';
 
 // Registrar fuentes (opcional - usar fuentes del sistema)
 Font.register({
@@ -356,15 +357,20 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
             const category = productCategories.find(cat => cat.name === selectedCategory);
             if (!category) return [];
 
-            // Filtrar solo productos que tienen pedidos
-            const filteredProducts = category.products.filter(product => {
-                const total = getTotalForProduct(product.id, selectedCategory);
-                console.log(`Producto ${product.name}: total = ${total}`);
-                return total > 0;
-            });
+            // Filtrar solo productos que tienen pedidos para Pasteles y Donuts
+            if (selectedCategory.toLowerCase() === 'pasteles' || selectedCategory.toLowerCase() === 'donuts') {
+                const filteredProducts = category.products.filter(product => {
+                    const total = getTotalForProduct(product.id, selectedCategory);
+                    console.log(`Producto ${product.name}: total = ${total}`);
+                    return total > 0;
+                });
 
-            console.log('Productos con pedidos:', filteredProducts.map(p => p.name));
-            return filteredProducts;
+                console.log('Productos con pedidos:', filteredProducts.map(p => p.name));
+                return filteredProducts;
+            }
+
+            // Para otras categorías, mostrar todos los productos
+            return category.products;
         }
         return [];
     };
@@ -395,11 +401,35 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
     }).filter(group => group.clients.length > 0);
 
     // Función para obtener estilos dinámicos según la configuración de tamaños
-    const getDynamicStyles = () => {
-        // RF-23: Usar tipografía fija: contenido general 10pt, encabezados 12pt
-        const baseFontSize = 10; // RF-23: Contenido general 10pt
-        const headerFontSize = 12; // RF-23: Encabezados 12pt
-        const titleFontSize = 12; // RF-23: Encabezados 12pt
+    const getDynamicStyles = (columnCount?: number, isFirstTable: boolean = false) => {
+        let baseFontSize = 10; // RF-23: Contenido general 10pt
+        let headerFontSize = 12; // RF-23: Encabezados 12pt
+        let titleFontSize = 12; // RF-23: Encabezados 12pt
+
+        // Ajuste especial para DONUTS
+        if (selectedCategory.toLowerCase() === 'donuts') {
+            if (isFirstTable) {
+                // Primera tabla más pequeña por defecto
+                baseFontSize = 8;
+                headerFontSize = 9;
+                titleFontSize = 10;
+            } else if (columnCount) {
+                // Ajustar según número de columnas
+                if (columnCount > 8) {
+                    baseFontSize = 7;
+                    headerFontSize = 8;
+                    titleFontSize = 9;
+                } else if (columnCount > 6) {
+                    baseFontSize = 8;
+                    headerFontSize = 9;
+                    titleFontSize = 10;
+                } else if (columnCount > 4) {
+                    baseFontSize = 9;
+                    headerFontSize = 10;
+                    titleFontSize = 11;
+                }
+            }
+        }
 
         return {
             tableCell: {
@@ -494,7 +524,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
 
     // Función para obtener productos con valores > 0 para las tablas por ruta
     const getProductsWithValues = (clients: any[]) => {
-        if (selectedCategory.toLowerCase() !== 'pasteles') {
+        if (selectedCategory.toLowerCase() !== 'pasteles' && selectedCategory.toLowerCase() !== 'donuts') {
             return filteredProducts;
         }
 
@@ -509,10 +539,25 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
 
     // Función para calcular el contenido de una página
     const createPageContent = (pageData: any[], pageNumber: number, totalPages: number) => {
-        const dynamicStyles = getDynamicStyles();
+        // Calcular el número máximo de columnas en esta página
+        let maxColumns = 0;
+        let isFirstTable = pageNumber === 1;
+
+        pageData.forEach(item => {
+            if (item.type === 'route' && item.clients) {
+                const columnCount = getProductsWithValues(item.clients).length;
+                maxColumns = Math.max(maxColumns, columnCount);
+            }
+        });
+
+        const dynamicStyles = getDynamicStyles(maxColumns, isFirstTable);
+
+        // Configurar tamaño y orientación según la categoría
+        const pageSize = selectedCategory.toLowerCase() === 'donuts' ? 'A5' : 'A4';
+        const pageOrientation = selectedCategory.toLowerCase() === 'donuts' ? 'landscape' : 'portrait';
 
         return (
-            <Page key={pageNumber} size="A4" orientation="portrait" style={styles.page}>
+            <Page key={pageNumber} size={pageSize} orientation={pageOrientation} style={styles.page}>
                 {/* Header solo en la primera página - RF-18: Encabezado en negro con fecha subrayada */}
                 {pageNumber === 1 && (
                     <View style={styles.header}>
@@ -546,24 +591,17 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                         return productName.includes('pastelchoco') || productName.includes('choco') || productName.includes('chocolate');
                                     })
                                     .map(product => {
-                                        // Mapear nombres de productos a abreviaciones como en la imagen
-                                        const getProductAbbreviation = (name: string) => {
-                                            const lowerName = name.toLowerCase();
-                                            if (lowerName.includes('pastelchoco') && !lowerName.includes('/')) return 'CHOC';
-                                            if (lowerName.includes('graj')) return 'CHOCO GRAJ';
-                                            if (lowerName.includes('s/c') && !lowerName.includes('cober')) return 'S/C';
-                                            if (lowerName.includes('x12')) return 'X 12';
-                                            if (lowerName.includes('deco')) return 'DECO';
-                                            if (lowerName.includes('s/cober')) return 'S/COBER';
-                                            if (lowerName.includes('seña')) return 'SEÑA';
-                                            if (lowerName.includes('x14')) return 'X14';
-                                            return name.substring(0, 8);
-                                        };
+                                        // Usar la nueva estrategia de manejo de texto
+                                        const textOptimization = getOptimizedTableText(
+                                            product.name,
+                                            selectedCategory,
+                                            { maxLength: 10, maxWords: 2 }
+                                        );
 
                                         return (
                                             <View key={product.id} style={styles.finalTotalHeaderCell}>
                                                 <Text style={styles.finalTotalProductHeader}>
-                                                    {getProductAbbreviation(product.name)}
+                                                    {textOptimization.displayText}
                                                 </Text>
                                             </View>
                                         );
@@ -576,24 +614,17 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                         return productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange');
                                     })
                                     .map(product => {
-                                        // Mapear nombres de productos a abreviaciones como en la imagen
-                                        const getProductAbbreviation = (name: string) => {
-                                            const lowerName = name.toLowerCase();
-                                            if (lowerName.includes('pastelnaranj') && !lowerName.includes('/') && !lowerName.includes('-')) return 'N';
-                                            if (lowerName.includes('s/c')) return 'S/C';
-                                            if (lowerName.includes('x10')) return 'X10';
-                                            if (lowerName.includes('x12')) return 'X12';
-                                            if (lowerName.includes('x14')) return 'X14';
-                                            if (lowerName.includes('deco')) return 'DECO';
-                                            if (lowerName.includes('seña')) return 'SEÑA';
-                                            if (lowerName.includes('sn/azucar')) return 'SN/AZUCAR';
-                                            return name.substring(0, 8);
-                                        };
+                                        // Usar la nueva estrategia de manejo de texto
+                                        const textOptimization = getOptimizedTableText(
+                                            product.name,
+                                            selectedCategory,
+                                            { maxLength: 10, maxWords: 2 }
+                                        );
 
                                         return (
                                             <View key={product.id} style={styles.finalTotalHeaderCell}>
                                                 <Text style={styles.finalTotalProductHeader}>
-                                                    {getProductAbbreviation(product.name)}
+                                                    {textOptimization.displayText}
                                                 </Text>
                                             </View>
                                         );
@@ -721,37 +752,16 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={dynamicStyles.clientCell}>CLIENTES</Text>
                                         {getProductsWithValues(clients).map((product) => {
-                                            // Función para obtener abreviación del producto (solo para Pasteles)
-                                            const getProductAbbreviation = (name: string) => {
-                                                if (selectedCategory.toLowerCase() !== 'pasteles') {
-                                                    return name;
-                                                }
-
-                                                const lowerName = name.toLowerCase();
-
-                                                // Abreviaciones para productos de chocolate
-                                                if (lowerName.includes('pastelchoco') && !lowerName.includes('/')) return 'CHOC';
-                                                if (lowerName.includes('graj')) return 'CHOCO GRAJ';
-                                                if (lowerName.includes('s/c') && !lowerName.includes('cober')) return 'S/C';
-                                                if (lowerName.includes('x12')) return 'X 12';
-                                                if (lowerName.includes('deco')) return 'DECO';
-                                                if (lowerName.includes('s/cober')) return 'S/COBER';
-                                                if (lowerName.includes('seña')) return 'SEÑA';
-                                                if (lowerName.includes('x14')) return 'X14';
-
-                                                // Abreviaciones para productos de naranja
-                                                if (lowerName.includes('pastelnaranj') && !lowerName.includes('/') && !lowerName.includes('-')) return 'N';
-                                                if (lowerName.includes('x10')) return 'X10';
-                                                if (lowerName.includes('x12')) return 'X12';
-                                                if (lowerName.includes('x14')) return 'X14';
-                                                if (lowerName.includes('sn/azucar')) return 'SN/AZUCAR';
-
-                                                return name;
-                                            };
+                                            // Usar la nueva estrategia de manejo de texto
+                                            const textOptimization = getOptimizedTableText(
+                                                product.name,
+                                                selectedCategory,
+                                                { maxLength: 12, maxWords: 2 }
+                                            );
 
                                             return (
                                                 <Text key={product.id} style={dynamicStyles.tableCellHeader}>
-                                                    {getProductAbbreviation(product.name)}
+                                                    {textOptimization.displayText}
                                                 </Text>
                                             );
                                         })}
@@ -854,41 +864,79 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
         }
 
         // Distribuir en páginas con lógica optimizada para aprovechar máximo espacio
+        // Para DONUTS: cada tabla debe aparecer máximo en una hoja
+        const isDonuts = selectedCategory.toLowerCase() === 'donuts';
+
         for (const item of groupedRoutes) {
             if (item.type === 'group' && item.tables) {
                 // Calcular altura total del grupo
                 const groupHeight = item.tables.reduce((sum, table) => sum + table.tableHeight, 0);
 
-                // Verificar si el grupo cabe en la página actual
-                if (currentPageHeight + groupHeight > maxPageHeight && currentPage.length > 0) {
-                    // Crear nueva página solo si realmente no cabe
-                    pages.push([...currentPage]);
-                    currentPage = [];
-                    currentPageHeight = 0;
-                    console.log(`🔄 Nueva página creada - Grupo no cabía (altura: ${groupHeight}, límite: ${maxPageHeight})`);
+                // Para DONUTS: cada tabla del grupo debe ir en su propia página
+                if (isDonuts) {
+                    // Agregar cada tabla del grupo en su propia página
+                    item.tables.forEach((table, index) => {
+                        // Si no es la primera tabla del grupo, crear nueva página
+                        if (index > 0 || currentPage.length > 0) {
+                            pages.push([...currentPage]);
+                            currentPage = [];
+                            currentPageHeight = 0;
+                        }
+
+                        currentPage.push({ type: 'route', route: table.route, clients: table.clients });
+                        currentPageHeight = table.tableHeight;
+
+                        console.log(`🍩 DONUTS: Tabla individual en página separada - altura: ${table.tableHeight}`);
+                    });
+                } else {
+                    // Lógica original para otras categorías
+                    // Verificar si el grupo cabe en la página actual
+                    if (currentPageHeight + groupHeight > maxPageHeight && currentPage.length > 0) {
+                        // Crear nueva página solo si realmente no cabe
+                        pages.push([...currentPage]);
+                        currentPage = [];
+                        currentPageHeight = 0;
+                        console.log(`🔄 Nueva página creada - Grupo no cabía (altura: ${groupHeight}, límite: ${maxPageHeight})`);
+                    }
+
+                    // Agregar todas las tablas del grupo
+                    item.tables.forEach(table => {
+                        currentPage.push({ type: 'route', route: table.route, clients: table.clients });
+                    });
+                    currentPageHeight += groupHeight;
+
+                    console.log(`✅ Grupo de ${item.tables.length} tablas pequeñas agregado - altura total: ${groupHeight}, página actual: ${currentPageHeight}/${maxPageHeight}`);
                 }
-
-                // Agregar todas las tablas del grupo
-                item.tables.forEach(table => {
-                    currentPage.push({ type: 'route', route: table.route, clients: table.clients });
-                });
-                currentPageHeight += groupHeight;
-
-                console.log(`✅ Grupo de ${item.tables.length} tablas pequeñas agregado - altura total: ${groupHeight}, página actual: ${currentPageHeight}/${maxPageHeight}`);
             } else if (item.type === 'single' && item.tableHeight !== undefined) {
-                // Tabla individual - verificar si cabe completamente
-                if (currentPageHeight + item.tableHeight > maxPageHeight && currentPage.length > 0) {
-                    // Crear nueva página solo si la tabla no cabe completamente
-                    pages.push([...currentPage]);
-                    currentPage = [];
-                    currentPageHeight = 0;
-                    console.log(`🔄 Nueva página creada - Tabla individual no cabía completamente (altura: ${item.tableHeight}, límite: ${maxPageHeight})`);
+                // Para DONUTS: cada tabla individual debe ir en su propia página
+                if (isDonuts) {
+                    // Crear nueva página para cada tabla individual
+                    if (currentPage.length > 0) {
+                        pages.push([...currentPage]);
+                        currentPage = [];
+                        currentPageHeight = 0;
+                    }
+
+                    currentPage.push({ type: 'route', route: item.route, clients: item.clients });
+                    currentPageHeight = item.tableHeight;
+
+                    console.log(`🍩 DONUTS: Tabla individual en página separada - altura: ${item.tableHeight}`);
+                } else {
+                    // Lógica original para otras categorías
+                    // Tabla individual - verificar si cabe completamente
+                    if (currentPageHeight + item.tableHeight > maxPageHeight && currentPage.length > 0) {
+                        // Crear nueva página solo si la tabla no cabe completamente
+                        pages.push([...currentPage]);
+                        currentPage = [];
+                        currentPageHeight = 0;
+                        console.log(`🔄 Nueva página creada - Tabla individual no cabía completamente (altura: ${item.tableHeight}, límite: ${maxPageHeight})`);
+                    }
+
+                    currentPage.push({ type: 'route', route: item.route, clients: item.clients });
+                    currentPageHeight += item.tableHeight;
+
+                    console.log(`✅ Tabla individual ${item.route.nombre} agregada - altura: ${item.tableHeight}, página actual: ${currentPageHeight}/${maxPageHeight}`);
                 }
-
-                currentPage.push({ type: 'route', route: item.route, clients: item.clients });
-                currentPageHeight += item.tableHeight;
-
-                console.log(`✅ Tabla individual ${item.route.nombre} agregada - altura: ${item.tableHeight}, página actual: ${currentPageHeight}/${maxPageHeight}`);
             }
         }
 
