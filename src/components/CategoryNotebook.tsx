@@ -23,7 +23,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
     const [orders, setOrders] = useState<Order[]>([]);
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [selectedCategory, setSelectedCategory] = useState<string>('');
-    const [dateFilterType, setDateFilterType] = useState<'order' | 'delivery'>('order');
+    const [dateFilterType, setDateFilterType] = useState<'registration' | 'delivery'>('registration');
     const [loading, setLoading] = useState(true);
     const [showPreview, setShowPreview] = useState(false);
     const [editingCell, setEditingCell] = useState<{ clientId: string; productId: string } | null>(null);
@@ -130,7 +130,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                 `);
 
             // Aplicar filtro según el tipo seleccionado
-            if (dateFilterType === 'order') {
+            if (dateFilterType === 'registration') {
                 // Filtrar por fecha de registro (order_date)
                 query = query
                     .gte('order_date', startOfDay.toISOString().split('T')[0])

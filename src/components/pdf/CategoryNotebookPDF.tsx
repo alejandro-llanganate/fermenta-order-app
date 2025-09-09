@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
 interface CategoryNotebookPDFProps {
     selectedDate: Date;
     selectedCategory: string;
-    dateFilterType: 'order' | 'delivery';
+    dateFilterType: 'registration' | 'delivery';
     productCategories: ProductCategory[];
     routes: Route[];
     getClientsWithOrders: (categoryId?: string) => Client[];
@@ -565,7 +565,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                             {generateMainTitle(selectedDate, selectedCategory)}
                         </Text>
                         <Text style={[dynamicStyles.dateText, { color: '#000000', textDecoration: 'underline' }]}>
-                            FILTRADO POR: {dateFilterType === 'order' ? 'Fecha de Registro' : 'Fecha de Entrega'}
+                            FILTRADO POR: {dateFilterType === 'registration' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                         </Text>
                     </View>
                 )}

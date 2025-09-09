@@ -16,7 +16,7 @@ interface CategoryNotebookPreviewProps {
     isGeneratingPDF: boolean;
     selectedDate: Date;
     selectedCategory: string;
-    dateFilterType: 'order' | 'delivery';
+    dateFilterType: 'registration' | 'delivery';
     productCategories: ProductCategory[];
     routes: Route[];
     getClientsWithOrders: (categoryId?: string) => any[];
@@ -403,7 +403,7 @@ export default function CategoryNotebookPreview({
                                                 {generateMainTitle(selectedDate, selectedCategory)}
                                             </h1>
                                             <p className={`text-black underline ${getFontSizeClass('cells')}`}>
-                                                FILTRADO POR: {dateFilterType === 'order' ? 'Fecha de Registro' : 'Fecha de Entrega'}
+                                                FILTRADO POR: {dateFilterType === 'registration' ? 'Fecha de Registro' : 'Fecha de Entrega'}
                                             </p>
                                         </div>
                                     )}
@@ -427,36 +427,6 @@ export default function CategoryNotebookPreview({
                                             </div>
                                         </div>
                                     )}
-
-                                    {/* Category Totals - EXCLUYENDO Pasteles y Donuts - RF-18: Colores de categoría */}
-                                    {selectedCategory.toLowerCase() !== 'pasteles' && selectedCategory.toLowerCase() !== 'donuts' && (
-                                        <div className={`rounded-lg p-4 border mb-4 ${getCategoryColors(selectedCategory).backgroundColor} border-gray-300`}>
-                                            <h3 className={`text-lg font-semibold mb-4 ${getCategoryColors(selectedCategory).textColor}`}>
-                                                TOTALES GENERALES - {selectedCategory}
-                                            </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div className="text-center">
-                                                    <p className="text-sm text-green-600">Total Cantidad</p>
-                                                    <p className="text-2xl font-bold text-green-900">
-                                                        {getTotalForCategory(selectedCategory).quantity}
-                                                    </p>
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className="text-sm text-green-600">Total Monto</p>
-                                                    <p className="text-2xl font-bold text-green-900">
-                                                        ${getTotalForCategory(selectedCategory).amount.toFixed(2)}
-                                                    </p>
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className="text-sm text-green-600">Rutas Activas</p>
-                                                    <p className="text-2xl font-bold text-green-900">
-                                                        {routes.filter(route => getClientsByRoute(route.id).length > 0).length}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
 
 
                                     {/* Bloque de TOTAL para Pasteles - AL INICIO */}

@@ -495,35 +495,6 @@ export default function CategoryNotebookTable({
                         <p className="text-gray-500">Selecciona una categoría para ver los reportes por ruta</p>
                     </div>
                 )}
-
-                {/* Category Totals */}
-                {selectedCategory && (
-                    <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                        <h3 className={`font-semibold text-green-900 mb-4 ${getFontSizeClass('titles')}`}>
-                            TOTALES GENERALES - {selectedCategory}
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="text-center">
-                                <p className={`text-green-600 ${getFontSizeClass('cells')}`}>Total Cantidad</p>
-                                <p className={`font-bold text-green-900 ${getFontSizeClass('titles')}`}>
-                                    {getTotalForCategory(selectedCategory).quantity}
-                                </p>
-                            </div>
-                            <div className="text-center">
-                                <p className={`text-green-600 ${getFontSizeClass('cells')}`}>Total Monto</p>
-                                <p className={`font-bold text-green-900 ${getFontSizeClass('titles')}`}>
-                                    ${getTotalForCategory(selectedCategory).amount.toFixed(2)}
-                                </p>
-                            </div>
-                            <div className="text-center">
-                                <p className={`text-green-600 ${getFontSizeClass('cells')}`}>Rutas Activas</p>
-                                <p className={`font-bold text-green-900 ${getFontSizeClass('titles')}`}>
-                                    {routes.filter(route => getClientsByRoute(route.id).length > 0).length}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

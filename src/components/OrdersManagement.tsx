@@ -47,7 +47,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const [selectedRoute, setSelectedRoute] = useState<string>('');
     const [routeFilter, setRouteFilter] = useState<string>('');
     const [dateFilter, setDateFilter] = useState<string>('');
-    const [dateFilterType, setDateFilterType] = useState<'order' | 'delivery'>('order');
+    const [dateFilterType, setDateFilterType] = useState<'registration' | 'delivery'>('registration');
     const [dateFilterValue, setDateFilterValue] = useState<Date | null>(null);
     const [showExportModal, setShowExportModal] = useState(false);
     const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
@@ -174,13 +174,13 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         return order.routeId === routeFilter;
     };
 
-    const orderMatchesDateFilter = (order: Order, dateFilterValue: Date | null, dateFilterType: 'order' | 'delivery'): boolean => {
+    const orderMatchesDateFilter = (order: Order, dateFilterValue: Date | null, dateFilterType: 'registration' | 'delivery'): boolean => {
         if (!dateFilterValue) return true;
 
         // Convertir la fecha del filtro a formato YYYY-MM-DD para comparación
         const filterDateStr = dateFilterValue.toISOString().split('T')[0];
 
-        if (dateFilterType === 'order') {
+        if (dateFilterType === 'registration') {
             const orderDateStr = order.orderDate.toISOString().split('T')[0];
             return orderDateStr === filterDateStr;
         } else {
@@ -340,7 +340,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
             if (dateFilterValue) {
                 const dateStr = dateFilterValue.toISOString().split('T')[0];
-                if (dateFilterType === 'order') {
+                if (dateFilterType === 'registration') {
                     query = query.eq('order_date', dateStr);
                 } else {
                     query = query.eq('delivery_date', dateStr);
@@ -1374,7 +1374,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         }
 
         if (dateFilterValue) {
-            const filterType = dateFilterType === 'order' ? 'Registro' : 'Entrega';
+            const filterType = dateFilterType === 'registration' ? 'Registro' : 'Entrega';
             const dateStr = dateFilterValue.toLocaleDateString('es-ES').replace(/\//g, '-');
             filters.push(`${filterType}-${dateStr}`);
         }
@@ -1468,7 +1468,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             }
 
             const routeFilterText = routeFilter ? `-Ruta-${routes.find(r => r.id === routeFilter)?.identificador}` : '';
-            const dateFilterText = dateFilterValue ? `-${dateFilterType === 'order' ? 'Registro' : 'Entrega'}-${dateFilterValue.toLocaleDateString('es-ES').replace(/\//g, '-')}` : '';
+            const dateFilterText = dateFilterValue ? `-${dateFilterType === 'registration' ? 'Registro' : 'Entrega'}-${dateFilterValue.toLocaleDateString('es-ES').replace(/\//g, '-')}` : '';
             const filterText = routeFilterText + dateFilterText;
             pdf.save(`Reporte-Pedidos${filterText}-${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`);
         } catch (error) {
@@ -1705,10 +1705,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <select
                                             value={dateFilterType}
-                                            onChange={(e) => setDateFilterType(e.target.value as 'order' | 'delivery')}
+                                            onChange={(e) => setDateFilterType(e.target.value as 'registration' | 'delivery')}
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 text-sm"
                                         >
-                                            <option value="order">Fecha de registro</option>
+                                            <option value="registration">Fecha de registro</option>
                                             <option value="delivery">Fecha de entrega</option>
                                         </select>
                                         <DatePicker
@@ -2792,7 +2792,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                     {routeFilterInfo && <p className="text-sm text-gray-600">• Ruta: {routeFilterInfo.identificador} - {routeFilterInfo.nombre}</p>}
                                                     {dateFilterValue && (
                                                         <p className="text-sm text-gray-600">
-                                                            • Fecha de {dateFilterType === 'order' ? 'registro' : 'entrega'}: {dateFilterValue.toLocaleDateString('es-ES')}
+                                                            • Fecha de {dateFilterType === 'registration' ? 'registro' : 'entrega'}: {dateFilterValue.toLocaleDateString('es-ES')}
                                                         </p>
                                                     )}
                                                 </div>

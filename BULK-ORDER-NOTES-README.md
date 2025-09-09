@@ -41,7 +41,7 @@ interface BulkOrderNotesPDFProps {
     orders: Order[];
     clients: Client[];
     routes: Route[];
-    dateFilterType: 'order' | 'delivery';
+    dateFilterType: 'registration' | 'delivery';
     dateFilterValue: Date | null;
     routeFilter: string;
     searchTerm: string;
