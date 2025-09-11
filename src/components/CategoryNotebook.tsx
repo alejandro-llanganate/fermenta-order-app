@@ -228,27 +228,16 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
     };
 
     const getClientsWithOrders = (categoryId?: string): Client[] => {
-        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
-        const filteredOrders = orders.filter(order => {
-            const orderDate = new Date(order.orderDate);
-            const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
-            const selectedDateStr = selectedDate.toISOString().split('T')[0];
-
-            if (dateFilterType === 'registration') {
-                return orderDate.toISOString().split('T')[0] === selectedDateStr;
-            } else {
-                // Si no hay fecha de entrega, no incluir la orden en el filtro de entrega
-                return deliveryDate && deliveryDate.toISOString().split('T')[0] === selectedDateStr;
-            }
-        });
+        // Las órdenes ya vienen filtradas por fecha desde fetchOrdersByDate()
+        // No necesitamos filtrar nuevamente aquí
 
         // Si se especifica una categoría, mostrar todos los clientes activos que tienen órdenes con productos de esa categoría
         if (categoryId) {
             const categoryProducts = products.filter(product => product.categoryName === categoryId);
             const categoryProductIds = categoryProducts.map(p => p.id);
 
-            // Obtener clientes que tienen órdenes con productos de esta categoría (usando órdenes filtradas)
-            const categoryOrders = filteredOrders.filter(order =>
+            // Obtener clientes que tienen órdenes con productos de esta categoría
+            const categoryOrders = orders.filter(order =>
                 order.items.some(item => categoryProductIds.includes(item.productId))
             );
             const orderClientIds = [...new Set(categoryOrders.map(order => order.clientId))];
@@ -260,8 +249,8 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
             return categoryClients;
         }
 
-        // Si no se especifica categoría, mostrar todos los clientes activos que tienen órdenes en la fecha filtrada
-        const orderClientIds = [...new Set(filteredOrders.map(order => order.clientId))];
+        // Si no se especifica categoría, mostrar todos los clientes activos que tienen órdenes
+        const orderClientIds = [...new Set(orders.map(order => order.clientId))];
         const activeClients = clients.filter(client =>
             orderClientIds.includes(client.id) && client.isActive
         );
@@ -269,21 +258,10 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
     };
 
     const getQuantityForClientAndProduct = (clientId: string, productId: string): number => {
-        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
-        const filteredOrders = orders.filter(order => {
-            const orderDate = new Date(order.orderDate);
-            const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
-            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+        // Las órdenes ya vienen filtradas por fecha desde fetchOrdersByDate()
+        // No necesitamos filtrar nuevamente aquí
 
-            if (dateFilterType === 'registration') {
-                return orderDate.toISOString().split('T')[0] === selectedDateStr;
-            } else {
-                // Si no hay fecha de entrega, no incluir la orden en el filtro de entrega
-                return deliveryDate && deliveryDate.toISOString().split('T')[0] === selectedDateStr;
-            }
-        });
-
-        const clientOrders = filteredOrders.filter(order => order.clientId === clientId);
+        const clientOrders = orders.filter(order => order.clientId === clientId);
         const quantity = clientOrders.reduce((sum, order) => {
             const productItems = order.items.filter(item => item.productId === productId);
             return sum + productItems.reduce((itemSum, item) => itemSum + item.quantity, 0);
@@ -293,21 +271,10 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
     };
 
     const getTotalForClient = (clientId: string): { quantity: number; amount: number } => {
-        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
-        const filteredOrders = orders.filter(order => {
-            const orderDate = new Date(order.orderDate);
-            const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
-            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+        // Las órdenes ya vienen filtradas por fecha desde fetchOrdersByDate()
+        // No necesitamos filtrar nuevamente aquí
 
-            if (dateFilterType === 'registration') {
-                return orderDate.toISOString().split('T')[0] === selectedDateStr;
-            } else {
-                // Si no hay fecha de entrega, no incluir la orden en el filtro de entrega
-                return deliveryDate && deliveryDate.toISOString().split('T')[0] === selectedDateStr;
-            }
-        });
-
-        const clientOrders = filteredOrders.filter(order => order.clientId === clientId);
+        const clientOrders = orders.filter(order => order.clientId === clientId);
         const quantity = clientOrders.reduce((sum, order) => {
             return sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0);
         }, 0);
@@ -316,25 +283,16 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
     };
 
     const getTotalForProduct = (productId: string, categoryId?: string): number => {
-        // Primero filtrar órdenes por fecha según el tipo de filtro seleccionado
-        let filteredOrders = orders.filter(order => {
-            const orderDate = new Date(order.orderDate);
-            const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
-            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+        // Las órdenes ya vienen filtradas por fecha desde fetchOrdersByDate()
+        // No necesitamos filtrar nuevamente aquí
 
-            if (dateFilterType === 'registration') {
-                return orderDate.toISOString().split('T')[0] === selectedDateStr;
-            } else {
-                // Si no hay fecha de entrega, no incluir la orden en el filtro de entrega
-                return deliveryDate && deliveryDate.toISOString().split('T')[0] === selectedDateStr;
-            }
-        });
+        let filteredOrders = orders;
 
         // Si se especifica una categoría, filtrar por esa categoría
         if (categoryId) {
             const categoryProducts = products.filter(product => product.categoryName === categoryId);
             const categoryProductIds = categoryProducts.map(p => p.id);
-            filteredOrders = filteredOrders.filter(order =>
+            filteredOrders = orders.filter(order =>
                 order.items.some(item => categoryProductIds.includes(item.productId))
             );
         }
@@ -353,24 +311,13 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
     };
 
     const getTotalForCategory = (categoryId: string): { quantity: number; amount: number } => {
-        // Primero filtrar órdenes por fecha según el tipo de filtro seleccionado
-        const filteredOrders = orders.filter(order => {
-            const orderDate = new Date(order.orderDate);
-            const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
-            const selectedDateStr = selectedDate.toISOString().split('T')[0];
-
-            if (dateFilterType === 'registration') {
-                return orderDate.toISOString().split('T')[0] === selectedDateStr;
-            } else {
-                // Si no hay fecha de entrega, no incluir la orden en el filtro de entrega
-                return deliveryDate && deliveryDate.toISOString().split('T')[0] === selectedDateStr;
-            }
-        });
+        // Las órdenes ya vienen filtradas por fecha desde fetchOrdersByDate()
+        // No necesitamos filtrar nuevamente aquí
 
         const categoryProducts = products.filter(product => product.categoryName === categoryId);
         const categoryProductIds = categoryProducts.map(p => p.id);
 
-        const categoryOrders = filteredOrders.filter(order =>
+        const categoryOrders = orders.filter(order =>
             order.items.some(item => categoryProductIds.includes(item.productId))
         );
 
