@@ -304,8 +304,21 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
     // Función para obtener solo categorías y productos que tienen valores (filtrado por ruta seleccionada)
     const getActiveProductCategories = (): ProductCategory[] => {
+        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
+        const filteredOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            const deliveryDate = new Date(order.deliveryDate);
+            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+            if (dateFilterType === 'registration') {
+                return orderDate.toISOString().split('T')[0] === selectedDateStr;
+            } else {
+                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+            }
+        });
+
         // Si no hay órdenes, retornar array vacío
-        if (orders.length === 0) {
+        if (filteredOrders.length === 0) {
             return [];
         }
 
@@ -313,7 +326,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
         const activeProducts = new Set<string>();
 
         // Obtener productos que tienen cantidades > 0 en la ruta seleccionada
-        orders.forEach(order => {
+        filteredOrders.forEach(order => {
             // Si hay una ruta seleccionada, solo considerar órdenes de esa ruta
             if (selectedRoute && order.routeId !== selectedRoute) {
                 return;
@@ -416,9 +429,22 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
     // Función para obtener categorías y productos ordenados localmente (filtrado por ruta seleccionada)
     const getOrderedProductCategories = useMemo((): ProductCategory[] => {
+        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
+        const filteredOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            const deliveryDate = new Date(order.deliveryDate);
+            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+            if (dateFilterType === 'registration') {
+                return orderDate.toISOString().split('T')[0] === selectedDateStr;
+            } else {
+                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+            }
+        });
+
         // Obtener productos activos (con pedidos > 0) en la ruta seleccionada
         const activeProducts = new Set<string>();
-        orders.forEach(order => {
+        filteredOrders.forEach(order => {
             // Si hay una ruta seleccionada, solo considerar órdenes de esa ruta
             if (selectedRoute && order.routeId !== selectedRoute) {
                 return;
@@ -469,13 +495,26 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
         // Si no hay orden guardado, usar orden por defecto
         return getActiveProductCategories();
-    }, [products, orders, columnOrderVersion, selectedRoute]);
+    }, [products, orders, columnOrderVersion, selectedRoute, dateFilterType, selectedDate]);
 
     const getClientsWithOrders = (routeId?: string): Client[] => {
+        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
+        const filteredOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            const deliveryDate = new Date(order.deliveryDate);
+            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+            if (dateFilterType === 'registration') {
+                return orderDate.toISOString().split('T')[0] === selectedDateStr;
+            } else {
+                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+            }
+        });
+
         // Solo mostrar clientes que tienen pedidos
         if (routeId) {
-            // Obtener órdenes de la ruta específica
-            const routeOrders = orders.filter(order => order.routeId === routeId);
+            // Obtener órdenes de la ruta específica (usando órdenes filtradas por fecha)
+            const routeOrders = filteredOrders.filter(order => order.routeId === routeId);
             const orderClientIds = [...new Set(routeOrders.map(order => order.clientId))];
 
             // Filtrar solo clientes que tienen órdenes en esta ruta
@@ -486,8 +525,8 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
             return clientsWithOrders;
         }
 
-        // Si no se especifica ruta, mostrar todos los clientes que tienen pedidos
-        const allOrderClientIds = [...new Set(orders.map(order => order.clientId))];
+        // Si no se especifica ruta, mostrar todos los clientes que tienen pedidos en la fecha filtrada
+        const allOrderClientIds = [...new Set(filteredOrders.map(order => order.clientId))];
         const clientsWithOrders = clients.filter(client =>
             allOrderClientIds.includes(client.id) && client.isActive
         );
@@ -496,7 +535,20 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     };
 
     const getQuantityForClientAndProduct = (clientId: string, productId: string): number => {
-        const clientOrders = orders.filter(order => order.clientId === clientId);
+        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
+        const filteredOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            const deliveryDate = new Date(order.deliveryDate);
+            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+            if (dateFilterType === 'registration') {
+                return orderDate.toISOString().split('T')[0] === selectedDateStr;
+            } else {
+                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+            }
+        });
+
+        const clientOrders = filteredOrders.filter(order => order.clientId === clientId);
         const quantity = clientOrders.reduce((sum, order) => {
             const productItems = order.items.filter(item => item.productId === productId);
             return sum + productItems.reduce((itemSum, item) => itemSum + item.quantity, 0);
@@ -531,7 +583,20 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     }, [getOrderedProductCategories, orders, clients, selectedRoute]);
 
     const getOrderItemsForClient = (clientId: string): OrderItem[] => {
-        const clientOrders = orders.filter(order => order.clientId === clientId);
+        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
+        const filteredOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            const deliveryDate = new Date(order.deliveryDate);
+            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+            if (dateFilterType === 'registration') {
+                return orderDate.toISOString().split('T')[0] === selectedDateStr;
+            } else {
+                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+            }
+        });
+
+        const clientOrders = filteredOrders.filter(order => order.clientId === clientId);
         console.log(`📋 Órdenes para cliente ${clientId}:`, clientOrders.length, clientOrders.map(o => o.orderNumber));
 
         const allItems: OrderItem[] = [];
@@ -545,7 +610,20 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     };
 
     const getTotalForClient = (clientId: string): { quantity: number; amount: number } => {
-        const clientOrders = orders.filter(order => order.clientId === clientId);
+        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
+        const filteredOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            const deliveryDate = new Date(order.deliveryDate);
+            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+            if (dateFilterType === 'registration') {
+                return orderDate.toISOString().split('T')[0] === selectedDateStr;
+            } else {
+                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+            }
+        });
+
+        const clientOrders = filteredOrders.filter(order => order.clientId === clientId);
         const quantity = clientOrders.reduce((sum, order) => {
             return sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0);
         }, 0);
@@ -554,11 +632,22 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     };
 
     const getTotalForProduct = (productId: string, routeId?: string): number => {
-        let filteredOrders = orders;
+        // Primero filtrar órdenes por fecha según el tipo de filtro seleccionado
+        let filteredOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            const deliveryDate = new Date(order.deliveryDate);
+            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+            if (dateFilterType === 'registration') {
+                return orderDate.toISOString().split('T')[0] === selectedDateStr;
+            } else {
+                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+            }
+        });
 
         // Si se especifica una ruta, filtrar por esa ruta
         if (routeId) {
-            filteredOrders = orders.filter(order => order.routeId === routeId);
+            filteredOrders = filteredOrders.filter(order => order.routeId === routeId);
         }
 
         const total = filteredOrders.reduce((sum, order) => {
@@ -568,14 +657,27 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
         // Logging para debugging
         if (total > 0) {
-            console.log(`🔢 getTotalForProduct - Producto: ${productId}, Ruta: ${routeId || 'Todas'}, Total: ${total}, Filtro: ${dateFilterType}`);
+            console.log(`🔢 getTotalForProduct - Producto: ${productId}, Ruta: ${routeId || 'Todas'}, Total: ${total}, Filtro: ${dateFilterType}, Fecha: ${selectedDate.toISOString().split('T')[0]}`);
         }
 
         return total;
     };
 
     const getTotalForRoute = (routeId: string): { quantity: number; amount: number } => {
-        const routeOrders = orders.filter(order => order.routeId === routeId);
+        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
+        const filteredOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            const deliveryDate = new Date(order.deliveryDate);
+            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+            if (dateFilterType === 'registration') {
+                return orderDate.toISOString().split('T')[0] === selectedDateStr;
+            } else {
+                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+            }
+        });
+
+        const routeOrders = filteredOrders.filter(order => order.routeId === routeId);
         const quantity = routeOrders.reduce((sum, order) => {
             return sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0);
         }, 0);
@@ -585,13 +687,39 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
     // Nueva función para obtener el número de pedidos únicos por ruta
     const getOrderCountForRoute = (routeId: string): number => {
-        const routeOrders = orders.filter(order => order.routeId === routeId);
+        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
+        const filteredOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            const deliveryDate = new Date(order.deliveryDate);
+            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+            if (dateFilterType === 'registration') {
+                return orderDate.toISOString().split('T')[0] === selectedDateStr;
+            } else {
+                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+            }
+        });
+
+        const routeOrders = filteredOrders.filter(order => order.routeId === routeId);
         return routeOrders.length;
     };
 
     // Nueva función para obtener el número total de pedidos únicos
     const getTotalOrderCount = (): number => {
-        return orders.length;
+        // Filtrar órdenes por fecha según el tipo de filtro seleccionado
+        const filteredOrders = orders.filter(order => {
+            const orderDate = new Date(order.orderDate);
+            const deliveryDate = new Date(order.deliveryDate);
+            const selectedDateStr = selectedDate.toISOString().split('T')[0];
+
+            if (dateFilterType === 'registration') {
+                return orderDate.toISOString().split('T')[0] === selectedDateStr;
+            } else {
+                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+            }
+        });
+
+        return filteredOrders.length;
     };
 
     const handleQuantityChange = async (clientId: string, productId: string, newQuantity: number) => {
