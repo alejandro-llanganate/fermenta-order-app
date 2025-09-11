@@ -231,13 +231,14 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
         // Filtrar órdenes por fecha según el tipo de filtro seleccionado
         const filteredOrders = orders.filter(order => {
             const orderDate = new Date(order.orderDate);
-            const deliveryDate = new Date(order.deliveryDate);
+            const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
             const selectedDateStr = selectedDate.toISOString().split('T')[0];
 
             if (dateFilterType === 'registration') {
                 return orderDate.toISOString().split('T')[0] === selectedDateStr;
             } else {
-                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+                // Si no hay fecha de entrega, no incluir la orden en el filtro de entrega
+                return deliveryDate && deliveryDate.toISOString().split('T')[0] === selectedDateStr;
             }
         });
 
@@ -271,13 +272,14 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
         // Filtrar órdenes por fecha según el tipo de filtro seleccionado
         const filteredOrders = orders.filter(order => {
             const orderDate = new Date(order.orderDate);
-            const deliveryDate = new Date(order.deliveryDate);
+            const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
             const selectedDateStr = selectedDate.toISOString().split('T')[0];
 
             if (dateFilterType === 'registration') {
                 return orderDate.toISOString().split('T')[0] === selectedDateStr;
             } else {
-                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+                // Si no hay fecha de entrega, no incluir la orden en el filtro de entrega
+                return deliveryDate && deliveryDate.toISOString().split('T')[0] === selectedDateStr;
             }
         });
 
@@ -294,13 +296,14 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
         // Filtrar órdenes por fecha según el tipo de filtro seleccionado
         const filteredOrders = orders.filter(order => {
             const orderDate = new Date(order.orderDate);
-            const deliveryDate = new Date(order.deliveryDate);
+            const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
             const selectedDateStr = selectedDate.toISOString().split('T')[0];
 
             if (dateFilterType === 'registration') {
                 return orderDate.toISOString().split('T')[0] === selectedDateStr;
             } else {
-                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+                // Si no hay fecha de entrega, no incluir la orden en el filtro de entrega
+                return deliveryDate && deliveryDate.toISOString().split('T')[0] === selectedDateStr;
             }
         });
 
@@ -316,13 +319,14 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
         // Primero filtrar órdenes por fecha según el tipo de filtro seleccionado
         let filteredOrders = orders.filter(order => {
             const orderDate = new Date(order.orderDate);
-            const deliveryDate = new Date(order.deliveryDate);
+            const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
             const selectedDateStr = selectedDate.toISOString().split('T')[0];
 
             if (dateFilterType === 'registration') {
                 return orderDate.toISOString().split('T')[0] === selectedDateStr;
             } else {
-                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+                // Si no hay fecha de entrega, no incluir la orden en el filtro de entrega
+                return deliveryDate && deliveryDate.toISOString().split('T')[0] === selectedDateStr;
             }
         });
 
@@ -352,13 +356,14 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
         // Primero filtrar órdenes por fecha según el tipo de filtro seleccionado
         const filteredOrders = orders.filter(order => {
             const orderDate = new Date(order.orderDate);
-            const deliveryDate = new Date(order.deliveryDate);
+            const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
             const selectedDateStr = selectedDate.toISOString().split('T')[0];
 
             if (dateFilterType === 'registration') {
                 return orderDate.toISOString().split('T')[0] === selectedDateStr;
             } else {
-                return deliveryDate.toISOString().split('T')[0] === selectedDateStr;
+                // Si no hay fecha de entrega, no incluir la orden en el filtro de entrega
+                return deliveryDate && deliveryDate.toISOString().split('T')[0] === selectedDateStr;
             }
         });
 
