@@ -73,17 +73,11 @@ export default function PartialTotalsNotebook({ onBack }: PartialTotalsNotebookP
 
     // Fetch orders by date
     const fetchOrdersByDate = async (date: Date) => {
-        console.log('🔄 useEffect triggered - fetching orders for date:', date.toISOString().split('T')[0]);
+        const dateStr = date.toISOString().split('T')[0];
+        console.log('🔄 useEffect triggered - fetching orders for date:', dateStr);
         console.log('🔍 Tipo de filtro:', dateFilterType);
 
-        const startOfDay = new Date(date);
-        startOfDay.setHours(0, 0, 0, 0);
-
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
-
-        console.log('🔍 Buscando órdenes para fecha:', date.toISOString().split('T')[0]);
-        console.log('📅 Rango de búsqueda:', startOfDay.toISOString(), 'a', endOfDay.toISOString());
+        console.log('🔍 Buscando órdenes para fecha:', dateStr);
 
         try {
             // Fetch orders with client and route joins
@@ -98,15 +92,11 @@ export default function PartialTotalsNotebook({ onBack }: PartialTotalsNotebookP
             // Aplicar filtro según el tipo seleccionado
             if (dateFilterType === 'registration') {
                 // Filtrar por fecha de registro (order_date)
-                query = query
-                    .gte('order_date', startOfDay.toISOString().split('T')[0])
-                    .lte('order_date', endOfDay.toISOString().split('T')[0]);
+                query = query.eq('order_date', dateStr);
                 console.log('📅 Filtrando por fecha de registro');
             } else {
                 // Filtrar por fecha de entrega (delivery_date)
-                query = query
-                    .gte('delivery_date', startOfDay.toISOString().split('T')[0])
-                    .lte('delivery_date', endOfDay.toISOString().split('T')[0]);
+                query = query.eq('delivery_date', dateStr);
                 console.log('📅 Filtrando por fecha de entrega');
             }
 

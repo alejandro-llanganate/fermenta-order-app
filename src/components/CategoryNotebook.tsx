@@ -109,17 +109,11 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
 
     const fetchOrdersByDate = async () => {
         try {
-            console.log('🔄 useEffect triggered - fetching orders for date:', selectedDate.toISOString().split('T')[0]);
+            const dateStr = selectedDate.toISOString().split('T')[0];
+            console.log('🔄 useEffect triggered - fetching orders for date:', dateStr);
             console.log('🔍 Tipo de filtro:', dateFilterType);
 
-            // Calcular rango de fechas (todo el día)
-            const startOfDay = new Date(selectedDate);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(selectedDate);
-            endOfDay.setHours(23, 59, 59, 999);
-
-            console.log('🔍 Buscando órdenes para fecha:', selectedDate.toISOString().split('T')[0]);
-            console.log('📅 Rango de búsqueda:', startOfDay.toISOString(), 'a', endOfDay.toISOString());
+            console.log('🔍 Buscando órdenes para fecha:', dateStr);
 
             let query = supabase
                 .from('orders')
@@ -132,15 +126,11 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
             // Aplicar filtro según el tipo seleccionado
             if (dateFilterType === 'registration') {
                 // Filtrar por fecha de registro (order_date)
-                query = query
-                    .gte('order_date', startOfDay.toISOString().split('T')[0])
-                    .lte('order_date', endOfDay.toISOString().split('T')[0]);
+                query = query.eq('order_date', dateStr);
                 console.log('📅 Filtrando por fecha de registro');
             } else {
                 // Filtrar por fecha de entrega (delivery_date)
-                query = query
-                    .gte('delivery_date', startOfDay.toISOString().split('T')[0])
-                    .lte('delivery_date', endOfDay.toISOString().split('T')[0]);
+                query = query.eq('delivery_date', dateStr);
                 console.log('📅 Filtrando por fecha de entrega');
             }
 

@@ -195,11 +195,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
     const fetchOrdersByDate = async () => {
         try {
-            const startDate = new Date(selectedDate);
-            startDate.setHours(0, 0, 0, 0);
-
-            const endDate = new Date(selectedDate);
-            endDate.setHours(23, 59, 59, 999);
+            const dateStr = selectedDate.toISOString().split('T')[0];
 
             // Fetch orders for the selected date based on filter type
             const { data: ordersData, error: ordersError } = await supabase
@@ -219,8 +215,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         is_active
                     )
                 `)
-                .gte(dateFilterType === 'registration' ? 'order_date' : 'delivery_date', startDate.toISOString().split('T')[0])
-                .lte(dateFilterType === 'registration' ? 'order_date' : 'delivery_date', endDate.toISOString().split('T')[0])
+                .eq(dateFilterType === 'registration' ? 'order_date' : 'delivery_date', dateStr)
                 .order('created_at', { ascending: false });
 
             if (ordersError) {
@@ -229,8 +224,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
             }
 
             console.log('🔍 RouteNotebook: Consulta SQL ejecutada');
-            console.log('🔍 RouteNotebook: Fecha inicio:', startDate.toISOString().split('T')[0]);
-            console.log('🔍 RouteNotebook: Fecha fin:', endDate.toISOString().split('T')[0]);
+            console.log('🔍 RouteNotebook: Fecha filtro:', dateStr);
             console.log('🔍 RouteNotebook: Tipo de filtro:', dateFilterType);
             console.log('🔍 RouteNotebook: Órdenes encontradas en BD:', ordersData?.length || 0);
 
