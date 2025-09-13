@@ -15,29 +15,29 @@ export const CATEGORY_COLORS: Record<string, CategoryColorConfig> = {
         hexColor: '#818CF8'
     },
     'MELVAS': {
-        backgroundColor: 'bg-orange-400',
+        backgroundColor: 'bg-orange-600',
         textColor: 'text-white',
-        hexColor: '#FB923C'
+        hexColor: '#EA580C'
     },
     'MUFFINS': {
+        backgroundColor: 'bg-purple-500',
+        textColor: 'text-white',
+        hexColor: '#8B5CF6'
+    },
+    'OREJAS': {
+        backgroundColor: 'bg-pink-400',
+        textColor: 'text-white',
+        hexColor: '#F472B6'
+    },
+    'PANES': {
+        backgroundColor: 'bg-green-500',
+        textColor: 'text-white',
+        hexColor: '#10B981'
+    },
+    'PANES CHOCOLATE': {
         backgroundColor: 'bg-blue-400',
         textColor: 'text-white',
         hexColor: '#60A5FA'
-    },
-    'OREJAS': {
-        backgroundColor: 'bg-purple-400',
-        textColor: 'text-white',
-        hexColor: '#C084FC'
-    },
-    'PANES': {
-        backgroundColor: 'bg-amber-400',
-        textColor: 'text-black',
-        hexColor: '#FBBF24'
-    },
-    'PANES CHOCOLATE': {
-        backgroundColor: 'bg-yellow-400',
-        textColor: 'text-black',
-        hexColor: '#FBBF24'
     },
     'PASTELES': {
         backgroundColor: 'bg-pink-400',
@@ -45,9 +45,14 @@ export const CATEGORY_COLORS: Record<string, CategoryColorConfig> = {
         hexColor: '#F472B6'
     },
     'PIZZAS': {
-        backgroundColor: 'bg-red-400',
+        backgroundColor: 'bg-yellow-400',
+        textColor: 'text-black',
+        hexColor: '#FBBF24'
+    },
+    'HAMBURGUESAS': {
+        backgroundColor: 'bg-green-500',
         textColor: 'text-white',
-        hexColor: '#F87171'
+        hexColor: '#10B981'
     },
     'VARIOS': {
         backgroundColor: 'bg-gray-400',
