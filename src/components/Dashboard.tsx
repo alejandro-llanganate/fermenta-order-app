@@ -65,33 +65,6 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                 console.error('Error fetching clients:', clientsError);
             }
 
-            // Obtener pedidos que se entregarán hoy (basado en delivery_date)
-            const today = new Date();
-            const todayString = today.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-
-            const { data: ordersData, error: ordersError } = await supabase
-                .from('orders')
-                .select('id, total_amount, delivery_date')
-                .eq('delivery_date', todayString);
-
-            if (ordersError) {
-                console.error('Error fetching orders:', ordersError);
-            }
-
-            // Obtener pedidos registrados hoy (basado en created_at)
-            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
-
-            const { data: ordersRegisteredData, error: ordersRegisteredError } = await supabase
-                .from('orders')
-                .select('id, total_amount, created_at')
-                .gte('created_at', startOfDay.toISOString())
-                .lte('created_at', endOfDay.toISOString());
-
-            if (ordersRegisteredError) {
-                console.error('Error fetching registered orders:', ordersRegisteredError);
-            }
-
             // Obtener productos activos
             const { data: productsData, error: productsError } = await supabase
                 .from('products')
@@ -102,11 +75,50 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                 console.error('Error fetching products:', productsError);
             }
 
-            // Calcular total de ventas de pedidos que se entregarán hoy
-            const totalSales = ordersData?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0;
+            let ordersData = null;
+            let ordersRegisteredData = null;
+            let totalSales = 0;
+            let salesRegisteredToday = 0;
 
-            // Calcular total de ventas de pedidos registrados hoy
-            const salesRegisteredToday = ordersRegisteredData?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0;
+            // Solo obtener datos de ventas si el usuario es administrador
+            if (isAdmin) {
+                // Obtener pedidos que se entregarán hoy (basado en delivery_date)
+                const today = new Date();
+                const todayString = today.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+
+                const { data: ordersDataResult, error: ordersError } = await supabase
+                    .from('orders')
+                    .select('id, total_amount, delivery_date')
+                    .eq('delivery_date', todayString);
+
+                if (ordersError) {
+                    console.error('Error fetching orders:', ordersError);
+                } else {
+                    ordersData = ordersDataResult;
+                }
+
+                // Obtener pedidos registrados hoy (basado en created_at)
+                const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+                const { data: ordersRegisteredDataResult, error: ordersRegisteredError } = await supabase
+                    .from('orders')
+                    .select('id, total_amount, created_at')
+                    .gte('created_at', startOfDay.toISOString())
+                    .lte('created_at', endOfDay.toISOString());
+
+                if (ordersRegisteredError) {
+                    console.error('Error fetching registered orders:', ordersRegisteredError);
+                } else {
+                    ordersRegisteredData = ordersRegisteredDataResult;
+                }
+
+                // Calcular total de ventas de pedidos que se entregarán hoy
+                totalSales = ordersData?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0;
+
+                // Calcular total de ventas de pedidos registrados hoy
+                salesRegisteredToday = ordersRegisteredData?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0;
+            }
 
             setStats({
                 activeClients: clientsData?.length || 0,
@@ -293,57 +305,62 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Ventas por Entregar</p>
-                                {loading ? (
-                                    <div className="animate-pulse">
-                                        <div className="h-8 bg-gray-200 rounded w-20 mb-1"></div>
-                                        <div className="h-3 bg-gray-200 rounded w-24"></div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <p className="text-2xl font-bold text-green-600">
-                                            ${stats.totalSales.toFixed(2)}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {stats.totalSales > 0 ? 'Ventas que se entregarán hoy' : 'Sin entregas hoy'}
-                                        </p>
-                                    </>
-                                )}
-                            </div>
-                            <div className="p-3 bg-green-100 rounded-full">
-                                <DollarSign className="h-6 w-6 text-green-600" />
+                    {/* Solo mostrar tarjetas de ventas para administradores */}
+                    {isAdmin && (
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">Ventas por Entregar</p>
+                                    {loading ? (
+                                        <div className="animate-pulse">
+                                            <div className="h-8 bg-gray-200 rounded w-20 mb-1"></div>
+                                            <div className="h-3 bg-gray-200 rounded w-24"></div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p className="text-2xl font-bold text-green-600">
+                                                ${stats.totalSales.toFixed(2)}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {stats.totalSales > 0 ? 'Ventas que se entregarán hoy' : 'Sin entregas hoy'}
+                                            </p>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="p-3 bg-green-100 rounded-full">
+                                    <DollarSign className="h-6 w-6 text-green-600" />
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Ventas Registradas</p>
-                                {loading ? (
-                                    <div className="animate-pulse">
-                                        <div className="h-8 bg-gray-200 rounded w-20 mb-1"></div>
-                                        <div className="h-3 bg-gray-200 rounded w-24"></div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <p className="text-2xl font-bold text-emerald-600">
-                                            ${stats.salesRegisteredToday.toFixed(2)}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {stats.salesRegisteredToday > 0 ? 'Ventas registradas hoy' : 'Sin ventas registradas'}
-                                        </p>
-                                    </>
-                                )}
-                            </div>
-                            <div className="p-3 bg-emerald-100 rounded-full">
-                                <DollarSign className="h-6 w-6 text-emerald-600" />
+                    {isAdmin && (
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">Ventas Registradas</p>
+                                    {loading ? (
+                                        <div className="animate-pulse">
+                                            <div className="h-8 bg-gray-200 rounded w-20 mb-1"></div>
+                                            <div className="h-3 bg-gray-200 rounded w-24"></div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p className="text-2xl font-bold text-emerald-600">
+                                                ${stats.salesRegisteredToday.toFixed(2)}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {stats.salesRegisteredToday > 0 ? 'Ventas registradas hoy' : 'Sin ventas registradas'}
+                                            </p>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="p-3 bg-emerald-100 rounded-full">
+                                    <DollarSign className="h-6 w-6 text-emerald-600" />
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div className="flex items-center justify-between">

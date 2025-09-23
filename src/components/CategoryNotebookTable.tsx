@@ -19,6 +19,7 @@ interface CategoryNotebookTableProps {
     handleQuantityChange: (clientId: string, productId: string, newQuantity: number) => void;
     editingCell: { clientId: string; productId: string } | null;
     isUpdating: boolean;
+    getDonutCalculations: (filteredProducts?: any[]) => { totalDonuts: number; result: number; restante: number; donutProducts: string[] } | null;
 }
 
 export default function CategoryNotebookTable({
@@ -34,7 +35,8 @@ export default function CategoryNotebookTable({
     getTotalForCategory,
     handleQuantityChange,
     editingCell,
-    isUpdating
+    isUpdating,
+    getDonutCalculations
 }: CategoryNotebookTableProps) {
     const { getFontSizeClass, getFontSizeValue } = useFontSize();
 
@@ -349,6 +351,84 @@ export default function CategoryNotebookTable({
                         </div>
                     </div>
                 )}
+
+                {/* Tabla de Donas Normales - Solo para categoría DONUTS */}
+                {selectedCategory && selectedCategory.toLowerCase() === 'donuts' && (() => {
+                    const donutCalc = getDonutCalculations(filteredProducts);
+                    if (!donutCalc) return null;
+
+                    return (
+                        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg p-6 border border-yellow-200 mb-6">
+                            <h3 className={`font-bold text-yellow-900 mb-4 text-center ${getFontSizeClass('titles')}`}>
+                                SUMA DONAS NORMALES
+                            </h3>
+
+                            <div className="bg-white rounded-lg p-4 border border-yellow-300">
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <h4 className={`font-semibold text-gray-700 mb-2 ${getFontSizeClass('headers')}`}>
+                                            Productos Sumados:
+                                        </h4>
+                                        <div className="space-y-1">
+                                            {donutCalc.donutProducts.map((productName) => (
+                                                <div key={productName} className="flex justify-between">
+                                                    <span className={`${getFontSizeClass('cells')}`}>{productName}:</span>
+                                                    <span className={`font-bold ${getFontSizeClass('cells')}`}>
+                                                        {(() => {
+                                                            // Usar los mismos productos filtrados que usa la tabla principal
+                                                            const product = filteredProducts.find(p => p.name === productName);
+
+                                                            // Debug específico para CHOCOCOCO
+                                                            if (productName === 'CHOCOCOCO') {
+                                                                console.log('🔍 Buscando CHOCOCOCO:');
+                                                                console.log('🔍 Productos filtrados disponibles:', filteredProducts.map(p => p.name));
+                                                                console.log('🔍 Producto encontrado:', product);
+                                                                if (product) {
+                                                                    const total = getTotalForProduct(product.id);
+                                                                    console.log('🔍 Total para CHOCOCOCO:', total);
+                                                                }
+                                                            }
+
+                                                            return product ? getTotalForProduct(product.id) : 0;
+                                                        })()}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h4 className={`font-semibold text-gray-700 mb-2 ${getFontSizeClass('headers')}`}>
+                                            Cálculos:
+                                        </h4>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <span className={`${getFontSizeClass('cells')}`}>Total Donas:</span>
+                                                <span className={`font-bold ${getFontSizeClass('cells')}`}>{donutCalc.totalDonuts}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className={`${getFontSizeClass('cells')}`}>Resultado / 30:</span>
+                                                <span className={`font-bold ${getFontSizeClass('cells')}`}>{donutCalc.result}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className={`${getFontSizeClass('cells')}`}>Restante:</span>
+                                                <span className={`font-bold text-red-600 ${getFontSizeClass('cells')}`}>{donutCalc.restante}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="border-t border-yellow-300 pt-4">
+                                    <div className="text-center">
+                                        <div className={`font-bold text-yellow-900 ${getFontSizeClass('headers')}`}>
+                                            Total Donas: {donutCalc.totalDonuts} | Resultado: {donutCalc.result} | Restante: {donutCalc.restante}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 {/* Resumen de Cantidades por Producto - Diseño de Recuadros (solo para categorías que no sean Pasteles) */}
                 {selectedCategory && selectedCategory.toLowerCase() !== 'pasteles' && (

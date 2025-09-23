@@ -529,6 +529,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                         handleQuantityChange={handleQuantityChange}
                         editingCell={editingCell}
                         isUpdating={isUpdating}
+                        getDonutCalculations={() => null}
                     />
                 </div>
             </div>
@@ -549,6 +550,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                 getTotalForProduct={getTotalForProduct}
                 getTotalForCategory={getTotalForCategory}
                 printRef={printRef}
+                getDonutCalculations={() => null}
             />
 
             <Footer />

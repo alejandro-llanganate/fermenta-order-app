@@ -105,7 +105,15 @@ export const authService = {
   // Check if user is admin
   isAdmin(): boolean {
     const user = this.getCurrentUser();
-    return user?.type === 'admin';
+    if (!user) return false;
+    
+    // Check for Supabase Auth admin users
+    if (user.type === 'admin') return true;
+    
+    // Check for usuarios table administrators
+    if (user.type === 'user' && user.role === 'Administrador') return true;
+    
+    return false;
   }
 };
 

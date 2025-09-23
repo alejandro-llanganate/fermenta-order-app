@@ -50,6 +50,9 @@ export const PRODUCT_ORDER_CONFIG: ProductOrderConfig[] = [
  * @returns Configuración de orden o null si no existe
  */
 export function getProductOrderConfig(categoryName: string): ProductOrderConfig | null {
+    if (!categoryName) {
+        return null;
+    }
     return PRODUCT_ORDER_CONFIG.find(config => 
         config.categoryName.toUpperCase() === categoryName.toUpperCase()
     ) || null;
@@ -62,6 +65,10 @@ export function getProductOrderConfig(categoryName: string): ProductOrderConfig 
  * @returns Array de productos ordenados
  */
 export function sortProductsByCategoryOrder(products: any[], categoryName: string): any[] {
+    if (!categoryName || !products || products.length === 0) {
+        return products || [];
+    }
+    
     const config = getProductOrderConfig(categoryName);
     
     if (!config) {
@@ -95,6 +102,9 @@ export function sortProductsByCategoryOrder(products: any[], categoryName: strin
  * @returns true si tiene configuración específica
  */
 export function hasSpecificOrder(categoryName: string): boolean {
+    if (!categoryName) {
+        return false;
+    }
     return getProductOrderConfig(categoryName) !== null;
 }
 
@@ -104,6 +114,9 @@ export function hasSpecificOrder(categoryName: string): boolean {
  * @returns Descripción de la configuración o null si no existe
  */
 export function getOrderDescription(categoryName: string): string | null {
+    if (!categoryName) {
+        return null;
+    }
     const config = getProductOrderConfig(categoryName);
     return config?.description || null;
 }
