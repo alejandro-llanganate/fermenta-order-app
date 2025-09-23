@@ -59,12 +59,7 @@ export default function LoginPage() {
 
       const user = users[0];
 
-      // Verificar que no sea administrador (los administradores van al panel admin)
-      if (user.role === 'Administrador') {
-        setError('Los administradores deben usar el panel administrativo');
-        setIsLoading(false);
-        return;
-      }
+      // Permitir acceso a todos los usuarios activos, incluyendo administradores
 
       // Crear un objeto de usuario compatible con el sistema de autenticación
       const authUser = {
