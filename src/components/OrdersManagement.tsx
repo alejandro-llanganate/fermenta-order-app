@@ -30,7 +30,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import BulkOrderNotesPDF from './pdf/BulkOrderNotesPDF';
 import { handleNumericInputChange, parseNumericValue } from '@/utils/numericValidation';
-import { generateUniqueOrderNumber } from '@/utils/orderIdGenerator';
+import { generateUniqueOrderNumberHybrid } from '@/utils/orderIdGenerator';
 
 interface OrdersManagementProps {
     onBack: () => void;
@@ -531,7 +531,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
     // Función para generar número de pedido único
     const generateOrderNumber = async () => {
-        return await generateUniqueOrderNumber(orderDate);
+        return await generateUniqueOrderNumberHybrid(orderDate);
     };
 
     // Función para calcular subtotal

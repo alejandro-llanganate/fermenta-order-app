@@ -8,7 +8,7 @@ import CategoryNotebookTable from './CategoryNotebookTable';
 import CategoryNotebookPreview from './CategoryNotebookPreview';
 import Footer from './Footer';
 import { Route, Client, Product, ProductCategory, Order, OrderItem } from '@/types/routeNotebook';
-import { generateUniqueOrderNumber } from '@/utils/orderIdGenerator';
+import { generateUniqueOrderNumberHybrid } from '@/utils/orderIdGenerator';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import CategoryNotebookPDF from './pdf/CategoryNotebookPDF';
 import { sortProductsByCategoryOrder } from '@/utils/productOrderConfig';
@@ -421,7 +421,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
     const createNewOrder = async (clientId: string, productId: string, quantity: number, product: Product, client: Client) => {
         try {
             // Generar número de orden único
-            const orderNumber = await generateUniqueOrderNumber(selectedDate);
+            const orderNumber = await generateUniqueOrderNumberHybrid(selectedDate);
 
             // Crear nueva orden
             const { data: newOrder, error: orderError } = await supabase
