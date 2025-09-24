@@ -30,6 +30,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import BulkOrderNotesPDF from './pdf/BulkOrderNotesPDF';
 import { handleNumericInputChange, parseNumericValue } from '@/utils/numericValidation';
+import { generateUniqueOrderNumber } from '@/utils/orderIdGenerator';
 
 interface OrdersManagementProps {
     onBack: () => void;
@@ -528,14 +529,9 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         }
     };
 
-    // Función para generar número de pedido
-    const generateOrderNumber = () => {
-        const date = new Date();
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        return `PED-${year}${month}${day}-${random}`;
+    // Función para generar número de pedido único
+    const generateOrderNumber = async () => {
+        return await generateUniqueOrderNumber(orderDate);
     };
 
     // Función para calcular subtotal
@@ -693,7 +689,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         }
 
         // Mostrar resumen del pedido antes de crear
-        const orderNumber = generateOrderNumber();
+        const orderNumber = await generateOrderNumber();
         const subtotal = calculateSubtotal();
 
         const orderSummary = `
