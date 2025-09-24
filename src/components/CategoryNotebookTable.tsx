@@ -368,7 +368,6 @@ export default function CategoryNotebookTable({
                             <div className="bg-white rounded-lg p-4 border border-yellow-300">
                                 <div className="grid grid-cols-2 gap-4 mb-4">
                                     <div>
-
                                         <div>
                                             <h4 className={`font-semibold text-gray-700 mb-2 ${getFontSizeClass('headers')}`}>
                                                 Cálculos:
@@ -399,155 +398,156 @@ export default function CategoryNotebookTable({
                                     </div>
                                 </div>
                             </div>
-                            );
+                        </div>
+                    );
                 })()}
 
-                            {/* Resumen de Cantidades por Producto - Diseño de Recuadros (solo para categorías que no sean Pasteles) */}
-                            {selectedCategory && selectedCategory.toLowerCase() !== 'pasteles' && (
-                                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200 mb-6">
-                                    <h3 className={`font-bold text-green-900 mb-6 text-center ${getFontSizeClass('titles')}`}>
-                                        TOTALES POR PRODUCTO - {selectedCategory.toUpperCase()}
-                                    </h3>
+                {/* Resumen de Cantidades por Producto - Diseño de Recuadros (solo para categorías que no sean Pasteles) */}
+                {selectedCategory && selectedCategory.toLowerCase() !== 'pasteles' && (
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200 mb-6">
+                        <h3 className={`font-bold text-green-900 mb-6 text-center ${getFontSizeClass('titles')}`}>
+                            TOTALES POR PRODUCTO - {selectedCategory.toUpperCase()}
+                        </h3>
 
-                                    {/* Grid de recuadros de productos */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                                        {filteredProducts.map((product) => {
-                                            const totalQuantity = getTotalForProduct(product.id);
+                        {/* Grid de recuadros de productos */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            {filteredProducts.map((product) => {
+                                const totalQuantity = getTotalForProduct(product.id);
 
-                                            return (
-                                                <div
-                                                    key={product.id}
-                                                    className="bg-white rounded-lg p-4 shadow-md border border-gray-200 hover:shadow-lg transition-shadow"
-                                                >
-                                                    <div className="text-center">
-                                                        <div className={`font-bold text-gray-800 mb-2 ${getFontSizeClass('cells')}`}>
-                                                            {product.name}
-                                                        </div>
-                                                        <div className={`font-bold text-green-600 ${getFontSizeClass('headers')}`}>
-                                                            {totalQuantity}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {/* Total General */}
-                                    <div className="mt-6 text-center">
-                                        <div className="inline-block bg-green-200 rounded-lg px-6 py-3 border border-green-300">
-                                            <div className={`font-bold text-green-900 ${getFontSizeClass('headers')}`}>
-                                                TOTAL GENERAL: {filteredProducts.reduce((sum, product) => sum + getTotalForProduct(product.id), 0)}
+                                return (
+                                    <div
+                                        key={product.id}
+                                        className="bg-white rounded-lg p-4 shadow-md border border-gray-200 hover:shadow-lg transition-shadow"
+                                    >
+                                        <div className="text-center">
+                                            <div className={`font-bold text-gray-800 mb-2 ${getFontSizeClass('cells')}`}>
+                                                {product.name}
+                                            </div>
+                                            <div className={`font-bold text-green-600 ${getFontSizeClass('headers')}`}>
+                                                {totalQuantity}
                                             </div>
                                         </div>
                                     </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Total General */}
+                        <div className="mt-6 text-center">
+                            <div className="inline-block bg-green-200 rounded-lg px-6 py-3 border border-green-300">
+                                <div className={`font-bold text-green-900 ${getFontSizeClass('headers')}`}>
+                                    TOTAL GENERAL: {filteredProducts.reduce((sum, product) => sum + getTotalForProduct(product.id), 0)}
                                 </div>
-                            )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
-                            {/* Tablas por ruta */}
-                            {selectedCategory ? (
-                                <>
-                                    {routes.map((route) => {
-                                        const routeClients = getClientsByRoute(route.id);
+                {/* Tablas por ruta */}
+                {selectedCategory ? (
+                    <>
+                        {routes.map((route) => {
+                            const routeClients = getClientsByRoute(route.id);
 
-                                        if (routeClients.length === 0) return null;
+                            if (routeClients.length === 0) return null;
 
-                                        return (
-                                            <div key={route.id} className="mb-6">
-                                                <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                                                    <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
-                                                        <h3 className={`font-semibold text-gray-900 ${getFontSizeClass('titles')}`}>
-                                                            {route.nombre} - {route.identificador}
-                                                        </h3>
-                                                    </div>
-                                                    <div className="overflow-x-auto">
-                                                        <table className="w-full border-collapse">
-                                                            <thead>
-                                                                <tr className="bg-gray-50">
-                                                                    <th className={`border border-gray-300 px-3 py-2 text-left text-black font-semibold ${getFontSizeClass('headers')}`} style={{ width: '200px' }}>
-                                                                        CLIENTES
-                                                                    </th>
-                                                                    {filteredProducts.map((product) => {
-                                                                        // Función para obtener abreviación del producto (solo para Pasteles)
-                                                                        // Usar la nueva estrategia de manejo de texto
-                                                                        const textOptimization = getOptimizedTableText(
-                                                                            product.name,
-                                                                            selectedCategory,
-                                                                            { maxLength: 12, maxWords: 2 }
-                                                                        );
+                            return (
+                                <div key={route.id} className="mb-6">
+                                    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                                        <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
+                                            <h3 className={`font-semibold text-gray-900 ${getFontSizeClass('titles')}`}>
+                                                {route.nombre} - {route.identificador}
+                                            </h3>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full border-collapse">
+                                                <thead>
+                                                    <tr className="bg-gray-50">
+                                                        <th className={`border border-gray-300 px-3 py-2 text-left text-black font-semibold ${getFontSizeClass('headers')}`} style={{ width: '200px' }}>
+                                                            CLIENTES
+                                                        </th>
+                                                        {filteredProducts.map((product) => {
+                                                            // Función para obtener abreviación del producto (solo para Pasteles)
+                                                            // Usar la nueva estrategia de manejo de texto
+                                                            const textOptimization = getOptimizedTableText(
+                                                                product.name,
+                                                                selectedCategory,
+                                                                { maxLength: 12, maxWords: 2 }
+                                                            );
 
-                                                                        return (
-                                                                            <th
-                                                                                key={product.id}
-                                                                                className={`border border-gray-300 px-2 py-2 text-center text-black font-semibold ${getFontSizeClass('headers')} ${textOptimization.classes}`}
-                                                                                style={{ width: '100px', ...textOptimization.styles }}
-                                                                                title={textOptimization.fullText}
-                                                                            >
-                                                                                {textOptimization.displayText}
-                                                                            </th>
-                                                                        );
-                                                                    })}
+                                                            return (
+                                                                <th
+                                                                    key={product.id}
+                                                                    className={`border border-gray-300 px-2 py-2 text-center text-black font-semibold ${getFontSizeClass('headers')} ${textOptimization.classes}`}
+                                                                    style={{ width: '100px', ...textOptimization.styles }}
+                                                                    title={textOptimization.fullText}
+                                                                >
+                                                                    {textOptimization.displayText}
+                                                                </th>
+                                                            );
+                                                        })}
 
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {routeClients.map((client) => {
-                                                                    const clientTotal = getTotalForClient(client.id);
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {routeClients.map((client) => {
+                                                        const clientTotal = getTotalForClient(client.id);
+
+                                                        return (
+                                                            <tr key={client.id} className="hover:bg-gray-50">
+                                                                <td className={`border border-gray-300 px-3 py-2 text-black font-medium ${getFontSizeClass('cells')}`}>
+                                                                    {client.nombre}
+                                                                </td>
+                                                                {filteredProducts.map((product) => {
+                                                                    const quantity = getQuantityForClientAndProduct(client.id, product.id);
+                                                                    const isEditing = editingCell?.clientId === client.id && editingCell?.productId === product.id;
 
                                                                     return (
-                                                                        <tr key={client.id} className="hover:bg-gray-50">
-                                                                            <td className={`border border-gray-300 px-3 py-2 text-black font-medium ${getFontSizeClass('cells')}`}>
-                                                                                {client.nombre}
-                                                                            </td>
-                                                                            {filteredProducts.map((product) => {
-                                                                                const quantity = getQuantityForClientAndProduct(client.id, product.id);
-                                                                                const isEditing = editingCell?.clientId === client.id && editingCell?.productId === product.id;
-
-                                                                                return (
-                                                                                    <td key={product.id} className={`border border-gray-300 px-2 py-2 text-center ${getFontSizeClass('cells')}`}>
-                                                                                        {quantity > 0 ? (
-                                                                                            <span className="text-black font-medium">{quantity}</span>
-                                                                                        ) : (
-                                                                                            <span className="text-gray-400">-</span>
-                                                                                        )}
-                                                                                    </td>
-                                                                                );
-                                                                            })}
-
-                                                                        </tr>
+                                                                        <td key={product.id} className={`border border-gray-300 px-2 py-2 text-center ${getFontSizeClass('cells')}`}>
+                                                                            {quantity > 0 ? (
+                                                                                <span className="text-black font-medium">{quantity}</span>
+                                                                            ) : (
+                                                                                <span className="text-gray-400">-</span>
+                                                                            )}
+                                                                        </td>
                                                                     );
                                                                 })}
 
-                                                                {/* Route Totals Row */}
-                                                                <tr className="bg-gray-100 font-bold">
-                                                                    <td className={`border border-gray-300 px-3 py-2 text-black font-bold ${getFontSizeClass('headers')}`}>
-                                                                        TOTALES {route.nombre}
-                                                                    </td>
-                                                                    {filteredProducts.map((product) => {
-                                                                        const total = routeClients.reduce((sum, client) => {
-                                                                            return sum + getQuantityForClientAndProduct(client.id, product.id);
-                                                                        }, 0);
-                                                                        return (
-                                                                            <td key={product.id} className={`border border-gray-300 px-2 py-2 text-black font-bold text-center ${getFontSizeClass('headers')}`}>
-                                                                                {total > 0 ? total : ''}
-                                                                            </td>
-                                                                        );
-                                                                    })}
+                                                            </tr>
+                                                        );
+                                                    })}
 
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </>
-                            ) : (
-                                <div className="text-center py-8">
-                                    <p className="text-gray-500">Selecciona una categoría para ver los reportes por ruta</p>
+                                                    {/* Route Totals Row */}
+                                                    <tr className="bg-gray-100 font-bold">
+                                                        <td className={`border border-gray-300 px-3 py-2 text-black font-bold ${getFontSizeClass('headers')}`}>
+                                                            TOTALES {route.nombre}
+                                                        </td>
+                                                        {filteredProducts.map((product) => {
+                                                            const total = routeClients.reduce((sum, client) => {
+                                                                return sum + getQuantityForClientAndProduct(client.id, product.id);
+                                                            }, 0);
+                                                            return (
+                                                                <td key={product.id} className={`border border-gray-300 px-2 py-2 text-black font-bold text-center ${getFontSizeClass('headers')}`}>
+                                                                    {total > 0 ? total : ''}
+                                                                </td>
+                                                            );
+                                                        })}
+
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 </div>
-                            )}
-                        </div>
+                            );
+                        })}
+                    </>
+                ) : (
+                    <div className="text-center py-8">
+                        <p className="text-gray-500">Selecciona una categoría para ver los reportes por ruta</p>
+                    </div>
+                )}
+            </div>
         </div>
-            );
+    );
 }
