@@ -1539,13 +1539,30 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         // Aplicar filtro de búsqueda local
         if (searchTerm) {
             filtered = filtered.filter(order => {
-                const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (order.clientName && order.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                    order.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (order.routeName && order.routeName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                    (order.routeId && routes.find(route => route.id === order.routeId)?.identificador.toLowerCase().includes(searchTerm.toLowerCase()));
+                const searchTermLower = searchTerm.toLowerCase();
+                
+                // Verificar número de pedido de manera segura
+                const orderNumberMatch = order.orderNumber && 
+                    order.orderNumber.toLowerCase().includes(searchTermLower);
+                
+                // Verificar nombre del cliente de manera segura
+                const clientNameMatch = order.clientName && 
+                    order.clientName.toLowerCase().includes(searchTermLower);
+                
+                // Verificar estado de manera segura
+                const statusMatch = order.status && 
+                    order.status.toLowerCase().includes(searchTermLower);
+                
+                // Verificar nombre de ruta de manera segura
+                const routeNameMatch = order.routeName && 
+                    order.routeName.toLowerCase().includes(searchTermLower);
+                
+                // Verificar identificador de ruta de manera segura
+                const routeIdentifierMatch = order.routeId && 
+                    routes.find(route => route.id === order.routeId)?.identificador &&
+                    routes.find(route => route.id === order.routeId)?.identificador.toLowerCase().includes(searchTermLower);
 
-                return matchesSearch;
+                return orderNumberMatch || clientNameMatch || statusMatch || routeNameMatch || routeIdentifierMatch;
             });
         }
 
