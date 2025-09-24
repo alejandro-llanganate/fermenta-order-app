@@ -253,12 +253,14 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         fetchData();
     }, []);
 
-    // Cargar pedidos cuando cambien los filtros
+    // Cargar pedidos cuando cambien los filtros (excepto searchTerm que se maneja localmente)
     useEffect(() => {
-        if (searchTerm || routeFilter || dateFilterValue) {
-            fetchOrdersWithPagination(1, itemsPerPage, true);
+        if (routeFilter || dateFilterValue) {
+            fetchOrdersWithPagination(1, itemsPerPage, true, true);
         }
-    }, [searchTerm, routeFilter, dateFilterValue, dateFilterType]);
+    }, [routeFilter, dateFilterValue, dateFilterType]);
+
+    // La búsqueda ahora se maneja manualmente con el botón "Buscar"
 
     // Verificar botones de scroll cuando cambien los datos
     useEffect(() => {
@@ -317,7 +319,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
 
     // Función para cargar pedidos con paginación del servidor
-    const fetchOrdersWithPagination = async (page: number = 1, limit: number = itemsPerPage, reset: boolean = false) => {
+    const fetchOrdersWithPagination = async (page: number = 1, limit: number = itemsPerPage, reset: boolean = false, applySearchFilter: boolean = true) => {
         try {
             if (reset) {
                 setLoading(true);
@@ -332,7 +334,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 .order('created_at', { ascending: false });
 
             // Aplicar filtros
-            if (searchTerm) {
+            if (applySearchFilter && searchTerm) {
                 query = query.or(`client_name.ilike.%${searchTerm}%,order_number.ilike.%${searchTerm}%`);
             }
 
@@ -541,16 +543,24 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     };
 
     // Función para manejar la búsqueda manual
-    const handleSearch = () => {
+    const handleSearch = async () => {
         setSearchTerm(tempSearchTerm);
         setCurrentPage(1); // Resetear a la primera página
+
+        // Si hay un término de búsqueda, cargar todos los pedidos para filtrado local
+        if (tempSearchTerm.trim()) {
+            await fetchOrdersWithPagination(1, itemsPerPage, true, false);
+        }
     };
 
     // Función para limpiar la búsqueda
-    const handleClearSearch = () => {
+    const handleClearSearch = async () => {
         setTempSearchTerm('');
         setSearchTerm('');
         setCurrentPage(1);
+
+        // Recargar pedidos sin filtros de búsqueda
+        await fetchOrdersWithPagination(1, itemsPerPage, true, true);
     };
 
     // Función para agregar producto
@@ -1522,10 +1532,30 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         return filtered;
     };
 
-    // Con paginación del servidor, usamos directamente los pedidos cargados
-    const filteredOrders = orders;
+    // Función para filtrar pedidos localmente
+    const getFilteredOrders = () => {
+        let filtered = orders;
+
+        // Aplicar filtro de búsqueda local
+        if (searchTerm) {
+            filtered = filtered.filter(order => {
+                const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (order.clientName && order.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    order.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (order.routeName && order.routeName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (order.routeId && routes.find(route => route.id === order.routeId)?.identificador.toLowerCase().includes(searchTerm.toLowerCase()));
+
+                return matchesSearch;
+            });
+        }
+
+        return filtered;
+    };
+
+    // Con paginación del servidor, aplicamos filtros locales
+    const filteredOrders = getFilteredOrders();
     const totalPages = Math.ceil(totalOrders / itemsPerPage);
-    const paginatedOrders = orders; // Ya están paginados del servidor
+    const paginatedOrders = filteredOrders; // Aplicar filtros locales
 
     const getStatusColor = (status: Order['status']) => {
         switch (status) {
