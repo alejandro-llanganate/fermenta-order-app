@@ -42,6 +42,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const [clients, setClients] = useState<Client[]>([]);
     const [routes, setRoutes] = useState<Route[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [tempSearchTerm, setTempSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
     const [showRoutePreviewModal, setShowRoutePreviewModal] = useState(false);
@@ -537,6 +538,19 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     // Función para calcular subtotal
     const calculateSubtotal = () => {
         return selectedItems.reduce((sum, item) => sum + item.totalPrice, 0);
+    };
+
+    // Función para manejar la búsqueda manual
+    const handleSearch = () => {
+        setSearchTerm(tempSearchTerm);
+        setCurrentPage(1); // Resetear a la primera página
+    };
+
+    // Función para limpiar la búsqueda
+    const handleClearSearch = () => {
+        setTempSearchTerm('');
+        setSearchTerm('');
+        setCurrentPage(1);
     };
 
     // Función para agregar producto
@@ -1668,15 +1682,34 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                         <div className="space-y-4">
                             {/* Primera fila: Búsqueda y Ruta */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar por número de pedido, cliente, teléfono, estado o código de ruta..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
-                                    />
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar por número de pedido, cliente, teléfono, estado o código de ruta..."
+                                            value={tempSearchTerm}
+                                            onChange={(e) => setTempSearchTerm(e.target.value)}
+                                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleSearch}
+                                        className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors flex items-center gap-2"
+                                    >
+                                        <Search className="h-4 w-4" />
+                                        Buscar
+                                    </button>
+                                    {searchTerm && (
+                                        <button
+                                            onClick={handleClearSearch}
+                                            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors flex items-center gap-2"
+                                        >
+                                            <X className="h-4 w-4" />
+                                            Limpiar
+                                        </button>
+                                    )}
                                 </div>
                                 <div>
                                     <select
@@ -1754,6 +1787,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                         <button
                                             onClick={() => {
                                                 setSearchTerm('');
+                                                setTempSearchTerm('');
                                                 setRouteFilter('');
                                                 setDateFilterValue(null);
                                             }}
