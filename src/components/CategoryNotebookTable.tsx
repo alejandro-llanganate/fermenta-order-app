@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react';
 import { Client, ProductCategory, Product, Route } from '@/types/routeNotebook';
 import CategoryNotebookTableLoading from './CategoryNotebookTableLoading';
 import { useFontSize } from '@/contexts/FontSizeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import FontSizeConfig from './FontSizeConfig';
 import { getOptimizedTableText } from '@/utils/textHandling';
 
@@ -39,6 +40,7 @@ export default function CategoryNotebookTable({
     getDonutCalculations
 }: CategoryNotebookTableProps) {
     const { getFontSizeClass, getFontSizeValue } = useFontSize();
+    const { isAdmin } = useAuth();
 
     if (loading) {
         return <CategoryNotebookTableLoading />;

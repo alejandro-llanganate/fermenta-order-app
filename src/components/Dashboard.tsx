@@ -75,44 +75,38 @@ export default function Dashboard({ username, onLogout, userData }: DashboardPro
                 console.error('Error fetching products:', productsError);
             }
 
-            let ordersData = null;
-            let ordersRegisteredData = null;
+            // Obtener pedidos que se entregarán hoy (basado en delivery_date) - visible para todos
+            const today = new Date();
+            const todayString = today.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+
+            const { data: ordersData, error: ordersError } = await supabase
+                .from('orders')
+                .select('id, total_amount, delivery_date')
+                .eq('delivery_date', todayString);
+
+            if (ordersError) {
+                console.error('Error fetching orders:', ordersError);
+            }
+
+            // Obtener pedidos registrados hoy (basado en created_at) - visible para todos
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+            const { data: ordersRegisteredData, error: ordersRegisteredError } = await supabase
+                .from('orders')
+                .select('id, total_amount, created_at')
+                .gte('created_at', startOfDay.toISOString())
+                .lte('created_at', endOfDay.toISOString());
+
+            if (ordersRegisteredError) {
+                console.error('Error fetching registered orders:', ordersRegisteredError);
+            }
+
+            // Solo calcular montos monetarios si el usuario es administrador
             let totalSales = 0;
             let salesRegisteredToday = 0;
 
-            // Solo obtener datos de ventas si el usuario es administrador
             if (isAdmin) {
-                // Obtener pedidos que se entregarán hoy (basado en delivery_date)
-                const today = new Date();
-                const todayString = today.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-
-                const { data: ordersDataResult, error: ordersError } = await supabase
-                    .from('orders')
-                    .select('id, total_amount, delivery_date')
-                    .eq('delivery_date', todayString);
-
-                if (ordersError) {
-                    console.error('Error fetching orders:', ordersError);
-                } else {
-                    ordersData = ordersDataResult;
-                }
-
-                // Obtener pedidos registrados hoy (basado en created_at)
-                const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
-
-                const { data: ordersRegisteredDataResult, error: ordersRegisteredError } = await supabase
-                    .from('orders')
-                    .select('id, total_amount, created_at')
-                    .gte('created_at', startOfDay.toISOString())
-                    .lte('created_at', endOfDay.toISOString());
-
-                if (ordersRegisteredError) {
-                    console.error('Error fetching registered orders:', ordersRegisteredError);
-                } else {
-                    ordersRegisteredData = ordersRegisteredDataResult;
-                }
-
                 // Calcular total de ventas de pedidos que se entregarán hoy
                 totalSales = ordersData?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0;
 

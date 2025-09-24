@@ -1,6 +1,7 @@
 import { Route, Product } from '@/types/routeNotebook';
 import PartialTotalsNotebookTableLoading from './PartialTotalsNotebookTableLoading';
 import { getCategoryColors } from '@/utils/categoryColors';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PartialTotalsNotebookTableProps {
     loading: boolean;
@@ -25,6 +26,8 @@ export default function PartialTotalsNotebookTable({
     getTotalForCategory,
     getGrandTotal
 }: PartialTotalsNotebookTableProps) {
+    const { isAdmin } = useAuth();
+
     if (loading) {
         return <PartialTotalsNotebookTableLoading />;
     }
@@ -100,7 +103,9 @@ export default function PartialTotalsNotebookTable({
                                     <td className="border border-gray-300 px-3 py-2 text-black font-medium text-center">
                                         <div className="flex flex-col">
                                             <span className="font-bold">{routeTotal.quantity}</span>
-                                            <span className="text-xs">${routeTotal.amount.toFixed(2)}</span>
+                                            {isAdmin && (
+                                                <span className="text-xs">${routeTotal.amount.toFixed(2)}</span>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -123,7 +128,9 @@ export default function PartialTotalsNotebookTable({
                             <td className="border border-gray-300 px-3 py-2 text-black font-bold text-center">
                                 <div className="flex flex-col">
                                     <span className="font-bold">{grandTotal.quantity}</span>
-                                    <span className="text-xs">${grandTotal.amount.toFixed(2)}</span>
+                                    {isAdmin && (
+                                        <span className="text-xs">${grandTotal.amount.toFixed(2)}</span>
+                                    )}
                                 </div>
                             </td>
                         </tr>
@@ -147,10 +154,12 @@ export default function PartialTotalsNotebookTable({
                         <p className="text-sm text-gray-600">Cantidad Total</p>
                         <p className="text-2xl font-bold text-purple-600">{grandTotal.quantity}</p>
                     </div>
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                        <p className="text-sm text-gray-600">Monto Total</p>
-                        <p className="text-2xl font-bold text-purple-600">${grandTotal.amount.toFixed(2)}</p>
-                    </div>
+                    {isAdmin && (
+                        <div className="bg-white rounded-lg p-4 border border-gray-200">
+                            <p className="text-sm text-gray-600">Monto Total</p>
+                            <p className="text-2xl font-bold text-purple-600">${grandTotal.amount.toFixed(2)}</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
