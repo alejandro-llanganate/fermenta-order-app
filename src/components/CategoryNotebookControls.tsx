@@ -1,5 +1,6 @@
 import { Printer } from 'lucide-react';
 import { ProductCategory } from '@/types/routeNotebook';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CategoryNotebookControlsProps {
     selectedDate: Date;
@@ -28,6 +29,8 @@ export default function CategoryNotebookControls({
     isGeneratingPDF,
     setShowPreview
 }: CategoryNotebookControlsProps) {
+    const { isAdmin } = useAuth();
+
     return (
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -84,9 +87,11 @@ export default function CategoryNotebookControls({
                         <p className="text-sm text-gray-600">
                             {orders.length} pedidos encontrados
                         </p>
-                        <p className="text-lg font-semibold text-green-600">
-                            Total: ${orders.reduce((sum, order) => sum + order.totalAmount, 0).toFixed(2)}
-                        </p>
+                        {isAdmin && (
+                            <p className="text-lg font-semibold text-green-600">
+                                Total: ${orders.reduce((sum, order) => sum + order.totalAmount, 0).toFixed(2)}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

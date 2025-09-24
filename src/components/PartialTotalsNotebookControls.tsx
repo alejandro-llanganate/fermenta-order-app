@@ -2,6 +2,7 @@ import { Calendar, Eye, Download } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Route, Order } from '@/types/routeNotebook';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PartialTotalsNotebookControlsProps {
     selectedDate: Date;
@@ -26,6 +27,8 @@ export default function PartialTotalsNotebookControls({
     generatePDF,
     setShowPreview
 }: PartialTotalsNotebookControlsProps) {
+    const { isAdmin } = useAuth();
+
     const totalOrders = orders.length;
     const totalRoutes = routes.length;
     const totalQuantity = orders.reduce((sum, order) => {
@@ -74,10 +77,12 @@ export default function PartialTotalsNotebookControls({
                         <p className="text-sm text-gray-600">Cantidad Total</p>
                         <p className="text-lg font-bold text-purple-600">{totalQuantity}</p>
                     </div>
-                    <div className="text-center">
-                        <p className="text-sm text-gray-600">Monto Total</p>
-                        <p className="text-lg font-bold text-purple-600">${totalAmount.toFixed(2)}</p>
-                    </div>
+                    {isAdmin && (
+                        <div className="text-center">
+                            <p className="text-sm text-gray-600">Monto Total</p>
+                            <p className="text-lg font-bold text-purple-600">${totalAmount.toFixed(2)}</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Action Buttons */}
