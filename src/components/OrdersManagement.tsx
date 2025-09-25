@@ -1060,7 +1060,15 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
                 if (error) throw error;
 
-                await fetchData();
+                // Actualizar la lista de pedidos manteniendo los filtros actuales
+                if (searchTerm) {
+                    // Si hay búsqueda activa, recargar todos los pedidos para búsqueda
+                    await fetchAllOrdersForSearch();
+                } else {
+                    // Si no hay búsqueda, usar la paginación normal con filtros actuales
+                    await fetchOrdersWithPagination(currentPage, itemsPerPage, true, true);
+                }
+
                 showSuccess('Pedido eliminado', 'El pedido ha sido eliminado exitosamente.');
             } catch (error) {
                 handleError(error, 'eliminar el pedido');
