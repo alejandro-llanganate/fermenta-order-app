@@ -16,7 +16,8 @@ import {
     Package,
     User,
     CreditCard,
-    FileText
+    FileText,
+    RefreshCw
 } from 'lucide-react';
 import { Order, CreateOrderData, PaymentMethod, OrderItem } from '@/types/order';
 import { Product } from '@/types/product';
@@ -614,9 +615,32 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         setTempSearchTerm('');
         setSearchTerm('');
         setCurrentPage(1);
-
+        
         // Recargar pedidos sin filtros de búsqueda
         await fetchOrdersWithPagination(1, itemsPerPage, true, true);
+    };
+
+    // Función para refrescar datos manteniendo filtros actuales
+    const handleRefresh = async () => {
+        try {
+            if (searchTerm) {
+                // Si hay búsqueda activa, recargar todos los pedidos para búsqueda
+                await fetchAllOrdersForSearch();
+            } else {
+                // Si no hay búsqueda, usar la paginación normal con filtros actuales
+                await fetchOrdersWithPagination(currentPage, itemsPerPage, true, true);
+            }
+            
+            showSuccess('Datos actualizados', 'La tabla se ha actualizado correctamente.');
+        } catch (error) {
+            console.error('Error refreshing data:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al actualizar',
+                text: 'No se pudieron actualizar los datos. Inténtalo de nuevo.',
+                confirmButtonColor: '#3085d6'
+            });
+        }
     };
 
     // Función para agregar producto
@@ -1776,6 +1800,14 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             >
                                 <Plus className="h-4 w-4" />
                                 <span>Nuevo pedido</span>
+                            </button>
+                            <button
+                                onClick={handleRefresh}
+                                className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                                title="Actualizar datos de la tabla"
+                            >
+                                <RefreshCw className="h-4 w-4" />
+                                <span>Refrescar</span>
                             </button>
                             <button
                                 onClick={() => setShowRoutePreviewModal(true)}
