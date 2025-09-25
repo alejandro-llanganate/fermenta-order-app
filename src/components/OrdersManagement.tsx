@@ -542,6 +542,62 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         return selectedItems.reduce((sum, item) => sum + item.totalPrice, 0);
     };
 
+    // Función para cargar todos los pedidos para búsqueda
+    const fetchAllOrdersForSearch = async () => {
+        try {
+            setLoading(true);
+
+            // Construir query base sin paginación
+            let query = supabase
+                .from('orders_summary')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            // Aplicar filtros de ruta y fecha si existen
+            if (routeFilter) {
+                query = query.eq('route_id', routeFilter);
+            }
+
+            if (dateFilterValue) {
+                const dateStr = dateFilterValue.toISOString().split('T')[0];
+                if (dateFilterType === 'registration') {
+                    query = query.eq('order_date', dateStr);
+                } else {
+                    query = query.eq('delivery_date', dateStr);
+                }
+            }
+
+            const { data: ordersData, error: ordersError } = await query;
+
+            if (ordersError) throw ordersError;
+
+            // Transform orders data to match our interface
+            const transformedOrders = (ordersData || []).map(order => ({
+                ...order,
+                orderNumber: order.order_number,
+                clientId: order.client_id,
+                clientName: order.client_name,
+                routeName: order.route_name,
+                routeId: order.route_id,
+                orderDate: parseDateFromDB(order.order_date),
+                deliveryDate: order.delivery_date ? parseDateFromDB(order.delivery_date) : null,
+                totalAmount: parseFloat(order.total_amount) || 0,
+                paymentMethod: order.payment_method || 'Efectivo',
+                totalItems: order.total_items || 0,
+                productsSummary: order.products_summary || '',
+                status: order.status || 'pending'
+            }));
+
+            setOrders(transformedOrders);
+            setTotalOrders(transformedOrders.length);
+
+        } catch (error) {
+            console.error('Error fetching orders for search:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Función para manejar la búsqueda manual
     const handleSearch = async () => {
         setSearchTerm(tempSearchTerm);
@@ -549,7 +605,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
         // Si hay un término de búsqueda, cargar todos los pedidos para filtrado local
         if (tempSearchTerm.trim()) {
-            await fetchOrdersWithPagination(1, itemsPerPage, true, false);
+            await fetchAllOrdersForSearch();
         }
     };
 
@@ -1540,25 +1596,25 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         if (searchTerm) {
             filtered = filtered.filter(order => {
                 const searchTermLower = searchTerm.toLowerCase();
-                
+
                 // Verificar número de pedido de manera segura
-                const orderNumberMatch = order.orderNumber && 
+                const orderNumberMatch = order.orderNumber &&
                     order.orderNumber.toLowerCase().includes(searchTermLower);
-                
+
                 // Verificar nombre del cliente de manera segura
-                const clientNameMatch = order.clientName && 
+                const clientNameMatch = order.clientName &&
                     order.clientName.toLowerCase().includes(searchTermLower);
-                
+
                 // Verificar estado de manera segura
-                const statusMatch = order.status && 
+                const statusMatch = order.status &&
                     order.status.toLowerCase().includes(searchTermLower);
-                
+
                 // Verificar nombre de ruta de manera segura
-                const routeNameMatch = order.routeName && 
+                const routeNameMatch = order.routeName &&
                     order.routeName.toLowerCase().includes(searchTermLower);
-                
+
                 // Verificar identificador de ruta de manera segura
-                const routeIdentifierMatch = order.routeId && 
+                const routeIdentifierMatch = order.routeId &&
                     routes.find(route => route.id === order.routeId)?.identificador &&
                     routes.find(route => route.id === order.routeId)?.identificador.toLowerCase().includes(searchTermLower);
 
