@@ -114,14 +114,18 @@ export function generateSmartAbbreviation(
         if (lowerName.includes('seña')) return 'SEÑA';
         if (lowerName.includes('x14')) return 'X14';
         
-        // Naranja - Agregar prefijo N para distinguir de chocolate
+        // Naranja - Mostrar N + parte final (ej: NX12)
         if (lowerName.includes('pastelnaranj') || lowerName.includes('naranja') || lowerName.includes('orange')) {
-            // Si ya tiene N al inicio, no agregar otra
+            // Si ya empieza con N, no cambiar
             if (name.startsWith('N')) {
                 return name;
             }
-            // Agregar solo N al inicio del nombre (sin espacio)
-            return 'N' + name;
+            // Extraer solo la parte final (ej: X12) y agregar N
+            if (name.includes('X12')) return 'NX12';
+            if (name.includes('X14')) return 'NX14';
+            if (name.includes('X10')) return 'NX10';
+            // Para otros casos, cambiar primera letra por N
+            return 'N' + name.substring(1);
         }
         if (lowerName.includes('x10')) return 'X10';
         if (lowerName.includes('x12')) return 'X12';
