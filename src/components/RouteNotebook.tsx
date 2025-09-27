@@ -263,6 +263,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         orderDate: new Date(order.order_date),
                         status: order.status,
                         totalAmount: parseFloat(order.total_amount) || 0,
+                        shippingSurcharge: parseFloat(order.shipping_surcharge) || 0,
                         items: items
                     };
 

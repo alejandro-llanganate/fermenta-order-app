@@ -28,6 +28,7 @@ export interface Order {
   deliveryDate?: Date;
   status: 'pending' | 'ready' | 'delivered' | 'cancelled';
   totalAmount: number;
+  shippingSurcharge: number;
   paymentMethod: PaymentMethod;
   notes?: string;
   items?: OrderItem[];
@@ -45,6 +46,7 @@ export interface CreateOrderData {
   deliveryDate?: Date;
   status?: 'pending' | 'ready' | 'delivered' | 'cancelled';
   totalAmount: number;
+  shippingSurcharge: number;
   paymentMethod: PaymentMethod;
   notes?: string;
 }
@@ -57,6 +59,7 @@ export interface UpdateOrderData {
   deliveryDate?: Date;
   status?: 'pending' | 'ready' | 'delivered' | 'cancelled';
   totalAmount?: number;
+  shippingSurcharge?: number;
   paymentMethod?: PaymentMethod;
   notes?: string;
 }

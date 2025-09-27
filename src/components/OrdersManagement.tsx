@@ -91,6 +91,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const [orderDate, setOrderDate] = useState(new Date());
     const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Efectivo');
+    const [shippingSurcharge, setShippingSurcharge] = useState<number>(1.5);
     const [notes, setNotes] = useState('');
     const [selectedItems, setSelectedItems] = useState<Array<{
         product: Product;
@@ -372,6 +373,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 orderDate: parseDateFromDB(order.order_date),
                 deliveryDate: order.delivery_date ? parseDateFromDB(order.delivery_date) : null,
                 totalAmount: parseFloat(order.total_amount) || 0,
+                shippingSurcharge: parseFloat(order.shipping_surcharge) || 0,
                 paymentMethod: order.payment_method || 'Efectivo',
                 totalItems: order.total_items || 0,
                 productsSummary: order.products_summary || '',
@@ -543,6 +545,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         return selectedItems.reduce((sum, item) => sum + item.totalPrice, 0);
     };
 
+    const calculateTotalWithShipping = () => {
+        return calculateSubtotal() + shippingSurcharge;
+    };
+
     // Función para cargar todos los pedidos para búsqueda
     const fetchAllOrdersForSearch = async () => {
         try {
@@ -583,6 +589,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 orderDate: parseDateFromDB(order.order_date),
                 deliveryDate: order.delivery_date ? parseDateFromDB(order.delivery_date) : null,
                 totalAmount: parseFloat(order.total_amount) || 0,
+                shippingSurcharge: parseFloat(order.shipping_surcharge) || 0,
                 paymentMethod: order.payment_method || 'Efectivo',
                 totalItems: order.total_items || 0,
                 productsSummary: order.products_summary || '',
@@ -615,7 +622,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         setTempSearchTerm('');
         setSearchTerm('');
         setCurrentPage(1);
-        
+
         // Recargar pedidos sin filtros de búsqueda
         await fetchOrdersWithPagination(1, itemsPerPage, true, true);
     };
@@ -630,7 +637,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 // Si no hay búsqueda, usar la paginación normal con filtros actuales
                 await fetchOrdersWithPagination(currentPage, itemsPerPage, true, true);
             }
-            
+
             showSuccess('Datos actualizados', 'La tabla se ha actualizado correctamente.');
         } catch (error) {
             console.error('Error refreshing data:', error);
@@ -806,6 +813,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     <p><strong>Fecha:</strong> ${orderDate.toLocaleDateString('es-ES')}</p>
                     ${deliveryDate ? `<p><strong>Entrega:</strong> ${deliveryDate.toLocaleDateString('es-ES')}</p>` : ''}
                     <p><strong>Método de pago:</strong> ${paymentMethod}</p>
+                    <p><strong>Recargo de envío:</strong> $${shippingSurcharge.toFixed(2)}</p>
                     ${notes ? `<p><strong>Notas:</strong> ${notes}</p>` : ''}
                 </div>
                 
@@ -822,9 +830,17 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 </div>
                 
                 <div class="border-t pt-2">
-                    <div class="flex justify-between font-bold text-lg">
-                        <span>Total:</span>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Subtotal:</span>
                         <span>$${selectedItems.some(item => item.usesSpecialPrice) ? subtotal.toString() : subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Recargo de envío:</span>
+                        <span>$${shippingSurcharge.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-lg border-t pt-1">
+                        <span>Total:</span>
+                        <span>$${calculateTotalWithShipping().toFixed(2)}</span>
                     </div>
                 </div>
             </div>
@@ -854,7 +870,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             route_id: selectedRouteForOrder?.id,
                             order_date: formatDateForDB(orderDate),
                             delivery_date: deliveryDate ? formatDateForDB(deliveryDate) : null,
-                            total_amount: subtotal,
+                            total_amount: calculateTotalWithShipping(),
+                            shipping_surcharge: shippingSurcharge,
                             payment_method: paymentMethod,
                             notes: notes
                         })
@@ -902,7 +919,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             order_date: formatDateForDB(orderDate),
                             delivery_date: deliveryDate ? formatDateForDB(deliveryDate) : null,
                             status: 'pending',
-                            total_amount: subtotal,
+                            total_amount: calculateTotalWithShipping(),
+                            shipping_surcharge: shippingSurcharge,
                             payment_method: paymentMethod,
                             notes: notes
                         }])
@@ -956,6 +974,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         setOrderDate(new Date());
         setDeliveryDate(null);
         setPaymentMethod('Efectivo');
+        setShippingSurcharge(1.5);
         setNotes('');
         setSelectedItems([]);
         setProductSearchTerm('');
@@ -991,6 +1010,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         setOrderDate(new Date(order.orderDate));
         setDeliveryDate(order.deliveryDate ? new Date(order.deliveryDate) : null);
         setPaymentMethod(order.paymentMethod);
+        setShippingSurcharge(order.shippingSurcharge || 0);
         setNotes(order.notes || '');
 
         // Cargar los items del pedido
@@ -2438,6 +2458,30 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Recargo de Envío *
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="1.5"
+                                                max="5.0"
+                                                step="0.1"
+                                                value={shippingSurcharge}
+                                                onChange={(e) => {
+                                                    const value = parseFloat(e.target.value);
+                                                    if (value >= 1.5 && value <= 5.0) {
+                                                        setShippingSurcharge(value);
+                                                    }
+                                                }}
+                                                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 text-sm sm:text-base"
+                                                placeholder="1.5"
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Mínimo: $1.5, Máximo: $5.0
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Notas Adicionales
                                             </label>
                                             <textarea
@@ -2558,10 +2602,18 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                 ))}
                                             </div>
 
-                                            <div className="p-3 sm:p-4 bg-orange-50 rounded-lg">
-                                                <div className="flex justify-between items-center">
+                                            <div className="p-3 sm:p-4 bg-orange-50 rounded-lg space-y-2">
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className="text-gray-700">Subtotal:</span>
+                                                    <span className="text-gray-900">${selectedItems.some(item => item.usesSpecialPrice) ? calculateSubtotal().toString() : calculateSubtotal().toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className="text-gray-700">Recargo de envío:</span>
+                                                    <span className="text-gray-900">${shippingSurcharge.toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center border-t pt-2">
                                                     <span className="text-base sm:text-lg font-semibold text-gray-900">Total:</span>
-                                                    <span className="text-lg sm:text-xl font-bold text-orange-600">${selectedItems.some(item => item.usesSpecialPrice) ? calculateSubtotal().toString() : calculateSubtotal().toFixed(2)}</span>
+                                                    <span className="text-lg sm:text-xl font-bold text-orange-600">${calculateTotalWithShipping().toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         </div>

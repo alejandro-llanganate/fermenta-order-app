@@ -42,6 +42,7 @@ export interface Order {
     deliveryDate?: Date;
     status: string;
     totalAmount: number;
+    shippingSurcharge: number;
     notes?: string;
     paymentMethod?: string;
     items: OrderItem[];

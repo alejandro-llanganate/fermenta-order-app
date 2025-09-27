@@ -148,6 +148,7 @@ export default function PartialTotalsNotebook({ onBack }: PartialTotalsNotebookP
                             deliveryDate: order.delivery_date,
                             status: order.status,
                             totalAmount: order.total_amount,
+                            shippingSurcharge: order.shipping_surcharge || 0,
                             notes: order.notes,
                             paymentMethod: order.payment_method,
                             items: items,

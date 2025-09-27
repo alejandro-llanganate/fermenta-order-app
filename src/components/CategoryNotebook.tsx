@@ -179,6 +179,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                         orderDate: new Date(order.order_date),
                         status: order.status,
                         totalAmount: parseFloat(order.total_amount) || 0,
+                        shippingSurcharge: parseFloat(order.shipping_surcharge) || 0,
                         items: items
                     };
 
@@ -434,6 +435,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                     delivery_date: selectedDate.toISOString().split('T')[0],
                     status: 'pending',
                     total_amount: quantity * product.priceRegular,
+                    shipping_surcharge: 1.5, // Valor por defecto para nuevos pedidos
                     notes: 'Orden creada desde cuaderno por categorías',
                     payment_method: 'Efectivo'
                 })
