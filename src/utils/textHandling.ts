@@ -117,11 +117,11 @@ export function generateSmartAbbreviation(
         // Naranja - Agregar prefijo N para distinguir de chocolate
         if (lowerName.includes('pastelnaranj') || lowerName.includes('naranja') || lowerName.includes('orange')) {
             // Si ya tiene N al inicio, no agregar otra
-            if (name.startsWith('N ')) {
+            if (name.startsWith('N')) {
                 return name;
             }
-            // Agregar N al inicio del nombre
-            return 'N ' + name;
+            // Agregar solo N al inicio del nombre (sin espacio)
+            return 'N' + name;
         }
         if (lowerName.includes('x10')) return 'X10';
         if (lowerName.includes('x12')) return 'X12';
