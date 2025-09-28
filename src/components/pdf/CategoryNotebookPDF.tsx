@@ -97,6 +97,16 @@ const styles = StyleSheet.create({
         flex: 1,
         color: '#000000',
     },
+    tableCellHeaderNaranja: {
+        padding: 3, // Aumentado para A4
+        fontSize: 10, // RF-23: Contenido general 10pt
+        fontWeight: 'bold',
+        textAlign: 'center',
+        borderRightWidth: 1,
+        borderRightColor: '#d1d5db',
+        flex: 1,
+        color: '#dc2626', // Rojo para naranja
+    },
     clientCell: {
         padding: 3, // Aumentado para A4
         fontSize: 10, // RF-23: Contenido general 10pt
@@ -267,6 +277,12 @@ const styles = StyleSheet.create({
         fontSize: 8,
         fontWeight: 'bold',
         color: '#92400e',
+        textAlign: 'center',
+    },
+    finalTotalProductHeaderNaranja: {
+        fontSize: 8,
+        fontWeight: 'bold',
+        color: '#dc2626', // Rojo más intenso para naranja
         textAlign: 'center',
     },
     finalTotalDataCell: {
@@ -623,7 +639,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
 
                                         return (
                                             <View key={product.id} style={styles.finalTotalHeaderCell}>
-                                                <Text style={styles.finalTotalProductHeader}>
+                                                <Text style={styles.finalTotalProductHeaderNaranja}>
                                                     {textOptimization.displayText}
                                                 </Text>
                                             </View>
@@ -759,8 +775,12 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                                                 { maxLength: 12, maxWords: 2 }
                                             );
 
+                                            // Determinar si es un producto de naranja
+                                            const productName = product.name.toLowerCase();
+                                            const isNaranja = productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange');
+
                                             return (
-                                                <Text key={product.id} style={dynamicStyles.tableCellHeader}>
+                                                <Text key={product.id} style={isNaranja ? styles.tableCellHeaderNaranja : dynamicStyles.tableCellHeader}>
                                                     {textOptimization.displayText}
                                                 </Text>
                                             );

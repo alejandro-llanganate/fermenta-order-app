@@ -114,23 +114,26 @@ export function generateSmartAbbreviation(
         if (lowerName.includes('seña')) return 'SEÑA';
         if (lowerName.includes('x14')) return 'X14';
         
-        // Naranja - Mostrar N + parte final (ej: NX12)
+        // Naranja - Todos los productos de naranja empiezan con "N"
         if (lowerName.includes('pastelnaranj') || lowerName.includes('naranja') || lowerName.includes('orange')) {
-            // Si ya empieza con N, no cambiar
-            if (name.startsWith('N')) {
-                return name;
-            }
-            // Extraer solo la parte final (ej: X12) y agregar N
-            if (name.includes('X12')) return 'NX12';
-            if (name.includes('X14')) return 'NX14';
-            if (name.includes('X10')) return 'NX10';
-            // Para otros casos, cambiar primera letra por N
-            return 'N' + name.substring(1);
+            // Para productos básicos de naranja, siempre empezar con N
+            if (lowerName.includes('x10')) return 'N X10';
+            if (lowerName.includes('x12')) return 'N X12';
+            if (lowerName.includes('x14')) return 'N X14';
+            if (lowerName.includes('sn/azucar')) return 'N S/AZ';
+            if (lowerName.includes('deco')) return 'N DECO';
+            if (lowerName.includes('s/c')) return 'N S/C';
+            if (lowerName.includes('s/cober')) return 'N S/COB';
+            if (lowerName.includes('seña')) return 'N SEÑA';
+            // Para cualquier otro producto de naranja, solo mostrar N
+            return 'N';
         }
-        if (lowerName.includes('x10')) return 'X10';
-        if (lowerName.includes('x12')) return 'X12';
-        if (lowerName.includes('x14')) return 'X14';
-        if (lowerName.includes('sn/azucar')) return 'SN/AZUCAR';
+        
+        // Detectar productos de naranja por patrones específicos que pueden no tener "naranja" en el nombre
+        // Estos son productos que aparecen en la sección de naranja pero no tienen la palabra "naranja" en el nombre
+        if (lowerName.includes('x12') && !lowerName.includes('choco') && !lowerName.includes('chocolate')) return 'N X12';
+        if (lowerName.includes('x14') && !lowerName.includes('choco') && !lowerName.includes('chocolate')) return 'N X14';
+        if (lowerName.includes('s/c') && !lowerName.includes('choco') && !lowerName.includes('chocolate')) return 'N S/C';
     }
     
     // Abreviaciones generales
