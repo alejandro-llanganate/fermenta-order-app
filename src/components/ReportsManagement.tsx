@@ -276,20 +276,20 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
         });
     };
 
-    return (
+        return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Header mejorado */}
             <div className="bg-white shadow-lg border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-20">
                         <div className="flex items-center space-x-6">
-                            <button
+                                <button
                                 onClick={onBack}
                                 className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                <ArrowLeft className="h-5 w-5 mr-2" />
+                                >
+                                    <ArrowLeft className="h-5 w-5 mr-2" />
                                 Volver al dashboard
-                            </button>
+                                </button>
                             <div className="h-8 w-px bg-gray-300"></div>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">Centro de Reportes</h1>
@@ -298,13 +298,13 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                         </div>
                         <div className="flex items-center space-x-4">
                             {/* Filtros */}
-                            <button
+                                <button
                                 onClick={() => setShowFilters(!showFilters)}
                                 className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
+                                >
                                 <Filter className="h-4 w-4 mr-2" />
                                 Filtros
-                            </button>
+                                </button>
 
                             {/* Modo de vista */}
                             <div className="flex items-center bg-gray-100 rounded-lg p-1">
@@ -341,10 +341,10 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <option value="weekly">📊 Semanal</option>
                                 <option value="monthly">📈 Mensual</option>
                             </select>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
             {/* Panel de filtros */}
             {showFilters && (
@@ -400,7 +400,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                 </div>
             )}
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Dashboard de métricas principales */}
                 {reportData && (
                     <div className="mb-8">
@@ -414,7 +414,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <p className="text-green-200 text-sm">
                                             {reportData.metrics?.growthRate > 0 ? '+' : ''}{reportData.metrics?.growthRate?.toFixed(1) || '0'}% vs período anterior
                                         </p>
-                                    </div>
+                                        </div>
                                     <TrendingUp className="h-12 w-12 text-green-200" />
                                 </div>
                             </div>
@@ -426,11 +426,11 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <p className="text-3xl font-bold">{reportData.metrics?.totalOrders || 0}</p>
                                         <p className="text-blue-200 text-sm">
                                             {reportData.metrics?.completedOrders || 0} completados
-                                        </p>
-                                    </div>
+                                            </p>
+                                        </div>
                                     <FileText className="h-12 w-12 text-blue-200" />
+                                    </div>
                                 </div>
-                            </div>
 
                             <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white">
                                 <div className="flex items-center justify-between">
@@ -440,7 +440,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <p className="text-purple-200 text-sm">
                                             por pedido
                                         </p>
-                                    </div>
+                                        </div>
                                     <BarChart3 className="h-12 w-12 text-purple-200" />
                                 </div>
                             </div>
@@ -452,11 +452,11 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                         <p className="text-3xl font-bold">{reportData.metrics?.activeClients || 0}</p>
                                         <p className="text-orange-200 text-sm">
                                             {reportData.metrics?.activeRoutes || 0} rutas
-                                        </p>
-                                    </div>
+                                            </p>
+                                        </div>
                                     <Users className="h-12 w-12 text-orange-200" />
+                                    </div>
                                 </div>
-                            </div>
                         </div>
                     </div>
                 )}
@@ -500,7 +500,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             <div key={index} className="flex items-center text-xs text-gray-500">
                                                 <div className="w-2 h-2 bg-orange-400 rounded-full mr-2"></div>
                                                 {metric}
-                                            </div>
+                                        </div>
                                         ))}
                                     </div>
 
@@ -512,7 +512,7 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                             </div>
                         );
                     })}
-                </div>
+                                </div>
 
                 {loading && (
                     <div className="flex justify-center items-center py-12">
@@ -523,17 +523,17 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
 
                 {!loading && selectedReportType === 'sales' && reportData && (
                     <div className="mt-8 space-y-6">
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
+                                <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-xl font-semibold text-gray-900 mb-4">Resumen de Ventas</h3>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div className="bg-blue-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-blue-600">{reportData.orders.length}</div>
                                     <div className="text-sm text-blue-800">Total Pedidos</div>
-                                </div>
+                                        </div>
                                 <div className="bg-green-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-green-600">{reportData.clients.length}</div>
                                     <div className="text-sm text-green-800">Clientes Activos</div>
-                                </div>
+                                        </div>
                                 <div className="bg-purple-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-purple-600">{reportData.products.length}</div>
                                     <div className="text-sm text-purple-800">Productos</div>
@@ -541,27 +541,27 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-orange-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-orange-600">{reportData.routes.length}</div>
                                     <div className="text-sm text-orange-800">Rutas</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
                         {/* Detalles de Pedidos */}
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
+                            <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-xl font-semibold text-gray-900 mb-4">Detalles de Pedidos</h3>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 ID Pedido
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Cliente
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Ruta
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Fecha
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -569,22 +569,22 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Total
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
                                         {reportData.orders.slice(0, 10).map((order: any, index: number) => (
                                             <tr key={index} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                     {order.id}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     Cliente #{order.client_id}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     Ruta #{order.route_id}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {new Date(order.order_date).toLocaleDateString()}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -599,23 +599,23 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     ${order.total_amount || '0.00'}
-                                                </td>
-                                            </tr>
+                                                    </td>
+                                                </tr>
                                         ))}
-                                    </tbody>
-                                </table>
+                                        </tbody>
+                                    </table>
                                 {reportData.orders.length > 10 && (
                                     <div className="mt-4 text-center text-sm text-gray-500">
                                         Mostrando 10 de {reportData.orders.length} pedidos
                                     </div>
                                 )}
+                                </div>
                             </div>
-                        </div>
 
                         {/* Análisis por Ruta */}
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
+                            <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-xl font-semibold text-gray-900 mb-4">Ventas por Ruta</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {reportData.routes.map((route: any, index: number) => {
                                     const routeOrders = reportData.orders.filter((order: any) => order.route_id === route.id);
                                     const totalSales = routeOrders.reduce((sum: number, order: any) => sum + (parseFloat(order.total_amount) || 0), 0);
@@ -628,29 +628,29 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                                 <div className="flex justify-between">
                                                     <span className="text-sm text-gray-600">Pedidos:</span>
                                                     <span className="font-semibold text-blue-600">{routeOrders.length}</span>
-                                                </div>
+                                            </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-sm text-gray-600">Ventas:</span>
                                                     <span className="font-semibold text-green-600">${totalSales.toFixed(2)}</span>
-                                                </div>
+                                            </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-sm text-gray-600">Promedio:</span>
                                                     <span className="font-semibold text-purple-600">
                                                         ${routeOrders.length > 0 ? (totalSales / routeOrders.length).toFixed(2) : '0.00'}
                                                     </span>
-                                                </div>
-                                            </div>
                                         </div>
+                                </div>
+                            </div>
                                     );
                                 })}
+                                </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
                 )}
 
                 {!loading && selectedReportType === 'routes' && reportData && (
                     <div className="mt-8 space-y-6">
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
+                                <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-xl font-semibold text-gray-900 mb-4">Análisis por Rutas</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {reportData.routes.map((route: any, index: number) => {
@@ -667,15 +667,15 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                                 <div className="flex justify-between">
                                                     <span className="text-sm text-gray-600">Pedidos:</span>
                                                     <span className="font-semibold text-blue-600">{routeOrders.length}</span>
-                                                </div>
+                                </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-sm text-gray-600">Completados:</span>
                                                     <span className="font-semibold text-green-600">{completedOrders}</span>
-                                                </div>
+                            </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-sm text-gray-600">Clientes:</span>
                                                     <span className="font-semibold text-purple-600">{routeClients.length}</span>
-                                                </div>
+                            </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-sm text-gray-600">Ventas:</span>
                                                     <span className="font-semibold text-orange-600">${totalSales.toFixed(2)}</span>
@@ -687,14 +687,14 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                                     </span>
                                                 </div>
                                             </div>
-                                        </div>
+                                    </div>
                                     );
                                 })}
+                                </div>
                             </div>
-                        </div>
 
                         {/* Top Clientes por Ruta */}
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
+                                <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-xl font-semibold text-gray-900 mb-4">Top Clientes por Ruta</h3>
                             <div className="space-y-4">
                                 {reportData.routes.map((route: any, routeIndex: number) => {
@@ -727,103 +727,103 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                                         <div className="flex space-x-4 text-sm">
                                                             <span className="text-blue-600">{client.pedidos} pedidos</span>
                                                             <span className="text-green-600">${client.total.toFixed(2)}</span>
-                                                        </div>
-                                                    </div>
+                                        </div>
+                                        </div>
                                                 ))}
                                                 {topClients.length === 0 && (
                                                     <div className="text-sm text-gray-500 text-center py-2">
                                                         No hay pedidos para esta ruta
-                                                    </div>
+                                    </div>
                                                 )}
-                                            </div>
+                                </div>
                                         </div>
                                     );
                                 })}
-                            </div>
-                        </div>
-                    </div>
+                                        </div>
+                                    </div>
+                                </div>
                 )}
 
                 {!loading && selectedReportType === 'clients' && reportData && (
                     <div className="mt-8 space-y-6">
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
+                                <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-xl font-semibold text-gray-900 mb-4">Análisis de Clientes</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div className="bg-blue-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-blue-600">{reportData.metrics?.activeClients || 0}</div>
                                     <div className="text-sm text-blue-800">Clientes Activos</div>
-                                </div>
+                                        </div>
                                 <div className="bg-green-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-green-600">
                                         ${reportData.clientMetrics?.reduce((sum: number, client: any) => sum + client.value, 0)?.toFixed(2) || '0.00'}
+                                        </div>
+                                    <div className="text-sm text-green-800">Total Clientes</div>
                                     </div>
-                                    <div className="text-sm text-green-800">Valor Total Clientes</div>
-                                </div>
                                 <div className="bg-purple-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-purple-600">
                                         {reportData.clientMetrics?.reduce((sum: number, client: any) => sum + client.orders, 0) || 0}
-                                    </div>
+                                </div>
                                     <div className="text-sm text-purple-800">Total Pedidos</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
                         {/* Top Clientes */}
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
+                            <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-xl font-semibold text-gray-900 mb-4">Top 10 Clientes por Valor</h3>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pedidos</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor Total</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Promedio</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frecuencia</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
                                         {reportData.topClients?.slice(0, 10).map((client: any, index: number) => (
                                             <tr key={index} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                     {client.nombre}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     {client.orders}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     ${client.value?.toFixed(2) || '0.00'}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     ${client.averageValue?.toFixed(2) || '0.00'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${client.frequency >= 5
-                                                        ? 'bg-green-100 text-green-800'
+                                                                ? 'bg-green-100 text-green-800'
                                                         : client.frequency >= 3
                                                             ? 'bg-yellow-100 text-yellow-800'
-                                                            : 'bg-red-100 text-red-800'
-                                                        }`}>
+                                                                : 'bg-red-100 text-red-800'
+                                                                }`}>
                                                         {client.frequency >= 5 ? 'Alta' : client.frequency >= 3 ? 'Media' : 'Baja'}
-                                                    </span>
-                                                </td>
-                                            </tr>
+                                                            </span>
+                                                        </td>
+                                                    </tr>
                                         ))}
-                                    </tbody>
-                                </table>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
 
                         {/* Análisis de Retención */}
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
+                                <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-xl font-semibold text-gray-900 mb-4">Análisis de Retención</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="bg-green-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-green-600">
                                         {reportData.clientMetrics?.filter((client: any) => client.frequency >= 5).length || 0}
-                                    </div>
+                                        </div>
                                     <div className="text-sm text-green-800">Clientes Frecuentes (5+ pedidos)</div>
-                                </div>
+                                        </div>
                                 <div className="bg-yellow-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-yellow-600">
                                         {reportData.clientMetrics?.filter((client: any) => client.frequency >= 3 && client.frequency < 5).length || 0}
@@ -833,17 +833,17 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-red-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-red-600">
                                         {reportData.clientMetrics?.filter((client: any) => client.frequency < 3).length || 0}
-                                    </div>
+                                        </div>
                                     <div className="text-sm text-red-800">Clientes Ocasionales (&lt;3 pedidos)</div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
+                                        </div>
                 )}
 
                 {!loading && selectedReportType === 'products' && reportData && (
                     <div className="mt-8 space-y-6">
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
+                                <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-xl font-semibold text-gray-900 mb-4">Análisis de Productos</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {Object.entries(
@@ -863,71 +863,71 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             {categoryProducts.slice(0, 3).map((product: any, index: number) => (
                                                 <div key={index} className="text-sm text-gray-700">
                                                     • {product.nombre}
-                                                </div>
+                                        </div>
                                             ))}
                                             {categoryProducts.length > 3 && (
                                                 <div className="text-sm text-gray-500">
                                                     ... y {categoryProducts.length - 3} más
-                                                </div>
-                                            )}
                                         </div>
+                                            )}
+                                    </div>
                                     </div>
                                 ))}
+                                </div>
                             </div>
-                        </div>
 
                         {/* Productos más vendidos */}
-                        <div className="bg-white p-6 rounded-lg shadow-sm border">
+                            <div className="bg-white p-6 rounded-lg shadow-sm border">
                             <h3 className="text-xl font-semibold text-gray-900 mb-4">Productos más vendidos</h3>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Producto
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Producto
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Categoría
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Precio
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Estado
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Estado
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
                                         {reportData.products.slice(0, 10).map((product: any, index: number) => (
                                             <tr key={index} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                     {product.nombre}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     Categoría #{product.category_id || 'N/A'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     ${product.price || '0.00'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${product.is_active
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
-                                                        }`}>
+                                                            ? 'bg-green-100 text-green-800'
+                                                                : 'bg-red-100 text-red-800'
+                                                            }`}>
                                                         {product.is_active ? 'Activo' : 'Inactivo'}
-                                                    </span>
-                                                </td>
-                                            </tr>
+                                                        </span>
+                                                    </td>
+                                                </tr>
                                         ))}
-                                    </tbody>
-                                </table>
+                                        </tbody>
+                                    </table>
                                 {reportData.products.length > 10 && (
                                     <div className="mt-4 text-center text-sm text-gray-500">
                                         Mostrando 10 de {reportData.products.length} productos
-                                    </div>
-                                )}
-                            </div>
                         </div>
+                    )}
+                                        </div>
+                                    </div>
 
                         {/* Resumen por categorías */}
                         <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -960,11 +960,11 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                             <div className="flex justify-between">
                                                 <span className="text-sm text-gray-600">Total:</span>
                                                 <span className="font-semibold text-blue-600">{stats.total}</span>
-                                            </div>
+                                                    </div>
                                             <div className="flex justify-between">
                                                 <span className="text-sm text-gray-600">Activos:</span>
                                                 <span className="font-semibold text-green-600">{stats.activos}</span>
-                                            </div>
+                                                        </div>
                                             <div className="flex justify-between">
                                                 <span className="text-sm text-gray-600">Inactivos:</span>
                                                 <span className="font-semibold text-red-600">{stats.inactivos}</span>
@@ -974,32 +974,32 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                                 <span className="font-semibold text-purple-600">
                                                     ${stats.total > 0 ? (stats.precioPromedio / stats.total).toFixed(2) : '0.00'}
                                                 </span>
-                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
                 {!loading && selectedReportType && (
                     <div className="mt-8 flex justify-end space-x-3">
-                        <button
+                            <button
                             onClick={exportToPDF}
                             className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                        >
+                            >
                             <Download className="h-4 w-4 mr-2" />
                             Exportar PDF
-                        </button>
+                            </button>
                         <button
                             onClick={exportToExcel}
                             className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                         >
                             <Download className="h-4 w-4 mr-2" />
                             Exportar Excel
-                        </button>
-                    </div>
+                            </button>
+                        </div>
                 )}
 
                 {!loading && !selectedReportType && (
@@ -1013,18 +1013,18 @@ export default function ReportsManagement({ onBack }: ReportsManagementProps) {
                                 <div className="bg-blue-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-blue-600">📊</div>
                                     <div className="text-sm text-blue-800 mt-2">Reportes de Ventas</div>
-                                </div>
+                            </div>
                                 <div className="bg-green-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-green-600">🗺️</div>
                                     <div className="text-sm text-green-800 mt-2">Análisis por Rutas</div>
-                                </div>
+                        </div>
                                 <div className="bg-purple-50 p-4 rounded-lg">
                                     <div className="text-2xl font-bold text-purple-600">📦</div>
                                     <div className="text-sm text-purple-800 mt-2">Productos y Categorías</div>
+                    </div>
+                </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
                 )}
             </div>
 

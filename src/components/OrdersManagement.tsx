@@ -1574,30 +1574,181 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             const jsPDF = (await import('jspdf')).default;
             const html2canvas = (await import('html2canvas')).default;
 
+            // Función para convertir todos los colores modernos a hex
+            const convertAllColors = (element: HTMLElement) => {
+                const computedStyle = window.getComputedStyle(element);
+
+                // Convertir colores de texto
+                if (computedStyle.color && (computedStyle.color.includes('oklch') || computedStyle.color.includes('hsl') || computedStyle.color.includes('hwb'))) {
+                    element.style.color = '#000000';
+                }
+
+                // Convertir colores de fondo
+                if (computedStyle.backgroundColor && (computedStyle.backgroundColor.includes('oklch') || computedStyle.backgroundColor.includes('hsl') || computedStyle.backgroundColor.includes('hwb'))) {
+                    element.style.backgroundColor = '#ffffff';
+                }
+
+                // Convertir colores de borde
+                if (computedStyle.borderColor && (computedStyle.borderColor.includes('oklch') || computedStyle.borderColor.includes('hsl') || computedStyle.borderColor.includes('hwb'))) {
+                    element.style.borderColor = '#d1d5db';
+                }
+
+                // Aplicar recursivamente a todos los hijos
+                Array.from(element.children).forEach(child => {
+                    if (child instanceof HTMLElement) {
+                        convertAllColors(child);
+                    }
+                });
+            };
+
+            // Función adicional para limpiar clases CSS problemáticas
+            const cleanProblematicClasses = (element: HTMLElement) => {
+                // Remover clases que puedan causar colores oklch
+                const problematicClasses = [
+                    'text-orange-50', 'text-orange-100', 'text-orange-200', 'text-orange-300', 'text-orange-400', 'text-orange-500',
+                    'text-orange-600', 'text-orange-700', 'text-orange-800', 'text-orange-900', 'text-orange-950',
+                    'bg-orange-50', 'bg-orange-100', 'bg-orange-200', 'bg-orange-300', 'bg-orange-400', 'bg-orange-500',
+                    'bg-orange-600', 'bg-orange-700', 'bg-orange-800', 'bg-orange-900', 'bg-orange-950',
+                    'border-orange-50', 'border-orange-100', 'border-orange-200', 'border-orange-300', 'border-orange-400', 'border-orange-500',
+                    'border-orange-600', 'border-orange-700', 'border-orange-800', 'border-orange-900', 'border-orange-950'
+                ];
+
+                problematicClasses.forEach(className => {
+                    if (element.classList.contains(className)) {
+                        element.classList.remove(className);
+                    }
+                });
+
+                // Aplicar recursivamente a todos los hijos
+                Array.from(element.children).forEach(child => {
+                    if (child instanceof HTMLElement) {
+                        cleanProblematicClasses(child);
+                    }
+                });
+            };
+
+            // Aplicar conversión de colores antes de html2canvas
+            convertAllColors(exportRef.current);
+            cleanProblematicClasses(exportRef.current);
+
             const canvas = await html2canvas(exportRef.current, {
-                scale: 2,
+                scale: 0.8, // Reducir escala para que quepa en una hoja
                 useCORS: true,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                allowTaint: true,
+                foreignObjectRendering: false,
+                logging: false,
+                removeContainer: true,
+                imageTimeout: 0,
+                ignoreElements: (element) => {
+                    const htmlElement = element as HTMLElement;
+                    return element.tagName === 'IFRAME' ||
+                        element.classList.contains('ignore-pdf') ||
+                        htmlElement.style.display === 'none' ||
+                        htmlElement.style.visibility === 'hidden';
+                },
+                onclone: (clonedDoc) => {
+                    // Remover iframes
+                    const iframes = clonedDoc.querySelectorAll('iframe');
+                    iframes.forEach(iframe => iframe.remove());
+
+                    // Limpiar clases CSS problemáticas en el documento clonado
+                    const problematicClasses = [
+                        'text-orange-50', 'text-orange-100', 'text-orange-200', 'text-orange-300', 'text-orange-400', 'text-orange-500',
+                        'text-orange-600', 'text-orange-700', 'text-orange-800', 'text-orange-900', 'text-orange-950',
+                        'bg-orange-50', 'bg-orange-100', 'bg-orange-200', 'bg-orange-300', 'bg-orange-400', 'bg-orange-500',
+                        'bg-orange-600', 'bg-orange-700', 'bg-orange-800', 'bg-orange-900', 'bg-orange-950',
+                        'border-orange-50', 'border-orange-100', 'border-orange-200', 'border-orange-300', 'border-orange-400', 'border-orange-500',
+                        'border-orange-600', 'border-orange-700', 'border-orange-800', 'border-orange-900', 'border-orange-950'
+                    ];
+
+                    const allElements = clonedDoc.querySelectorAll('*');
+                    allElements.forEach((el: any) => {
+                        // Remover clases problemáticas
+                        problematicClasses.forEach(className => {
+                            if (el.classList && el.classList.contains(className)) {
+                                el.classList.remove(className);
+                            }
+                        });
+
+                        if (el.style) {
+                            // Convertir colores de texto
+                            if (el.style.color && (el.style.color.includes('oklch') || el.style.color.includes('hsl') || el.style.color.includes('hwb'))) {
+                                el.style.color = '#000000';
+                            }
+
+                            // Convertir colores de fondo
+                            if (el.style.backgroundColor && (el.style.backgroundColor.includes('oklch') || el.style.backgroundColor.includes('hsl') || el.style.backgroundColor.includes('hwb'))) {
+                                el.style.backgroundColor = '#ffffff';
+                            }
+
+                            // Convertir colores de borde
+                            if (el.style.borderColor && (el.style.borderColor.includes('oklch') || el.style.borderColor.includes('hsl') || el.style.borderColor.includes('hwb'))) {
+                                el.style.borderColor = '#d1d5db';
+                            }
+
+                            // Convertir colores de outline
+                            if (el.style.outlineColor && (el.style.outlineColor.includes('oklch') || el.style.outlineColor.includes('hsl') || el.style.outlineColor.includes('hwb'))) {
+                                el.style.outlineColor = '#d1d5db';
+                            }
+
+                            // Convertir colores de box-shadow
+                            if (el.style.boxShadow && (el.style.boxShadow.includes('oklch') || el.style.boxShadow.includes('hsl') || el.style.boxShadow.includes('hwb'))) {
+                                el.style.boxShadow = 'none';
+                            }
+                        }
+                    });
+
+                    // También convertir estilos CSS computados
+                    const styleSheets = clonedDoc.styleSheets;
+                    for (let i = 0; i < styleSheets.length; i++) {
+                        try {
+                            const sheet = styleSheets[i];
+                            if (sheet.cssRules) {
+                                for (let j = 0; j < sheet.cssRules.length; j++) {
+                                    const rule = sheet.cssRules[j] as CSSStyleRule;
+                                    if (rule.style) {
+                                        // Convertir colores en reglas CSS
+                                        if (rule.style.color && (rule.style.color.includes('oklch') || rule.style.color.includes('hsl') || rule.style.color.includes('hwb'))) {
+                                            rule.style.color = '#000000';
+                                        }
+                                        if (rule.style.backgroundColor && (rule.style.backgroundColor.includes('oklch') || rule.style.backgroundColor.includes('hsl') || rule.style.backgroundColor.includes('hwb'))) {
+                                            rule.style.backgroundColor = '#ffffff';
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            // Ignorar errores de CORS en hojas de estilo
+                        }
+                    }
+                }
             });
 
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('l', 'mm', 'a5');
+            const pdf = new jsPDF('l', 'mm', 'a4'); // Cambiar a A4 para más espacio
 
-            const imgWidth = 210;
-            const pageHeight = 148;
+            const imgWidth = 297; // Ancho A4
+            const pageHeight = 210; // Alto A4
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let heightLeft = imgHeight;
 
-            let position = 0;
+            // Si el contenido cabe en una página, usar una sola página
+            if (imgHeight <= pageHeight) {
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            } else {
+                // Si no cabe, dividir en páginas
+                let heightLeft = imgHeight;
+                let position = 0;
 
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
                 pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
                 heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
             }
 
             const routeFilterText = routeFilter ? `-Ruta-${routes.find(r => r.id === routeFilter)?.identificador}` : '';
@@ -2955,7 +3106,6 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                                 </div>
                                                                 <p className="text-sm text-gray-600">Cliente: {order.clientName}</p>
                                                                 <p className="text-sm text-gray-600">Fecha: {order.orderDate.toLocaleDateString('es-ES')}</p>
-                                                                <p className="text-sm text-gray-600">Total: ${order.totalAmount.toFixed(2)}</p>
                                                                 <div className="mt-2">
                                                                     <p className="text-sm font-medium text-gray-700">Productos:</p>
                                                                     <ul className="text-sm text-gray-600 list-disc list-inside">
@@ -3049,14 +3199,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                         </div>
 
                                         {/* Resumen */}
-                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg">
                                             <div className="text-center">
                                                 <p className="text-sm font-medium text-gray-600">Total de Pedidos</p>
                                                 <p className="text-2xl font-bold text-blue-600">{exportOrders.length}</p>
-                                            </div>
-                                            <div className="text-center">
-                                                <p className="text-sm font-medium text-gray-600">Valor Total</p>
-                                                <p className="text-2xl font-bold text-green-600">${totalAmount.toFixed(2)}</p>
                                             </div>
                                             <div className="text-center">
                                                 <p className="text-sm font-medium text-gray-600">Pedidos Pendientes</p>
