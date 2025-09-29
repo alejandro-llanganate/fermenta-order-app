@@ -641,10 +641,10 @@ export default function CategoryNotebookPreview({
                                                                     return (
                                                                         <td
                                                                             key={product.id}
-                                                                            className="bg-yellow-50 border border-yellow-300 px-1 py-1 text-center"
+                                                                            className="bg-orange-50 border border-orange-300 px-1 py-1 text-center"
                                                                             title={`${product.name}: ${total}`}
                                                                         >
-                                                                            <span className={`font-bold text-yellow-900 ${getFontSizeClass('headers')}`}>
+                                                                            <span className={`font-bold text-orange-900 ${getFontSizeClass('headers')}`}>
                                                                                 {total}
                                                                             </span>
                                                                         </td>

@@ -110,10 +110,33 @@ export default function RouteNotebookTableBody({
                                     console.log(`🔍 RouteNotebookTableBody - Renderizando primera columna: Cliente: ${client.nombre}, Producto: ${product.name}, Cantidad: ${quantity}`);
                                 }
 
+                                // Determinar si es un producto de naranja (misma lógica que tabla de totales)
+                                const productName = product.name.toLowerCase();
+                                const isNaranja = productName.includes('pastelnaranj') ||
+                                    productName.includes('naranja') ||
+                                    productName.includes('orange');
+
                                 return (
-                                    <td key={product.id} className="px-2 py-3 text-sm text-gray-900 text-center border-l border-gray-200">
+                                    <td
+                                        key={product.id}
+                                        className={`px-2 py-3 text-sm text-center border-l border-gray-200 ${isNaranja ? 'bg-orange-50' : ''}`}
+                                        style={{
+                                            // Aplicar estilos inline como en el PDF para garantizar que se vean
+                                            ...(isNaranja && {
+                                                backgroundColor: '#fed7aa !important',
+                                                color: '#ea580c !important'
+                                            })
+                                        }}
+                                    >
                                         {quantity > 0 ? (
-                                            <span className="text-black font-medium">{quantity}</span>
+                                            <span
+                                                className={`font-medium ${isNaranja ? 'text-orange-900' : 'text-black'}`}
+                                                style={{
+                                                    ...(isNaranja && { color: '#ea580c !important' })
+                                                }}
+                                            >
+                                                {quantity}
+                                            </span>
                                         ) : (
                                             <span className="text-gray-300">-</span>
                                         )}

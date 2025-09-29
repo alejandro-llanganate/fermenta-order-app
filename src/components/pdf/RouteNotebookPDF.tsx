@@ -87,6 +87,16 @@ const styles = StyleSheet.create({
         flex: 1,
         color: '#000000',
     },
+    tableCellNaranja: {
+        padding: 2, // Más reducido para columnas pequeñas
+        fontSize: 7, // Reducido de 8 a 7
+        textAlign: 'center',
+        borderRightWidth: 1,
+        borderRightColor: '#d1d5db',
+        flex: 1,
+        backgroundColor: '#fed7aa', // Fondo naranja claro
+        color: '#ea580c', // Texto naranja oscuro
+    },
     tableCellHeader: {
         padding: 2, // Más reducido para columnas pequeñas
         fontSize: 5, // Reducido de 6 a 5
@@ -106,6 +116,29 @@ const styles = StyleSheet.create({
         borderRightColor: '#d1d5db',
         flex: 1,
         color: '#000000',
+        lineHeight: 1.0, // Más compacto
+    },
+    tableCellHeaderNaranja: {
+        padding: 2, // Más reducido para columnas pequeñas
+        fontSize: 5, // Reducido de 6 a 5
+        fontWeight: 'bold',
+        textAlign: 'center',
+        borderRightWidth: 1,
+        borderRightColor: '#d1d5db',
+        flex: 1,
+        backgroundColor: '#fed7aa', // Fondo naranja claro
+        color: '#ea580c', // Texto naranja oscuro
+    },
+    tableCellHeaderNaranjaVertical: {
+        padding: 2, // Más reducido para columnas pequeñas
+        fontSize: 5, // Reducido de 6 a 5
+        fontWeight: 'bold',
+        textAlign: 'center',
+        borderRightWidth: 1,
+        borderRightColor: '#d1d5db',
+        flex: 1,
+        backgroundColor: '#fed7aa', // Fondo naranja claro
+        color: '#ea580c', // Texto naranja oscuro
         lineHeight: 1.0, // Más compacto
     },
     clientCell: {
@@ -401,6 +434,12 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                     <View style={[styles.tableRow, styles.tableHeader]}>
                                         <Text style={styles.clientCell}>&nbsp;</Text>
                                         {filteredProducts.map((product) => {
+                                            // Determinar si es un producto de naranja (misma lógica que tabla de totales)
+                                            const productName = product.name.toLowerCase();
+                                            const isNaranja = productName.includes('pastelnaranj') ||
+                                                productName.includes('naranja') ||
+                                                productName.includes('orange');
+
                                             // Encontrar la categoría del producto para obtener su color
                                             const productCategory = filteredCategories.find(cat =>
                                                 cat.products.some(p => p.id === product.id)
@@ -409,8 +448,10 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
 
                                             return (
                                                 <View key={product.id} style={[
-                                                    isVerticalText ? styles.tableCellHeaderVertical : styles.tableCellHeader,
-                                                    {
+                                                    isNaranja
+                                                        ? (isVerticalText ? styles.tableCellHeaderNaranjaVertical : styles.tableCellHeaderNaranja)
+                                                        : (isVerticalText ? styles.tableCellHeaderVertical : styles.tableCellHeader),
+                                                    !isNaranja && {
                                                         backgroundColor: categoryColors.backgroundColor,
                                                         color: categoryColors.color
                                                     }
@@ -436,8 +477,15 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                                 <Text style={styles.clientCell}>{client.nombre}</Text>
                                                 {filteredProducts.map((product) => {
                                                     const quantity = getQuantityForClientAndProduct(client.id, product.id);
+
+                                                    // Determinar si es un producto de naranja (misma lógica que tabla de totales)
+                                                    const productName = product.name.toLowerCase();
+                                                    const isNaranja = productName.includes('pastelnaranj') ||
+                                                        productName.includes('naranja') ||
+                                                        productName.includes('orange');
+
                                                     return (
-                                                        <Text key={product.id} style={styles.tableCell}>
+                                                        <Text key={product.id} style={isNaranja ? styles.tableCellNaranja : styles.tableCell}>
                                                             {quantity > 0 ? quantity : '-'}
                                                         </Text>
                                                     );

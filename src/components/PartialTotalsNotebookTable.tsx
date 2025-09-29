@@ -69,11 +69,17 @@ export default function PartialTotalsNotebookTable({
                             <th className="border border-gray-300 px-3 py-2 text-left text-black font-semibold sticky left-0 bg-gray-50 z-20" style={{ width: '200px' }}>
                                 &nbsp;
                             </th>
-                            {unifiedProducts.map((product) => (
-                                <th key={product.id} className="border border-gray-300 px-2 py-2 text-center text-black font-semibold text-xs" style={{ width: '80px' }}>
-                                    {product.name}
-                                </th>
-                            ))}
+                            {unifiedProducts.map((product) => {
+                                // Determinar si es un producto de naranja
+                                const productName = product.name.toLowerCase();
+                                const isNaranja = productName.includes('pastelnaranj') || productName.includes('naranja') || productName.includes('orange');
+
+                                return (
+                                    <th key={product.id} className={`border border-gray-300 px-2 py-2 text-center font-semibold text-xs ${isNaranja ? 'bg-orange-100 text-orange-800' : 'text-black'}`} style={{ width: '80px' }}>
+                                        {product.name}
+                                    </th>
+                                );
+                            })}
                             <th className="border border-gray-300 px-3 py-2 text-center text-black font-semibold" style={{ width: '120px' }}>
                                 CANT. | $
                             </th>

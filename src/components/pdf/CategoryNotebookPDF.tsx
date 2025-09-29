@@ -105,7 +105,8 @@ const styles = StyleSheet.create({
         borderRightWidth: 1,
         borderRightColor: '#d1d5db',
         flex: 1,
-        color: '#dc2626', // Rojo para naranja
+        backgroundColor: '#fed7aa', // Fondo naranja claro
+        color: '#ea580c', // Texto naranja oscuro
     },
     clientCell: {
         padding: 3, // Aumentado para A4
@@ -716,7 +717,7 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                 )}
 
                 {/* Totales por producto para otras categorías - RF-18: Colores de categoría */}
-                {pageNumber === 1 && selectedCategory && selectedCategory.toLowerCase() !== 'pasteles' && (
+                {pageNumber === 1 && selectedCategory && selectedCategory.toLowerCase() !== 'pasteles' && selectedCategory.toLowerCase() !== 'donuts' && (
                     <View style={[styles.productTotals, getCategoryPDFStyles(selectedCategory)]}>
                         <Text style={{
                             ...styles.productTotalsTitle,
@@ -751,7 +752,39 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
 
                 {/* Contenido de la página */}
                 {pageData.map((item) => {
-                    if (item.type === 'route') {
+                    if (item.type === 'totals') {
+                        // Página especial para totales de DONUTS
+                        return (
+                            <View key="totals" style={styles.section}>
+                                <Text style={{
+                                    ...styles.productTotalsTitle,
+                                    fontSize: dynamicStyles.subtitleText.fontSize,
+                                    color: '#000000'
+                                }}>
+                                    TOTALES POR PRODUCTO - DONUTS
+                                </Text>
+                                <View style={styles.productTotalsGrid}>
+                                    {categoryProducts.map((product) => {
+                                        const total = getTotalForProduct(product.id, selectedCategory);
+                                        return (
+                                            <View key={product.id} style={styles.productTotalItem}>
+                                                <Text style={{
+                                                    ...styles.productName,
+                                                    fontSize: dynamicStyles.tableCell.fontSize,
+                                                    color: '#000000'
+                                                }}>{product.name}</Text>
+                                                <Text style={{
+                                                    ...styles.productQuantity,
+                                                    fontSize: dynamicStyles.tableCellHeader.fontSize,
+                                                    color: '#000000'
+                                                }}>{total}</Text>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            </View>
+                        );
+                    } else if (item.type === 'route') {
                         const { route, clients } = item;
 
                         return (
@@ -842,9 +875,18 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
         const tableHeaderHeight = 8;
         const marginBuffer = 10; // Buffer OPTIMIZADO para máximo aprovechamiento
 
-        // Agregar header y totales a la primera página
-        if (clientsByRoute.length > 0) {
-            currentPageHeight = headerHeight + productTotalsHeight + marginBuffer;
+        // Para DONUTS: Crear página separada para totales
+        const isDonuts = selectedCategory.toLowerCase() === 'donuts';
+
+        if (isDonuts) {
+            // Página 1: Solo header y totales por producto
+            pages.push([{ type: 'totals' }]);
+            console.log('🍩 DONUTS: Página de totales creada por separado');
+        } else {
+            // Para otras categorías: Agregar header y totales a la primera página
+            if (clientsByRoute.length > 0) {
+                currentPageHeight = headerHeight + productTotalsHeight + marginBuffer;
+            }
         }
 
         // Agrupar tablas pequeñas para mejor distribución
@@ -885,7 +927,6 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
 
         // Distribuir en páginas con lógica optimizada para aprovechar máximo espacio
         // Para DONUTS: cada tabla debe aparecer máximo en una hoja
-        const isDonuts = selectedCategory.toLowerCase() === 'donuts';
 
         for (const item of groupedRoutes) {
             if (item.type === 'group' && item.tables) {
@@ -896,17 +937,9 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                 if (isDonuts) {
                     // Agregar cada tabla del grupo en su propia página
                     item.tables.forEach((table: any, index: number) => {
-                        // Si no es la primera tabla del grupo, crear nueva página
-                        if (index > 0 || currentPage.length > 0) {
-                            pages.push([...currentPage]);
-                            currentPage = [];
-                            currentPageHeight = 0;
-                        }
-
-                        currentPage.push({ type: 'route', route: table.route, clients: table.clients });
-                        currentPageHeight = table.tableHeight;
-
-                        console.log(`🍩 DONUTS: Tabla individual en página separada - altura: ${table.tableHeight}`);
+                        // Crear nueva página para cada tabla
+                        pages.push([{ type: 'route', route: table.route, clients: table.clients }]);
+                        console.log(`🍩 DONUTS: Tabla ${table.route.nombre} en página separada - altura: ${table.tableHeight}`);
                     });
                 } else {
                     // Lógica original para otras categorías
@@ -931,16 +964,8 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                 // Para DONUTS: cada tabla individual debe ir en su propia página
                 if (isDonuts) {
                     // Crear nueva página para cada tabla individual
-                    if (currentPage.length > 0) {
-                        pages.push([...currentPage]);
-                        currentPage = [];
-                        currentPageHeight = 0;
-                    }
-
-                    currentPage.push({ type: 'route', route: item.route, clients: item.clients });
-                    currentPageHeight = item.tableHeight;
-
-                    console.log(`🍩 DONUTS: Tabla individual en página separada - altura: ${item.tableHeight}`);
+                    pages.push([{ type: 'route', route: item.route, clients: item.clients }]);
+                    console.log(`🍩 DONUTS: Tabla individual ${item.route.nombre} en página separada - altura: ${item.tableHeight}`);
                 } else {
                     // Lógica original para otras categorías
                     // Tabla individual - verificar si cabe completamente
@@ -960,8 +985,8 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
             }
         }
 
-        // Agregar la última página si tiene contenido
-        if (currentPage.length > 0) {
+        // Agregar la última página si tiene contenido (solo para categorías que no sean DONUTS)
+        if (currentPage.length > 0 && !isDonuts) {
             pages.push(currentPage);
             console.log(`📄 Página final agregada con ${currentPage.length} elementos`);
         }

@@ -80,13 +80,39 @@ export default function RouteNotebookTableHeader({
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10" style={{ width: '200px' }}>
                     &nbsp;
                 </th>
-                {filteredProducts.map((product, productIndex) => (
-                    <th key={product.id} className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-l border-gray-200" style={{ width: '80px' }}>
-                        <span className={`text-xs ${isVerticalText ? 'writing-mode-vertical-rl' : ''}`}>
-                            {product.name}
-                        </span>
-                    </th>
-                ))}
+                {filteredProducts.map((product, productIndex) => {
+                    // Determinar si es un producto de naranja (misma lógica que tabla de totales)
+                    const productName = product.name.toLowerCase();
+                    const isNaranja = productName.includes('pastelnaranj') ||
+                        productName.includes('naranja') ||
+                        productName.includes('orange');
+
+                    // Debug: Log para verificar detección
+                    console.log('🔍 Verificando producto:', product.name, 'isNaranja:', isNaranja);
+                    if (isNaranja) {
+                        console.log('🍊 Producto naranja detectado:', product.name);
+                    }
+
+                    return (
+                        <th
+                            key={product.id}
+                            className={`px-2 py-2 text-center text-xs font-medium uppercase tracking-wider border-l border-gray-200 ${isNaranja ? 'bg-orange-100 text-orange-800' : 'text-gray-500'}`}
+                            style={{
+                                width: '80px',
+                                // Aplicar estilos inline como en el PDF para garantizar que se vean
+                                ...(isNaranja && {
+                                    backgroundColor: '#fed7aa !important',
+                                    color: '#ea580c !important',
+                                    borderColor: '#ea580c'
+                                })
+                            }}
+                        >
+                            <span className={`text-xs ${isVerticalText ? 'writing-mode-vertical-rl' : ''}`}>
+                                {product.name}
+                            </span>
+                        </th>
+                    );
+                })}
             </tr>
         </>
     );
