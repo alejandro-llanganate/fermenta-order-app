@@ -451,10 +451,10 @@ const RouteNotebookPDF: React.FC<RouteNotebookPDFProps> = ({
                                                     isNaranja
                                                         ? (isVerticalText ? styles.tableCellHeaderNaranjaVertical : styles.tableCellHeaderNaranja)
                                                         : (isVerticalText ? styles.tableCellHeaderVertical : styles.tableCellHeader),
-                                                    !isNaranja && {
+                                                    !isNaranja ? {
                                                         backgroundColor: categoryColors.backgroundColor,
                                                         color: categoryColors.color
-                                                    }
+                                                    } : {}
                                                 ]}>
                                                     {isVerticalText ? (
                                                         <View style={{ alignItems: 'center' }}>
