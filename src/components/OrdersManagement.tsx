@@ -32,6 +32,7 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import BulkOrderNotesPDF from './pdf/BulkOrderNotesPDF';
 import { handleNumericInputChange, parseNumericValue } from '@/utils/numericValidation';
 import { generateUniqueOrderNumberHybrid } from '@/utils/orderIdGenerator';
+import { formatDateForDB, parseDateFromDB, convertDBTimestampToEcuador, getEcuadorDate } from '@/utils/dateUtils';
 
 interface OrdersManagementProps {
     onBack: () => void;
@@ -88,7 +89,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
     const [clientSearchTerm, setClientSearchTerm] = useState('');
     const [showClientDropdown, setShowClientDropdown] = useState(false);
-    const [orderDate, setOrderDate] = useState(new Date());
+    const [orderDate, setOrderDate] = useState(getEcuadorDate());
     const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Efectivo');
     const [applyShippingSurcharge, setApplyShippingSurcharge] = useState<boolean>(false);
@@ -136,14 +137,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         });
     };
 
-    // Función auxiliar para manejar fechas sin problemas de zona horaria
-    const formatDateForDB = (date: Date): string => {
-        return date.toISOString().split('T')[0];
-    };
-
-    const parseDateFromDB = (dateStr: string): Date => {
-        return new Date(dateStr + 'T00:00:00');
-    };
+    // Las funciones de fecha ahora están importadas desde dateUtils
 
     // Función auxiliar para mostrar mensajes de éxito
     const showSuccess = (title: string, message: string) => {
@@ -183,15 +177,15 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         if (!dateFilterValue) return true;
 
         // Convertir la fecha del filtro a formato YYYY-MM-DD para comparación
-        const filterDateStr = dateFilterValue.toISOString().split('T')[0];
+        const filterDateStr = formatDateForDB(dateFilterValue);
 
         if (dateFilterType === 'registration') {
-            const orderDateStr = order.orderDate.toISOString().split('T')[0];
+            const orderDateStr = formatDateForDB(order.orderDate);
             return orderDateStr === filterDateStr;
         } else {
             // Filtro por fecha de entrega
             if (!order.deliveryDate) return false;
-            const deliveryDateStr = order.deliveryDate.toISOString().split('T')[0];
+            const deliveryDateStr = formatDateForDB(order.deliveryDate);
             return deliveryDateStr === filterDateStr;
         }
     };
@@ -346,7 +340,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             }
 
             if (dateFilterValue) {
-                const dateStr = dateFilterValue.toISOString().split('T')[0];
+                const dateStr = formatDateForDB(dateFilterValue);
                 if (dateFilterType === 'registration') {
                     query = query.eq('order_date', dateStr);
                 } else {
@@ -378,8 +372,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 paymentMethod: order.payment_method || 'Efectivo',
                 totalItems: order.total_items || 0,
                 productsSummary: order.products_summary || '',
-                createdAt: new Date(order.created_at),
-                updatedAt: new Date(order.updated_at),
+                createdAt: convertDBTimestampToEcuador(order.created_at),
+                updatedAt: convertDBTimestampToEcuador(order.updated_at),
                 items: [] // Inicializar items vacío
             }));
 
@@ -472,8 +466,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     pricePage: product.price_page || 0,
                     specialPrice: product.special_price || undefined,
                     isActive: product.is_active,
-                    createdAt: new Date(product.created_at),
-                    updatedAt: new Date(product.updated_at)
+                    createdAt: convertDBTimestampToEcuador(product.created_at),
+                    updatedAt: convertDBTimestampToEcuador(product.updated_at)
                 };
             });
 
@@ -505,8 +499,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     routeName: route?.nombre,
                     routeIdentifier: route?.identificador,
                     isActive: client.is_active,
-                    createdAt: new Date(client.created_at),
-                    updatedAt: new Date(client.updated_at)
+                    createdAt: convertDBTimestampToEcuador(client.created_at),
+                    updatedAt: convertDBTimestampToEcuador(client.updated_at)
                 };
             });
 
@@ -523,8 +517,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             const transformedRoutes = (routesData || []).map(route => ({
                 ...route,
                 isActive: route.is_active !== false,
-                createdAt: new Date(route.created_at),
-                updatedAt: new Date(route.updated_at)
+                createdAt: convertDBTimestampToEcuador(route.created_at),
+                updatedAt: convertDBTimestampToEcuador(route.updated_at)
             }));
 
             setRoutes(transformedRoutes);
@@ -567,7 +561,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             }
 
             if (dateFilterValue) {
-                const dateStr = dateFilterValue.toISOString().split('T')[0];
+                const dateStr = formatDateForDB(dateFilterValue);
                 if (dateFilterType === 'registration') {
                     query = query.eq('order_date', dateStr);
                 } else {
@@ -974,7 +968,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         setSelectedRouteForOrder(null);
         setSelectedClient(null);
         setClientSearchTerm('');
-        setOrderDate(new Date());
+        setOrderDate(getEcuadorDate());
         setDeliveryDate(null);
         setPaymentMethod('Efectivo');
         setApplyShippingSurcharge(false);
@@ -1011,8 +1005,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         setSelectedClient(clients.find(c => c.id === order.clientId) || null);
         setClientSearchTerm(order.clientName || '');
         setSelectedRouteForOrder(routes.find(r => r.id === order.routeId) || null);
-        setOrderDate(new Date(order.orderDate));
-        setDeliveryDate(order.deliveryDate ? new Date(order.deliveryDate) : null);
+        setOrderDate(parseDateFromDB(order.orderDate.toISOString().split('T')[0]));
+        setDeliveryDate(order.deliveryDate ? parseDateFromDB(order.deliveryDate.toISOString().split('T')[0]) : null);
         setPaymentMethod(order.paymentMethod);
         setApplyShippingSurcharge((order.shippingSurcharge || 0) > 0);
         setShippingSurcharge(order.shippingSurcharge || 1.5);
@@ -1052,8 +1046,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                     priceRegular: item.unitPrice,
                     pricePage: item.unitPrice,
                     isActive: true,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
+                    createdAt: getEcuadorDate(),
+                    updatedAt: getEcuadorDate()
                 };
                 const transformedItem = {
                     product: tempProduct,
@@ -1306,7 +1300,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 usesSpecialPrice: item.uses_special_price || false,
                 individualValue: parseFloat(item.unit_price), // Asumiendo que individual_value es igual a unit_price
                 totalPrice: parseFloat(item.total_price),
-                createdAt: new Date(item.created_at)
+                createdAt: convertDBTimestampToEcuador(item.created_at)
             }));
 
             // Función auxiliar para validar si un valor es válido
@@ -1515,7 +1509,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         const filterText = filters.length > 0 ? `-${filters.join('-')}` : '';
         const orderCount = filteredOrders.length;
 
-        return `Notas-Pedido-Masivas${filterText}-${orderCount}-pedidos-${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`;
+        return `Notas-Pedido-Masivas${filterText}-${orderCount}-pedidos-${getEcuadorDate().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`;
     };
 
     // Función para manejar la descarga del PDF masivo
@@ -1754,7 +1748,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             const routeFilterText = routeFilter ? `-Ruta-${routes.find(r => r.id === routeFilter)?.identificador}` : '';
             const dateFilterText = dateFilterValue ? `-${dateFilterType === 'registration' ? 'Registro' : 'Entrega'}-${dateFilterValue.toLocaleDateString('es-ES').replace(/\//g, '-')}` : '';
             const filterText = routeFilterText + dateFilterText;
-            pdf.save(`Reporte-Pedidos${filterText}-${new Date().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`);
+            pdf.save(`Reporte-Pedidos${filterText}-${getEcuadorDate().toLocaleDateString('es-ES').replace(/\//g, '-')}.pdf`);
         } catch (error) {
             console.error('Error generando PDF de exportación:', error);
             Swal.fire({
@@ -2954,7 +2948,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             <div style={{ marginTop: '10px', paddingTop: '6px', borderTop: '1px solid #d1d5db' }}>
                                 <p style={{ textAlign: 'center', fontSize: '7px', fontWeight: '500', color: '#374151', margin: '0 0 3px 0', lineHeight: '1.2' }}>
                                     Gracias por su preferencia - Mega Donut<br />
-                                    Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
+                                    Generado el {getEcuadorDate().toLocaleDateString('es-ES')} a las {getEcuadorDate().toLocaleTimeString('es-ES')}
                                 </p>
                                 <p style={{ textAlign: 'center', fontSize: '6px', marginTop: '3px', fontWeight: '500', color: '#dc2626', margin: '3px 0 0 0', lineHeight: '1.2' }}>
                                     En caso de incumplimiento en el pago del valor establecido en la nota de pedido emitida por MEGA DONUT, el cliente se someterá a las acciones legales correspondientes.
@@ -3027,7 +3021,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                 <h2 className="text-xl font-semibold text-gray-800">Guía de Reparto - Ruta {route.identificador}</h2>
                                                 <p className="text-lg text-gray-600">{route.nombre}</p>
                                                 <p className="text-sm text-gray-500">
-                                                    Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
+                                                    Generado el {getEcuadorDate().toLocaleDateString('es-ES')} a las {getEcuadorDate().toLocaleTimeString('es-ES')}
                                                 </p>
                                             </div>
 
@@ -3182,7 +3176,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                             <h1 className="text-2xl font-bold text-black">Mega Donut</h1>
                                             <h2 className="text-xl font-semibold text-gray-800">Reporte de Pedidos</h2>
                                             <p className="text-sm text-gray-500">
-                                                Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
+                                                Generado el {getEcuadorDate().toLocaleDateString('es-ES')} a las {getEcuadorDate().toLocaleTimeString('es-ES')}
                                             </p>
                                             {(searchTerm || routeFilter || dateFilterValue) && (
                                                 <div className="mt-2 p-2 bg-gray-50 rounded-lg">

@@ -12,6 +12,7 @@ import { generateUniqueOrderNumberHybrid } from '@/utils/orderIdGenerator';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import CategoryNotebookPDF from './pdf/CategoryNotebookPDF';
 import { sortProductsByCategoryOrder } from '@/utils/productOrderConfig';
+import { formatDateForDB, parseDateFromDB, convertDBTimestampToEcuador } from '@/utils/dateUtils';
 
 interface CategoryNotebookProps {
     onBack: () => void;
@@ -22,7 +23,10 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
     const [clients, setClients] = useState<Client[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
-    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [selectedDate, setSelectedDate] = useState<Date>(() => {
+        const now = new Date();
+        return new Date(now.toLocaleString("en-US", { timeZone: "America/Guayaquil" }));
+    });
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [dateFilterType, setDateFilterType] = useState<'registration' | 'delivery'>('registration');
     const [loading, setLoading] = useState(true);
@@ -110,7 +114,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
 
     const fetchOrdersByDate = async () => {
         try {
-            const dateStr = selectedDate.toISOString().split('T')[0];
+            const dateStr = formatDateForDB(selectedDate);
             console.log('🔄 useEffect triggered - fetching orders for date:', dateStr);
             console.log('🔍 Tipo de filtro:', dateFilterType);
 
@@ -176,7 +180,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                         clientName: order.clients?.nombre || 'Cliente no encontrado',
                         routeId: order.route_id,
                         routeName: order.routes?.nombre || 'Ruta no encontrada',
-                        orderDate: new Date(order.order_date),
+                        orderDate: parseDateFromDB(order.order_date),
                         status: order.status,
                         totalAmount: parseFloat(order.total_amount) || 0,
                         shippingSurcharge: parseFloat(order.shipping_surcharge) || 0,
@@ -296,7 +300,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
 
         // Logging para debugging
         if (total > 0) {
-            console.log(`🔢 CategoryNotebook getTotalForProduct - Producto: ${productId}, Categoría: ${categoryId || 'Todas'}, Total: ${total}, Filtro: ${dateFilterType}, Fecha: ${selectedDate.toISOString().split('T')[0]}`);
+            console.log(`🔢 CategoryNotebook getTotalForProduct - Producto: ${productId}, Categoría: ${categoryId || 'Todas'}, Total: ${total}, Filtro: ${dateFilterType}, Fecha: ${formatDateForDB(selectedDate)}`);
         }
 
         return total;
@@ -336,7 +340,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
             // Buscar si ya existe una orden para este cliente en la fecha seleccionada
             const existingOrder = orders.find(order =>
                 order.clientId === clientId &&
-                order.orderDate.toISOString().split('T')[0] === selectedDate.toISOString().split('T')[0]
+                formatDateForDB(order.orderDate) === formatDateForDB(selectedDate)
             );
 
             const product = products.find(p => p.id === productId);
@@ -431,8 +435,8 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                     order_number: orderNumber,
                     client_id: clientId,
                     route_id: client.routeId,
-                    order_date: selectedDate.toISOString().split('T')[0],
-                    delivery_date: selectedDate.toISOString().split('T')[0],
+                    order_date: formatDateForDB(selectedDate),
+                    delivery_date: formatDateForDB(selectedDate),
                     status: 'pending',
                     total_amount: quantity * product.priceRegular,
                     shipping_surcharge: 1.5, // Valor por defecto para nuevos pedidos

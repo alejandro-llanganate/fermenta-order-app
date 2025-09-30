@@ -1,6 +1,7 @@
 import { Printer, RefreshCw } from 'lucide-react';
 import { Route } from '@/types/routeNotebook';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatDateForDB, parseDateFromDB } from '@/utils/dateUtils';
 
 interface RouteNotebookControlsProps {
     selectedDate: Date;
@@ -56,8 +57,8 @@ export default function RouteNotebookControls({
                     </label>
                     <input
                         type="date"
-                        value={selectedDate.toISOString().split('T')[0]}
-                        onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                        value={formatDateForDB(selectedDate)}
+                        onChange={(e) => setSelectedDate(parseDateFromDB(e.target.value))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>

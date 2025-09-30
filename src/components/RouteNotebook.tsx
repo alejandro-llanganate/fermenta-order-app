@@ -11,6 +11,7 @@ import { Route, Client, Product, ProductCategory, Order, OrderItem } from '@/typ
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import RouteNotebookPDF from './pdf/RouteNotebookPDF';
 import { sortProductsByCategoryOrder } from '@/utils/productOrderConfig';
+import { formatDateForDB, parseDateFromDB, convertDBTimestampToEcuador } from '@/utils/dateUtils';
 // ColumnOrderModal eliminado - ahora usamos localStorage directamente
 
 interface RouteNotebookProps {
@@ -22,7 +23,10 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
     const [clients, setClients] = useState<Client[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
-    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [selectedDate, setSelectedDate] = useState<Date>(() => {
+        const now = new Date();
+        return new Date(now.toLocaleString("en-US", { timeZone: "America/Guayaquil" }));
+    });
     const [dateFilterType, setDateFilterType] = useState<'registration' | 'delivery'>('registration');
     const [selectedRoute, setSelectedRoute] = useState<string>('');
     const [loading, setLoading] = useState(false);
@@ -195,7 +199,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
     const fetchOrdersByDate = async () => {
         try {
-            const dateStr = selectedDate.toISOString().split('T')[0];
+            const dateStr = formatDateForDB(selectedDate);
 
             // Fetch orders for the selected date based on filter type
             const { data: ordersData, error: ordersError } = await supabase
@@ -260,7 +264,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         clientName: order.clients?.nombre || 'Cliente no encontrado',
                         routeId: order.route_id,
                         routeName: order.routes?.nombre || 'Ruta no encontrada',
-                        orderDate: new Date(order.order_date),
+                        orderDate: parseDateFromDB(order.order_date),
                         status: order.status,
                         totalAmount: parseFloat(order.total_amount) || 0,
                         shippingSurcharge: parseFloat(order.shipping_surcharge) || 0,
@@ -584,7 +588,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
         // Logging para debugging
         if (total > 0) {
-            console.log(`🔢 getTotalForProduct - Producto: ${productId}, Ruta: ${routeId || 'Todas'}, Total: ${total}, Filtro: ${dateFilterType}, Fecha: ${selectedDate.toISOString().split('T')[0]}`);
+            console.log(`🔢 getTotalForProduct - Producto: ${productId}, Ruta: ${routeId || 'Todas'}, Total: ${total}, Filtro: ${dateFilterType}, Fecha: ${formatDateForDB(selectedDate)}`);
         }
 
         return total;
@@ -666,7 +670,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                     {/* 🔍 DEBUG: Log antes del renderizado de la tabla - solo cuando cambien los datos */}
                     {(() => {
                         // Solo hacer log cuando cambien los datos importantes
-                        const userSpecificHash = `user_${userInfo?.id}_${routes.length}-${clients.length}-${products.length}-${orders.length}-${getUnifiedProductArray.length}-${selectedDate.toISOString().split('T')[0]}-${dateFilterType}`;
+                        const userSpecificHash = `user_${userInfo?.id}_${routes.length}-${clients.length}-${products.length}-${orders.length}-${getUnifiedProductArray.length}-${formatDateForDB(selectedDate)}-${dateFilterType}`;
 
                         if (!(window as any)[`lastDataHash_${userInfo?.id}`] || (window as any)[`lastDataHash_${userInfo?.id}`] !== userSpecificHash) {
                             console.log('🔍 RouteNotebook - Renderizando tabla con datos:', {
@@ -678,7 +682,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                                 ordenes: orders.length,
                                 categorias: getOrderedProductCategories.length,
                                 productosUnificados: getUnifiedProductArray.length,
-                                fechaSeleccionada: selectedDate.toISOString().split('T')[0],
+                                fechaSeleccionada: formatDateForDB(selectedDate),
                                 tipoFiltro: dateFilterType,
                                 rutaSeleccionada: selectedRoute
                             });
