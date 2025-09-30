@@ -1,4 +1,4 @@
-import { Printer } from 'lucide-react';
+import { Printer, RefreshCw } from 'lucide-react';
 import { ProductCategory } from '@/types/routeNotebook';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -14,6 +14,7 @@ interface CategoryNotebookControlsProps {
     isUpdating: boolean;
     isGeneratingPDF: boolean;
     setShowPreview: (show: boolean) => void;
+    onRefresh: () => void;
 }
 
 export default function CategoryNotebookControls({
@@ -27,7 +28,8 @@ export default function CategoryNotebookControls({
     orders,
     isUpdating,
     isGeneratingPDF,
-    setShowPreview
+    setShowPreview,
+    onRefresh
 }: CategoryNotebookControlsProps) {
     const { isAdmin } = useAuth();
 
@@ -105,6 +107,15 @@ export default function CategoryNotebookControls({
                     >
                         <Printer className="h-4 w-4" />
                         <span>Vista Previa</span>
+                    </button>
+
+                    <button
+                        onClick={onRefresh}
+                        className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                        title="Refrescar datos"
+                    >
+                        <RefreshCw className="h-4 w-4" />
+                        <span>Refrescar</span>
                     </button>
                 </div>
 

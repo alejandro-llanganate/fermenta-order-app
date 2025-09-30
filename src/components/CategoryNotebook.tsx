@@ -516,6 +516,7 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
                         isUpdating={isUpdating}
                         isGeneratingPDF={isGeneratingPDF}
                         setShowPreview={setShowPreview}
+                        onRefresh={fetchData}
                     />
 
                     <CategoryNotebookTable

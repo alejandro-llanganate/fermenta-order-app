@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Nata+Sans:wght@100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Spline+Sans:wght@300..700&display=swap');
+
 @theme {
   --color-orange-50: #fff7ed;
   --color-orange-100: #ffedd5;
@@ -44,4 +47,33 @@ body {
 
 .origin-center {
   transform-origin: center;
+}
+
+/* Google Fonts Classes */
+.font-lato {
+  font-family: 'Lato', sans-serif;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.font-nata-sans {
+  font-family: 'Nata Sans', sans-serif;
+}
+
+.font-noto-sans {
+  font-family: 'Noto Sans', sans-serif;
+}
+
+.font-nunito-sans {
+  font-family: 'Nunito Sans', sans-serif;
+}
+
+.font-nunito {
+  font-family: 'Nunito', sans-serif;
+}
+
+.font-spline-sans {
+  font-family: 'Spline Sans', sans-serif;
 }

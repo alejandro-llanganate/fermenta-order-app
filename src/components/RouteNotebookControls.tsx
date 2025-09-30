@@ -1,4 +1,4 @@
-import { Printer } from 'lucide-react';
+import { Printer, RefreshCw } from 'lucide-react';
 import { Route } from '@/types/routeNotebook';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -13,6 +13,7 @@ interface RouteNotebookControlsProps {
     orders: any[]; // Should be Order[]
     isUpdating: boolean;
     setShowPreview: (show: boolean) => void;
+    onRefresh: () => void;
 }
 
 export default function RouteNotebookControls({
@@ -25,7 +26,8 @@ export default function RouteNotebookControls({
     routes,
     orders,
     isUpdating,
-    setShowPreview
+    setShowPreview,
+    onRefresh
 }: RouteNotebookControlsProps) {
     const { isAdmin } = useAuth();
 
@@ -103,6 +105,15 @@ export default function RouteNotebookControls({
                     >
                         <Printer className="h-4 w-4" />
                         <span>Vista Previa</span>
+                    </button>
+
+                    <button
+                        onClick={onRefresh}
+                        className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                        title="Refrescar datos"
+                    >
+                        <RefreshCw className="h-4 w-4" />
+                        <span>Refrescar</span>
                     </button>
                 </div>
 

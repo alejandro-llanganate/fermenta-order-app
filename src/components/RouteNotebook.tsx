@@ -660,6 +660,7 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
                         orders={orders}
                         isUpdating={isUpdating}
                         setShowPreview={setShowPreview}
+                        onRefresh={fetchData}
                     />
 
                     {/* 🔍 DEBUG: Log antes del renderizado de la tabla - solo cuando cambien los datos */}
