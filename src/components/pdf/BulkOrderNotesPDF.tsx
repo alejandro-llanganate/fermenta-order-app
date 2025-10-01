@@ -20,8 +20,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#ffffff',
         padding: 12,
         fontFamily: 'Helvetica',
-        fontSize: 9,
-        lineHeight: 1.1,
+        fontSize: 10,
+        lineHeight: 1.2,
     },
     header: {
         textAlign: 'center',
@@ -29,70 +29,65 @@ const styles = StyleSheet.create({
         paddingBottom: 4,
     },
     title: {
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: 'bold',
-        marginBottom: 6,
+        marginBottom: 4,
         color: '#000000',
     },
     subtitle: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 'bold',
-        marginBottom: 3,
-        color: '#374151',
+        marginBottom: 2,
+        color: '#000000',
     },
     orderNumberSection: {
         textAlign: 'center',
         marginBottom: 6,
-        padding: 6,
-        backgroundColor: '#f3f4f6',
-        borderRadius: 4,
+        padding: 4,
     },
     clientInfo: {
         marginBottom: 6,
-        padding: 6,
-        backgroundColor: '#f9fafb',
-        borderRadius: 4,
+        padding: 4,
     },
     clientName: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
         marginBottom: 2,
-        color: '#1f2937',
+        color: '#000000',
     },
     clientDetails: {
-        fontSize: 8,
-        color: '#6b7280',
+        fontSize: 9,
+        color: '#000000',
         marginBottom: 1,
     },
     orderNumber: {
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: 'bold',
-        color: '#1f2937',
+        color: '#000000',
     },
     table: {
         width: '100%',
         borderStyle: 'solid',
         borderWidth: 1,
-        borderColor: '#d1d5db',
+        borderColor: '#000000',
         marginBottom: 6,
     },
     tableHeader: {
-        backgroundColor: '#f9fafb',
         flexDirection: 'row',
         borderBottomWidth: 1,
-        borderBottomColor: '#d1d5db',
+        borderBottomColor: '#000000',
         padding: 4,
     },
     tableRow: {
         flexDirection: 'row',
         borderBottomWidth: 1,
-        borderBottomColor: '#d1d5db',
+        borderBottomColor: '#000000',
         padding: 4,
         minHeight: 18,
     },
     productCell: {
         flex: 2,
-        fontSize: 8,
+        fontSize: 9,
         textAlign: 'left',
         color: '#000000',
         paddingLeft: 2,
@@ -100,7 +95,7 @@ const styles = StyleSheet.create({
     },
     quantityCell: {
         flex: 1,
-        fontSize: 8,
+        fontSize: 9,
         textAlign: 'center',
         color: '#000000',
         paddingLeft: 2,
@@ -108,7 +103,7 @@ const styles = StyleSheet.create({
     },
     priceCell: {
         flex: 1,
-        fontSize: 8,
+        fontSize: 9,
         textAlign: 'right',
         color: '#000000',
         paddingLeft: 2,
@@ -116,24 +111,22 @@ const styles = StyleSheet.create({
     },
     totalCell: {
         flex: 1,
-        fontSize: 8,
+        fontSize: 9,
         textAlign: 'right',
         color: '#000000',
         paddingLeft: 2,
         paddingRight: 2,
     },
     headerCell: {
-        fontSize: 8,
+        fontSize: 9,
         fontWeight: 'bold',
-        color: '#374151',
+        color: '#000000',
         paddingLeft: 2,
         paddingRight: 2,
     },
     totals: {
         marginTop: 6,
-        padding: 6,
-        backgroundColor: '#f9fafb',
-        borderRadius: 4,
+        padding: 4,
     },
     totalRow: {
         flexDirection: 'row',
@@ -141,12 +134,12 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
     totalLabel: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
-        color: '#374151',
+        color: '#000000',
     },
     totalValue: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
         color: '#000000',
     },
@@ -155,10 +148,10 @@ const styles = StyleSheet.create({
         padding: 4,
     },
     footerText: {
-        fontSize: 6,
-        color: '#6b7280',
+        fontSize: 7,
+        color: '#000000',
         textAlign: 'center',
-        lineHeight: 1.1,
+        lineHeight: 1.2,
     },
     specialPrice: {
         fontSize: 6,
@@ -211,7 +204,7 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
                 const route = routes.find(r => r.id === order.routeId);
 
                 return (
-                    <Page key={order.id} size="A5" orientation="landscape" style={styles.page}>
+                    <Page key={order.id} size="LETTER" style={styles.page}>
                         {/* Header */}
                         <View style={styles.header}>
                             <Text style={styles.title}>Mega Donut</Text>
