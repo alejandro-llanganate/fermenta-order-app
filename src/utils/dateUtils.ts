@@ -1,6 +1,7 @@
 /**
  * Utilidades para formateo de fechas con manejo correcto de zona horaria Ecuador (UTC-5)
  */
+import { DateTime } from 'luxon';
 
 /**
  * Obtiene la fecha actual en zona horaria de Ecuador (UTC-5)
@@ -58,24 +59,12 @@ export function formatDateDDMMYYYY(date: Date): string {
  * @returns String con la fecha en formato YYYY-MM-DD en zona horaria de Ecuador
  */
 export function formatDateForDB(date: Date): string {
-    // Si la fecha es medianoche UTC (típico de date pickers), 
-    // usar directamente los componentes de fecha sin conversión
-    if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0) {
-        // Es una fecha de date picker, usar directamente los componentes de fecha
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const day = date.getDate().toString().padStart(2, '0');
-        
-        return `${year}-${month}-${day}`;
-    }
+    // Obtener la zona horaria configurada en Vercel
+    const timezone = process.env.NEXT_PUBLIC_TIMEZONE || 'America/Guayaquil';
     
-    // Para fechas con hora específica, usar la conversión normal a Ecuador
-    const ecuadorDate = convertUTCToEcuador(date);
-    const year = ecuadorDate.getFullYear();
-    const month = (ecuadorDate.getMonth() + 1).toString().padStart(2, '0');
-    const day = ecuadorDate.getDate().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}`;
+    // Usar Luxon para manejar correctamente la zona horaria
+    const luxonDate = DateTime.fromJSDate(date, { zone: timezone });
+    return luxonDate.toISODate() || '';
 }
 
 /**
