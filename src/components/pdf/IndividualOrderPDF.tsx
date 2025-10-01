@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 15,
+        padding: 12,
         fontFamily: 'Helvetica',
         fontSize: 10,
         lineHeight: 1.2,
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     orderNumberSection: {
         textAlign: 'center',
         marginBottom: 6,
-        padding: 6,
+        padding: 4,
         border: '1 solid #000000',
     },
     orderNumber: {
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     },
     clientInfo: {
         marginBottom: 6,
-        padding: 6,
+        padding: 4,
         border: '1 solid #000000',
     },
     clientName: {
@@ -92,43 +92,43 @@ const styles = StyleSheet.create({
         fontSize: 9,
         textAlign: 'left',
         color: '#000000',
-        paddingLeft: 3,
-        paddingRight: 3,
+        paddingLeft: 2,
+        paddingRight: 2,
     },
     quantityCell: {
         flex: 1,
         fontSize: 9,
         textAlign: 'center',
         color: '#000000',
-        paddingLeft: 3,
-        paddingRight: 3,
+        paddingLeft: 2,
+        paddingRight: 2,
     },
     priceCell: {
         flex: 1,
         fontSize: 9,
         textAlign: 'right',
         color: '#000000',
-        paddingLeft: 3,
-        paddingRight: 3,
+        paddingLeft: 2,
+        paddingRight: 2,
     },
     totalCell: {
         flex: 1,
         fontSize: 9,
         textAlign: 'right',
         color: '#000000',
-        paddingLeft: 3,
-        paddingRight: 3,
+        paddingLeft: 2,
+        paddingRight: 2,
     },
     headerCell: {
         fontSize: 9,
         fontWeight: 'bold',
         color: '#000000',
-        paddingLeft: 3,
-        paddingRight: 3,
+        paddingLeft: 2,
+        paddingRight: 2,
     },
     totals: {
         marginTop: 6,
-        padding: 6,
+        padding: 4,
         border: '1 solid #000000',
     },
     totalRow: {
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     },
     notes: {
         marginBottom: 6,
-        padding: 6,
+        padding: 4,
         border: '1 solid #000000',
     },
     notesTitle: {
