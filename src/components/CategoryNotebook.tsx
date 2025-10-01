@@ -105,6 +105,11 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
             setProducts(transformedProducts);
             console.log('🏷️ Productos cargados:', transformedProducts.length, transformedProducts.slice(0, 5).map(p => p.name));
 
+            // Si hay una fecha seleccionada, también actualizar las órdenes
+            if (selectedDate) {
+                console.log('🔄 Refrescando órdenes con filtros actuales...');
+                await fetchOrdersByDate();
+            }
         } catch (error) {
             console.error('❌ Error fetching data:', error);
         } finally {

@@ -189,6 +189,12 @@ export default function RouteNotebook({ onBack }: RouteNotebookProps) {
 
             setProducts(transformedProducts);
             console.log('🏷️ Productos cargados:', transformedProducts.length, transformedProducts.map(p => `${p.name} (${p.categoryName})`));
+
+            // Si hay una fecha seleccionada, también actualizar las órdenes
+            if (selectedDate) {
+                console.log('🔄 Refrescando órdenes con filtros actuales...');
+                await fetchOrdersByDate();
+            }
         } catch (error) {
             console.error('❌ Error fetching data:', error);
         } finally {
