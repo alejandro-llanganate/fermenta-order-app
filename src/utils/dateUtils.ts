@@ -73,9 +73,12 @@ export function formatDateForDB(date: Date): string {
  * @returns Date en zona horaria de Ecuador
  */
 export function parseDateFromDB(dateStr: string): Date {
-    // Crear fecha en UTC y luego convertir a Ecuador
-    const utcDate = new Date(dateStr + 'T00:00:00Z');
-    return convertUTCToEcuador(utcDate);
+    // Obtener la zona horaria configurada en Vercel
+    const timezone = process.env.NEXT_PUBLIC_TIMEZONE || 'America/Guayaquil';
+    
+    // Usar Luxon para parsear correctamente la fecha desde la base de datos
+    const luxonDate = DateTime.fromISO(dateStr, { zone: timezone });
+    return luxonDate.toJSDate();
 }
 
 /**
@@ -84,8 +87,12 @@ export function parseDateFromDB(dateStr: string): Date {
  * @returns Date en zona horaria de Ecuador
  */
 export function convertDBTimestampToEcuador(dbTimestamp: string | Date): Date {
-    const date = typeof dbTimestamp === 'string' ? new Date(dbTimestamp) : dbTimestamp;
-    return convertUTCToEcuador(date);
+    // Obtener la zona horaria configurada en Vercel
+    const timezone = process.env.NEXT_PUBLIC_TIMEZONE || 'America/Guayaquil';
+    
+    // Usar Luxon para convertir correctamente el timestamp
+    const luxonDate = DateTime.fromJSDate(dbTimestamp, { zone: timezone });
+    return luxonDate.toJSDate();
 }
 
 /**
