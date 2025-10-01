@@ -2852,20 +2852,20 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             lineHeight: '1.2',
                             padding: '15px',
                             border: '1px solid #d1d5db',
-                            width: '210mm',
-                            minHeight: '148mm',
+                            width: '492px',
+                            height: '886px',
                             display: 'flex',
                             flexDirection: 'column'
                         }}>
                             {/* Header */}
-                            <div style={{ textAlign: 'center', marginBottom: '12px', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px' }}>
-                                <h1 style={{ color: '#000000', fontSize: '20px', fontWeight: 'bold', margin: '0 0 6px 0' }}>Mega Donut</h1>
-                                <p style={{ color: '#374151', margin: '0', fontSize: '14px' }}>Nota de Pedido</p>
+                            <div style={{ textAlign: 'center', marginBottom: '10px', borderBottom: '1px solid #e5e7eb', paddingBottom: '4px' }}>
+                                <h1 style={{ color: '#000000', fontSize: '18px', fontWeight: 'bold', margin: '0 0 4px 0' }}>Mega Donut</h1>
+                                <p style={{ color: '#374151', margin: '0', fontSize: '12px' }}>Nota de Pedido</p>
                             </div>
 
                             {/* Pedido # */}
-                            <div style={{ textAlign: 'center', marginBottom: '10px', padding: '8px', backgroundColor: '#f3f4f6', borderRadius: '4px' }}>
-                                <h2 style={{ color: '#000000', fontSize: '16px', fontWeight: 'bold', margin: '0' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '8px', padding: '6px', backgroundColor: '#f3f4f6', borderRadius: '4px' }}>
+                                <h2 style={{ color: '#000000', fontSize: '14px', fontWeight: 'bold', margin: '0' }}>
                                     Pedido #{(() => {
                                         // Función para generar identificador de 5 dígitos del ID del pedido
                                         const numbers = selectedOrder.id.replace(/\D/g, '');
@@ -2876,52 +2876,52 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             </div>
 
                             {/* Información del Cliente */}
-                            <div style={{ marginBottom: '10px', padding: '8px', backgroundColor: '#f9fafb', borderRadius: '4px' }}>
-                                <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '6px', margin: '0 0 6px 0', fontSize: '12px' }}>Cliente</h3>
-                                <p style={{ color: '#111827', margin: '3px 0', fontSize: '9px' }}><strong>Nombre:</strong> {selectedOrder.clientName || 'No disponible'}</p>
+                            <div style={{ marginBottom: '8px', padding: '6px', backgroundColor: '#f9fafb', borderRadius: '4px' }}>
+                                <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '4px', margin: '0 0 4px 0', fontSize: '11px' }}>Cliente</h3>
+                                <p style={{ color: '#111827', margin: '2px 0', fontSize: '10px' }}><strong>Nombre:</strong> {selectedOrder.clientName || 'No disponible'}</p>
                                 {selectedOrder.deliveryDate && (
-                                    <p style={{ color: '#111827', margin: '3px 0', fontSize: '9px' }}><strong>Fecha de entrega:</strong> {selectedOrder.deliveryDate.toLocaleDateString('es-ES')}</p>
+                                    <p style={{ color: '#111827', margin: '2px 0', fontSize: '10px' }}><strong>Fecha de entrega:</strong> {selectedOrder.deliveryDate.toLocaleDateString('es-ES')}</p>
                                 )}
                                 {selectedOrder.clientPhone && (
-                                    <p style={{ color: '#111827', margin: '3px 0', fontSize: '9px' }}><strong>Teléfono:</strong> {selectedOrder.clientPhone}</p>
+                                    <p style={{ color: '#111827', margin: '2px 0', fontSize: '10px' }}><strong>Teléfono:</strong> {selectedOrder.clientPhone}</p>
                                 )}
                                 {selectedOrder.clientAddress && (
-                                    <p style={{ color: '#111827', margin: '3px 0', fontSize: '9px' }}><strong>Dirección:</strong> {selectedOrder.clientAddress}</p>
+                                    <p style={{ color: '#111827', margin: '2px 0', fontSize: '10px' }}><strong>Dirección:</strong> {selectedOrder.clientAddress}</p>
                                 )}
                                 {selectedOrder.clientCedula && (
-                                    <p style={{ color: '#111827', margin: '3px 0', fontSize: '9px' }}><strong>Cédula:</strong> {selectedOrder.clientCedula}</p>
+                                    <p style={{ color: '#111827', margin: '2px 0', fontSize: '10px' }}><strong>Cédula:</strong> {selectedOrder.clientCedula}</p>
                                 )}
                             </div>
 
                             {/* Productos */}
-                            <div style={{ marginBottom: '10px' }}>
-                                <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '8px', margin: '0 0 8px 0', fontSize: '11px' }}>Detalle de Productos</h3>
+                            <div style={{ marginBottom: '8px' }}>
+                                <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '6px', margin: '0 0 6px 0', fontSize: '11px' }}>Detalle de Productos</h3>
                                 <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #d1d5db' }}>
                                     <thead>
                                         <tr style={{ backgroundColor: '#f3f4f6' }}>
-                                            <th style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'left', fontWeight: '600', color: '#000000', fontSize: '9px' }}>Producto</th>
-                                            <th style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'center', fontWeight: '600', color: '#000000', fontSize: '9px' }}>Cantidad</th>
-                                            <th style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', fontWeight: '600', color: '#000000', fontSize: '9px' }}>Precio Unit.</th>
-                                            <th style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', fontWeight: '600', color: '#000000', fontSize: '9px' }}>Total</th>
+                                            <th style={{ border: '1px solid #d1d5db', padding: '4px', textAlign: 'left', fontWeight: '600', color: '#000000', fontSize: '10px' }}>Producto</th>
+                                            <th style={{ border: '1px solid #d1d5db', padding: '4px', textAlign: 'center', fontWeight: '600', color: '#000000', fontSize: '10px' }}>Cantidad</th>
+                                            <th style={{ border: '1px solid #d1d5db', padding: '4px', textAlign: 'right', fontWeight: '600', color: '#000000', fontSize: '10px' }}>Precio Unit.</th>
+                                            <th style={{ border: '1px solid #d1d5db', padding: '4px', textAlign: 'right', fontWeight: '600', color: '#000000', fontSize: '10px' }}>Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {selectedOrder.items && selectedOrder.items.length > 0 ? (
                                             selectedOrder.items.map((item, index) => (
                                                 <tr key={index}>
-                                                    <td style={{ border: '1px solid #d1d5db', padding: '6px' }}>
+                                                    <td style={{ border: '1px solid #d1d5db', padding: '4px' }}>
                                                         <div>
-                                                            <div style={{ color: '#000000', fontWeight: '500', fontSize: '9px' }}>{item.productName}</div>
+                                                            <div style={{ color: '#000000', fontWeight: '500', fontSize: '10px' }}>{item.productName}</div>
                                                         </div>
                                                     </td>
-                                                    <td style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'center', color: '#000000', fontSize: '9px' }}>{item.quantity}</td>
-                                                    <td style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', color: '#000000', fontSize: '9px' }}>${item.unitPrice.toFixed(2)}</td>
-                                                    <td style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', fontWeight: '500', color: '#000000', fontSize: '9px' }}>${item.totalPrice.toFixed(2)}</td>
+                                                    <td style={{ border: '1px solid #d1d5db', padding: '4px', textAlign: 'center', color: '#000000', fontSize: '10px' }}>{item.quantity}</td>
+                                                    <td style={{ border: '1px solid #d1d5db', padding: '4px', textAlign: 'right', color: '#000000', fontSize: '10px' }}>${item.unitPrice.toFixed(2)}</td>
+                                                    <td style={{ border: '1px solid #d1d5db', padding: '4px', textAlign: 'right', fontWeight: '500', color: '#000000', fontSize: '10px' }}>${item.totalPrice.toFixed(2)}</td>
                                                 </tr>
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan={4} style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'center', color: '#6b7280', fontSize: '9px' }}>
+                                                <td colSpan={4} style={{ border: '1px solid #d1d5db', padding: '4px', textAlign: 'center', color: '#6b7280', fontSize: '10px' }}>
                                                     No hay productos en este pedido
                                                 </td>
                                             </tr>
@@ -2929,8 +2929,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                     </tbody>
                                     <tfoot>
                                         <tr style={{ backgroundColor: '#f3f4f6' }}>
-                                            <td colSpan={3} style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', fontWeight: 'bold', color: '#000000', fontSize: '9px' }}>TOTAL A CANCELAR:</td>
-                                            <td style={{ border: '1px solid #d1d5db', padding: '6px', textAlign: 'right', fontWeight: 'bold', fontSize: '11px', color: '#000000' }}>${selectedOrder.totalAmount.toFixed(2)}</td>
+                                            <td colSpan={3} style={{ border: '1px solid #d1d5db', padding: '4px', textAlign: 'right', fontWeight: 'bold', color: '#000000', fontSize: '10px' }}>TOTAL A CANCELAR:</td>
+                                            <td style={{ border: '1px solid #d1d5db', padding: '4px', textAlign: 'right', fontWeight: 'bold', fontSize: '12px', color: '#000000' }}>${selectedOrder.totalAmount.toFixed(2)}</td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -2938,19 +2938,19 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
                             {/* Notas */}
                             {selectedOrder.notes && (
-                                <div style={{ marginBottom: '10px' }}>
-                                    <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '6px', margin: '0 0 6px 0', fontSize: '11px' }}>Notas adicionales</h3>
-                                    <p style={{ color: '#111827', margin: '0', fontSize: '9px' }}>{selectedOrder.notes}</p>
+                                <div style={{ marginBottom: '8px' }}>
+                                    <h3 style={{ color: '#000000', fontWeight: '600', marginBottom: '4px', margin: '0 0 4px 0', fontSize: '11px' }}>Notas adicionales</h3>
+                                    <p style={{ color: '#111827', margin: '0', fontSize: '10px' }}>{selectedOrder.notes}</p>
                                 </div>
                             )}
 
                             {/* Footer */}
-                            <div style={{ marginTop: '10px', paddingTop: '6px', borderTop: '1px solid #d1d5db' }}>
-                                <p style={{ textAlign: 'center', fontSize: '7px', fontWeight: '500', color: '#374151', margin: '0 0 3px 0', lineHeight: '1.2' }}>
+                            <div style={{ marginTop: '8px', paddingTop: '4px', borderTop: '1px solid #d1d5db' }}>
+                                <p style={{ textAlign: 'center', fontSize: '8px', fontWeight: '500', color: '#374151', margin: '0 0 2px 0', lineHeight: '1.2' }}>
                                     Gracias por su preferencia - Mega Donut<br />
                                     Generado el {getEcuadorDate().toLocaleDateString('es-ES')} a las {getEcuadorDate().toLocaleTimeString('es-ES')}
                                 </p>
-                                <p style={{ textAlign: 'center', fontSize: '6px', marginTop: '3px', fontWeight: '500', color: '#dc2626', margin: '3px 0 0 0', lineHeight: '1.2' }}>
+                                <p style={{ textAlign: 'center', fontSize: '7px', marginTop: '2px', fontWeight: '500', color: '#dc2626', margin: '2px 0 0 0', lineHeight: '1.2' }}>
                                     En caso de incumplimiento en el pago del valor establecido en la nota de pedido emitida por MEGA DONUT, el cliente se someterá a las acciones legales correspondientes.
                                 </p>
                             </div>
