@@ -25,7 +25,6 @@ const styles = StyleSheet.create({
     header: {
         textAlign: 'center',
         marginBottom: 10,
-        borderBottom: '1 solid #e5e7eb',
         paddingBottom: 6,
     },
     title: {

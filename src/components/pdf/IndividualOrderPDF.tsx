@@ -25,7 +25,6 @@ const styles = StyleSheet.create({
     header: {
         textAlign: 'center',
         marginBottom: 8,
-        borderBottom: '1 solid #e5e7eb',
         paddingBottom: 4,
     },
     title: {
@@ -44,7 +43,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 6,
         padding: 4,
-        border: '1 solid #000000',
     },
     orderNumber: {
         fontSize: 14,
@@ -54,7 +52,6 @@ const styles = StyleSheet.create({
     clientInfo: {
         marginBottom: 6,
         padding: 4,
-        border: '1 solid #000000',
     },
     clientName: {
         fontSize: 11,
@@ -129,7 +126,6 @@ const styles = StyleSheet.create({
     totals: {
         marginTop: 6,
         padding: 4,
-        border: '1 solid #000000',
     },
     totalRow: {
         flexDirection: 'row',
@@ -149,7 +145,6 @@ const styles = StyleSheet.create({
     footer: {
         marginTop: 6,
         padding: 4,
-        borderTop: '1 solid #000000',
     },
     footerText: {
         fontSize: 7,
@@ -160,7 +155,6 @@ const styles = StyleSheet.create({
     notes: {
         marginBottom: 6,
         padding: 4,
-        border: '1 solid #000000',
     },
     notesTitle: {
         fontSize: 11,

@@ -2846,14 +2846,13 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             fontSize: '11px',
                             lineHeight: '1.2',
                             padding: '15px',
-                            border: '1px solid #d1d5db',
                             width: '492px',
                             height: '886px',
                             display: 'flex',
                             flexDirection: 'column'
                         }}>
                             {/* Header */}
-                            <div style={{ textAlign: 'center', marginBottom: '10px', borderBottom: '1px solid #e5e7eb', paddingBottom: '4px' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '10px', paddingBottom: '4px' }}>
                                 <h1 style={{ color: '#000000', fontSize: '18px', fontWeight: 'bold', margin: '0 0 4px 0' }}>Mega Donut</h1>
                                 <p style={{ color: '#374151', margin: '0', fontSize: '12px' }}>Nota de Pedido</p>
                             </div>
@@ -2940,7 +2939,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                             )}
 
                             {/* Footer */}
-                            <div style={{ marginTop: '8px', paddingTop: '4px', borderTop: '1px solid #d1d5db' }}>
+                            <div style={{ marginTop: '8px', paddingTop: '4px' }}>
                                 <p style={{ textAlign: 'center', fontSize: '8px', fontWeight: '500', color: '#374151', margin: '0 0 2px 0', lineHeight: '1.2' }}>
                                     Gracias por su preferencia - Mega Donut<br />
                                     Generado el {getEcuadorDate().toLocaleDateString('es-ES')} a las {getEcuadorDate().toLocaleTimeString('es-ES')}

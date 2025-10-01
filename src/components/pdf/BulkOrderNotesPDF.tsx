@@ -26,7 +26,6 @@ const styles = StyleSheet.create({
     header: {
         textAlign: 'center',
         marginBottom: 8,
-        borderBottom: '1 solid #e5e7eb',
         paddingBottom: 4,
     },
     title: {
@@ -154,7 +153,6 @@ const styles = StyleSheet.create({
     footer: {
         marginTop: 6,
         padding: 4,
-        borderTop: '1 solid #e5e7eb',
     },
     footerText: {
         fontSize: 6,

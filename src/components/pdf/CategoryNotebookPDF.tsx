@@ -26,7 +26,6 @@ const styles = StyleSheet.create({
     header: {
         textAlign: 'center',
         marginBottom: 10,
-        borderBottom: '1 solid #e5e7eb',
         paddingBottom: 6,
     },
     title: {
@@ -172,7 +171,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 9,
         color: '#6b7280',
-        borderTop: '1 solid #e5e7eb',
         paddingTop: 4,
     },
     categoryTotals: {
