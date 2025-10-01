@@ -845,7 +845,6 @@ const CategoryNotebookPDF: React.FC<CategoryNotebookPDFProps> = ({
                 <View style={styles.pageFooter}>
                     <Text style={{ fontSize: dynamicStyles.tableCell.fontSize }}>
                         MEGA DONUT - Sistema de Gestión de Pedidos por Categorías |
-                        Página {pageNumber} de {totalPages} |
                         Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
                     </Text>
                     <Text style={{ fontSize: 6, color: '#999', marginTop: 2 }}>

@@ -160,13 +160,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 1.1,
     },
-    pageNumber: {
-        position: 'absolute',
-        bottom: 12,
-        right: 12,
-        fontSize: 6,
-        color: '#6b7280',
-    },
     specialPrice: {
         fontSize: 6,
         color: '#dc2626',
@@ -312,10 +305,6 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
                             </Text>
                         </View>
 
-                        {/* Número de página */}
-                        <Text style={styles.pageNumber}>
-                            Página {index + 1} de {orders.length}
-                        </Text>
                     </Page>
                 );
             })}
