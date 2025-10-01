@@ -8,7 +8,7 @@ import CategoryNotebookTable from './CategoryNotebookTable';
 import CategoryNotebookPreview from './CategoryNotebookPreview';
 import Footer from './Footer';
 import { Route, Client, Product, ProductCategory, Order, OrderItem } from '@/types/routeNotebook';
-import { generateUniqueOrderNumberHybrid } from '@/utils/orderIdGenerator';
+import { generateUniqueOrderNumberHybrid, createOrderWithRetry } from '@/utils/orderIdGenerator';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import CategoryNotebookPDF from './pdf/CategoryNotebookPDF';
 import { sortProductsByCategoryOrder } from '@/utils/productOrderConfig';
@@ -425,28 +425,20 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
 
     const createNewOrder = async (clientId: string, productId: string, quantity: number, product: Product, client: Client) => {
         try {
-            // Generar número de orden único
-            const orderNumber = await generateUniqueOrderNumberHybrid(selectedDate);
+            // Usar la función robusta de creación de órdenes con reintentos
+            const orderData = {
+                client_id: clientId,
+                route_id: client.routeId,
+                order_date: formatDateForDB(selectedDate),
+                delivery_date: formatDateForDB(selectedDate),
+                status: 'pending',
+                total_amount: quantity * product.priceRegular,
+                shipping_surcharge: 1.5, // Valor por defecto para nuevos pedidos
+                notes: 'Orden creada desde cuaderno por categorías',
+                payment_method: 'Efectivo'
+            };
 
-            // Crear nueva orden
-            const { data: newOrder, error: orderError } = await supabase
-                .from('orders')
-                .insert({
-                    order_number: orderNumber,
-                    client_id: clientId,
-                    route_id: client.routeId,
-                    order_date: formatDateForDB(selectedDate),
-                    delivery_date: formatDateForDB(selectedDate),
-                    status: 'pending',
-                    total_amount: quantity * product.priceRegular,
-                    shipping_surcharge: 1.5, // Valor por defecto para nuevos pedidos
-                    notes: 'Orden creada desde cuaderno por categorías',
-                    payment_method: 'Efectivo'
-                })
-                .select()
-                .single();
-
-            if (orderError) throw orderError;
+            const newOrder = await createOrderWithRetry(orderData);
 
             // Crear item de la orden
             const { error: itemError } = await supabase
@@ -464,10 +456,14 @@ export default function CategoryNotebook({ onBack }: CategoryNotebookProps) {
 
             if (itemError) throw itemError;
 
-            console.log('✅ Nueva orden creada:', orderNumber);
+            console.log('✅ Nueva orden creada:', newOrder.order_number);
 
         } catch (error) {
             console.error('❌ Error creating new order:', error);
+            // Mostrar mensaje de error más específico al usuario
+            if (error instanceof Error && error.message.includes('duplicate key value violates unique constraint')) {
+                console.error('❌ Error: Número de orden duplicado detectado. Esto no debería pasar con el nuevo sistema.');
+            }
         }
     };
 

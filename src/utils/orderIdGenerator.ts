@@ -3,9 +3,9 @@ import { supabase } from '@/lib/supabase';
 /**
  * Genera un número de pedido único verificando contra la base de datos
  * Formato: PED-YYYYMMDD-XXXX (donde XXXX es un número secuencial de 4 dígitos)
- * Incluye reintentos para manejar condiciones de carrera
+ * Incluye reintentos para manejar condiciones de carrera y usa timestamp como fallback
  */
-export async function generateUniqueOrderNumber(date?: Date, maxRetries: number = 5): Promise<string> {
+export async function generateUniqueOrderNumber(date?: Date, maxRetries: number = 10): Promise<string> {
     const targetDate = date || new Date();
     const year = targetDate.getFullYear();
     const month = String(targetDate.getMonth() + 1).padStart(2, '0');
@@ -42,9 +42,11 @@ export async function generateUniqueOrderNumber(date?: Date, maxRetries: number 
                 }
             }
             
-            // Agregar un pequeño offset basado en el intento para evitar colisiones
+            // Agregar un offset basado en el intento y tiempo para evitar colisiones
             if (attempt > 0) {
                 nextSequence += attempt;
+                // Agregar un pequeño delay aleatorio para evitar condiciones de carrera
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
             }
             
             // Formatear el número secuencial con 4 dígitos
@@ -70,7 +72,7 @@ export async function generateUniqueOrderNumber(date?: Date, maxRetries: number 
             }
             
             // Si el número ya existe, continuar con el siguiente intento
-            console.warn(`Order number ${proposedOrderNumber} already exists, trying again...`);
+            console.warn(`Order number ${proposedOrderNumber} already exists, trying again... (attempt ${attempt + 1}/${maxRetries})`);
             
         } catch (error) {
             console.error(`Attempt ${attempt + 1} failed:`, error);
@@ -147,4 +149,51 @@ export async function isOrderNumberUnique(orderNumber: string): Promise<boolean>
         console.error('Error in isOrderNumberUnique:', error);
         return false;
     }
+}
+
+/**
+ * Crea una orden con manejo robusto de números duplicados
+ * Incluye reintentos automáticos si hay colisiones de números de orden
+ */
+export async function createOrderWithRetry(orderData: any, maxRetries: number = 5): Promise<any> {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            // Generar un número de orden único para este intento
+            const orderNumber = await generateUniqueOrderNumber(orderData.order_date ? new Date(orderData.order_date) : undefined);
+            
+            // Intentar crear la orden
+            const { data: newOrder, error: orderError } = await supabase
+                .from('orders')
+                .insert({
+                    ...orderData,
+                    order_number: orderNumber
+                })
+                .select()
+                .single();
+
+            if (orderError) {
+                // Si es un error de clave duplicada, intentar de nuevo
+                if (orderError.code === '23505' && orderError.message.includes('duplicate key value violates unique constraint')) {
+                    console.warn(`Duplicate order number detected (attempt ${attempt + 1}/${maxRetries}), retrying...`);
+                    if (attempt < maxRetries - 1) {
+                        // Esperar un poco antes del siguiente intento
+                        await new Promise(resolve => setTimeout(resolve, Math.random() * 200 + 100));
+                        continue;
+                    }
+                }
+                throw orderError;
+            }
+
+            return newOrder;
+        } catch (error) {
+            console.error(`Order creation attempt ${attempt + 1} failed:`, error);
+            if (attempt === maxRetries - 1) {
+                throw error;
+            }
+            // Esperar antes del siguiente intento
+            await new Promise(resolve => setTimeout(resolve, Math.random() * 300 + 200));
+        }
+    }
+    
+    throw new Error('Failed to create order after maximum retries');
 }

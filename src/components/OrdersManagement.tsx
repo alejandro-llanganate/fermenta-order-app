@@ -31,7 +31,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import BulkOrderNotesPDF from './pdf/BulkOrderNotesPDF';
 import { handleNumericInputChange, parseNumericValue } from '@/utils/numericValidation';
-import { generateUniqueOrderNumberHybrid } from '@/utils/orderIdGenerator';
+import { generateUniqueOrderNumberHybrid, createOrderWithRetry } from '@/utils/orderIdGenerator';
 import { formatDateForDB, parseDateFromDB, convertDBTimestampToEcuador, getEcuadorDate } from '@/utils/dateUtils';
 
 interface OrdersManagementProps {
@@ -530,7 +530,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         }
     };
 
-    // Función para generar número de pedido único
+    // Función para generar número de pedido único (mantenida para compatibilidad)
     const generateOrderNumber = async () => {
         return await generateUniqueOrderNumberHybrid(orderDate);
     };
@@ -906,29 +906,24 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
                     showSuccess('¡Pedido Actualizado!', `El pedido ${orderNumber} ha sido actualizado exitosamente.`);
                 } else {
-                    // Crear el pedido
-                    const { data: orderData, error: orderError } = await supabase
-                        .from('orders')
-                        .insert([{
-                            order_number: orderNumber,
-                            client_id: selectedClient!.id,
-                            route_id: selectedRouteForOrder?.id,
-                            order_date: formatDateForDB(orderDate),
-                            delivery_date: deliveryDate ? formatDateForDB(deliveryDate) : null,
-                            status: 'pending',
-                            total_amount: calculateTotalWithShipping(),
-                            shipping_surcharge: applyShippingSurcharge ? shippingSurcharge : 0,
-                            payment_method: paymentMethod,
-                            notes: notes
-                        }])
-                        .select()
-                        .single();
+                    // Usar la función robusta de creación de órdenes con reintentos
+                    const orderData = {
+                        client_id: selectedClient!.id,
+                        route_id: selectedRouteForOrder?.id,
+                        order_date: formatDateForDB(orderDate),
+                        delivery_date: deliveryDate ? formatDateForDB(deliveryDate) : null,
+                        status: 'pending',
+                        total_amount: calculateTotalWithShipping(),
+                        shipping_surcharge: applyShippingSurcharge ? shippingSurcharge : 0,
+                        payment_method: paymentMethod,
+                        notes: notes
+                    };
 
-                    if (orderError) throw orderError;
+                    const orderDataResult = await createOrderWithRetry(orderData);
 
                     // Crear los items del pedido
                     const orderItems = selectedItems.map(item => ({
-                        order_id: orderData.id,
+                        order_id: orderDataResult.id,
                         product_id: item.product.id,
                         product_name: item.product.name,
                         product_category: item.product.categoryName || '',
@@ -946,7 +941,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
 
                     if (itemsError) throw itemsError;
 
-                    showSuccess('¡Pedido Creado!', `El pedido ${orderNumber} ha sido creado exitosamente.`);
+                    showSuccess('¡Pedido Creado!', `El pedido ${orderDataResult.order_number} ha sido creado exitosamente.`);
                 }
 
                 // Actualizar la lista de pedidos
