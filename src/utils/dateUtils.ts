@@ -91,7 +91,9 @@ export function convertDBTimestampToEcuador(dbTimestamp: string | Date): Date {
     const timezone = process.env.NEXT_PUBLIC_TIMEZONE || 'America/Guayaquil';
     
     // Usar Luxon para convertir correctamente el timestamp
-    const luxonDate = DateTime.fromJSDate(dbTimestamp, { zone: timezone });
+    const luxonDate = typeof dbTimestamp === 'string' 
+        ? DateTime.fromISO(dbTimestamp, { zone: timezone })
+        : DateTime.fromJSDate(dbTimestamp, { zone: timezone });
     return luxonDate.toJSDate();
 }
 
