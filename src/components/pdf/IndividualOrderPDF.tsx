@@ -38,55 +38,52 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: 'bold',
         marginBottom: 2,
-        color: '#374151',
+        color: '#000000',
     },
     orderNumberSection: {
         textAlign: 'center',
         marginBottom: 6,
         padding: 6,
-        backgroundColor: '#f3f4f6',
-        borderRadius: 4,
+        border: '1 solid #000000',
     },
     orderNumber: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#1f2937',
+        color: '#000000',
     },
     clientInfo: {
         marginBottom: 6,
         padding: 6,
-        backgroundColor: '#f9fafb',
-        borderRadius: 4,
+        border: '1 solid #000000',
     },
     clientName: {
         fontSize: 11,
         fontWeight: 'bold',
         marginBottom: 2,
-        color: '#1f2937',
+        color: '#000000',
     },
     clientDetails: {
         fontSize: 9,
-        color: '#6b7280',
+        color: '#000000',
         marginBottom: 1,
     },
     table: {
         width: '100%',
         borderStyle: 'solid',
         borderWidth: 1,
-        borderColor: '#d1d5db',
+        borderColor: '#000000',
         marginBottom: 6,
     },
     tableHeader: {
-        backgroundColor: '#f9fafb',
         flexDirection: 'row',
         borderBottomWidth: 1,
-        borderBottomColor: '#d1d5db',
+        borderBottomColor: '#000000',
         padding: 4,
     },
     tableRow: {
         flexDirection: 'row',
         borderBottomWidth: 1,
-        borderBottomColor: '#d1d5db',
+        borderBottomColor: '#000000',
         padding: 4,
         minHeight: 18,
     },
@@ -125,15 +122,14 @@ const styles = StyleSheet.create({
     headerCell: {
         fontSize: 9,
         fontWeight: 'bold',
-        color: '#374151',
+        color: '#000000',
         paddingLeft: 3,
         paddingRight: 3,
     },
     totals: {
         marginTop: 6,
         padding: 6,
-        backgroundColor: '#f9fafb',
-        borderRadius: 4,
+        border: '1 solid #000000',
     },
     totalRow: {
         flexDirection: 'row',
@@ -143,7 +139,7 @@ const styles = StyleSheet.create({
     totalLabel: {
         fontSize: 11,
         fontWeight: 'bold',
-        color: '#374151',
+        color: '#000000',
     },
     totalValue: {
         fontSize: 11,
@@ -153,29 +149,28 @@ const styles = StyleSheet.create({
     footer: {
         marginTop: 6,
         padding: 4,
-        borderTop: '1 solid #e5e7eb',
+        borderTop: '1 solid #000000',
     },
     footerText: {
         fontSize: 7,
-        color: '#6b7280',
+        color: '#000000',
         textAlign: 'center',
         lineHeight: 1.2,
     },
     notes: {
         marginBottom: 6,
         padding: 6,
-        backgroundColor: '#f9fafb',
-        borderRadius: 4,
+        border: '1 solid #000000',
     },
     notesTitle: {
         fontSize: 11,
         fontWeight: 'bold',
         marginBottom: 3,
-        color: '#1f2937',
+        color: '#000000',
     },
     notesText: {
         fontSize: 9,
-        color: '#6b7280',
+        color: '#000000',
     },
 });
 
@@ -199,7 +194,7 @@ const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, client }
 
     return (
         <Document>
-            <Page size={[492, 886]} style={styles.page}>
+            <Page size="LETTER" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.title}>Mega Donut</Text>
