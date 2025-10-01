@@ -17,10 +17,10 @@ const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 12,
+        padding: 15,
         fontFamily: 'Helvetica',
-        fontSize: 9,
-        lineHeight: 1.1,
+        fontSize: 10,
+        lineHeight: 1.2,
     },
     header: {
         textAlign: 'center',
@@ -29,15 +29,15 @@ const styles = StyleSheet.create({
         paddingBottom: 4,
     },
     title: {
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: 'bold',
-        marginBottom: 6,
+        marginBottom: 4,
         color: '#000000',
     },
     subtitle: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 'bold',
-        marginBottom: 3,
+        marginBottom: 2,
         color: '#374151',
     },
     orderNumberSection: {
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
         borderRadius: 4,
     },
     orderNumber: {
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: 'bold',
         color: '#1f2937',
     },
@@ -59,13 +59,13 @@ const styles = StyleSheet.create({
         borderRadius: 4,
     },
     clientName: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
         marginBottom: 2,
         color: '#1f2937',
     },
     clientDetails: {
-        fontSize: 8,
+        fontSize: 9,
         color: '#6b7280',
         marginBottom: 1,
     },
@@ -92,42 +92,42 @@ const styles = StyleSheet.create({
     },
     productCell: {
         flex: 2,
-        fontSize: 8,
+        fontSize: 9,
         textAlign: 'left',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 3,
+        paddingRight: 3,
     },
     quantityCell: {
         flex: 1,
-        fontSize: 8,
+        fontSize: 9,
         textAlign: 'center',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 3,
+        paddingRight: 3,
     },
     priceCell: {
         flex: 1,
-        fontSize: 8,
+        fontSize: 9,
         textAlign: 'right',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 3,
+        paddingRight: 3,
     },
     totalCell: {
         flex: 1,
-        fontSize: 8,
+        fontSize: 9,
         textAlign: 'right',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 3,
+        paddingRight: 3,
     },
     headerCell: {
-        fontSize: 8,
+        fontSize: 9,
         fontWeight: 'bold',
         color: '#374151',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 3,
+        paddingRight: 3,
     },
     totals: {
         marginTop: 6,
@@ -141,12 +141,12 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
     totalLabel: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
         color: '#374151',
     },
     totalValue: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
         color: '#000000',
     },
@@ -156,10 +156,10 @@ const styles = StyleSheet.create({
         borderTop: '1 solid #e5e7eb',
     },
     footerText: {
-        fontSize: 6,
+        fontSize: 7,
         color: '#6b7280',
         textAlign: 'center',
-        lineHeight: 1.1,
+        lineHeight: 1.2,
     },
     notes: {
         marginBottom: 6,
@@ -168,13 +168,13 @@ const styles = StyleSheet.create({
         borderRadius: 4,
     },
     notesTitle: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
         marginBottom: 3,
         color: '#1f2937',
     },
     notesText: {
-        fontSize: 8,
+        fontSize: 9,
         color: '#6b7280',
     },
 });
@@ -199,7 +199,7 @@ const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, client }
 
     return (
         <Document>
-            <Page size="A5" orientation="landscape" style={styles.page}>
+            <Page size={[492, 886]} style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.title}>Mega Donut</Text>
