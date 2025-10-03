@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     ShoppingCart,
     Plus,
@@ -1358,7 +1358,8 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
         try {
             // Importar dinámicamente para evitar errores de SSR
             const { pdf } = await import('@react-pdf/renderer');
-            const IndividualOrderPDF = (await import('@/components/pdf/IndividualOrderPDF')).default;
+            const pdfGeneratorModule = await import('@/utils/pdfGenerator');
+            const IndividualOrderPDF = pdfGeneratorModule.IndividualOrderPDF;
 
             // Obtener datos del cliente
             const clientData = await supabase
@@ -1367,7 +1368,7 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                 .eq('id', selectedOrder.clientId)
                 .single();
 
-            const pdfDocument = IndividualOrderPDF({
+            const pdfDocument = React.createElement(IndividualOrderPDF, {
                 order: selectedOrder,
                 client: clientData.data as any
             });

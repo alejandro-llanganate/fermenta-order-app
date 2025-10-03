@@ -12,158 +12,158 @@ Font.register({
     ]
 });
 
-// Estilos para el PDF
+// Estilos para el PDF - Optimizados para 14cm x 21cm - ULTRA COMPACTO
 const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 12,
+        padding: 4,
         fontFamily: 'Helvetica',
-        fontSize: 10,
-        lineHeight: 1.2,
+        fontSize: 6,
+        lineHeight: 0.9,
     },
     header: {
         textAlign: 'center',
-        marginBottom: 8,
-        paddingBottom: 4,
+        marginBottom: 3,
+        paddingBottom: 1,
     },
     title: {
-        fontSize: 16,
+        fontSize: 9,
         fontWeight: 'bold',
-        marginBottom: 4,
+        marginBottom: 1,
         color: '#000000',
     },
     subtitle: {
-        fontSize: 12,
+        fontSize: 7,
         fontWeight: 'bold',
-        marginBottom: 2,
+        marginBottom: 0,
         color: '#000000',
     },
     orderNumberSection: {
         textAlign: 'center',
-        marginBottom: 6,
-        padding: 4,
+        marginBottom: 1,
+        padding: 1,
     },
     orderNumber: {
-        fontSize: 14,
+        fontSize: 8,
         fontWeight: 'bold',
         color: '#000000',
     },
     clientInfo: {
-        marginBottom: 6,
-        padding: 4,
+        marginBottom: 1,
+        padding: 1,
     },
     clientName: {
-        fontSize: 11,
+        fontSize: 6,
         fontWeight: 'bold',
-        marginBottom: 2,
+        marginBottom: 0,
         color: '#000000',
     },
     clientDetails: {
-        fontSize: 9,
+        fontSize: 5,
         color: '#000000',
-        marginBottom: 1,
+        marginBottom: 0,
     },
     table: {
         width: '100%',
         borderStyle: 'solid',
         borderWidth: 1,
         borderColor: '#000000',
-        marginBottom: 6,
+        marginBottom: 1,
     },
     tableHeader: {
         flexDirection: 'row',
         borderBottomWidth: 1,
         borderBottomColor: '#000000',
-        padding: 4,
+        padding: 1,
     },
     tableRow: {
         flexDirection: 'row',
         borderBottomWidth: 1,
         borderBottomColor: '#000000',
-        padding: 4,
-        minHeight: 18,
+        padding: 1,
+        minHeight: 8,
     },
     productCell: {
         flex: 2,
-        fontSize: 9,
+        fontSize: 5,
         textAlign: 'left',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 0,
+        paddingRight: 0,
     },
     quantityCell: {
         flex: 1,
-        fontSize: 9,
+        fontSize: 5,
         textAlign: 'center',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 0,
+        paddingRight: 0,
     },
     priceCell: {
         flex: 1,
-        fontSize: 9,
+        fontSize: 5,
         textAlign: 'right',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 0,
+        paddingRight: 0,
     },
     totalCell: {
         flex: 1,
-        fontSize: 9,
+        fontSize: 5,
         textAlign: 'right',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 0,
+        paddingRight: 0,
     },
     headerCell: {
-        fontSize: 9,
+        fontSize: 5,
         fontWeight: 'bold',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 0,
+        paddingRight: 0,
     },
     totals: {
-        marginTop: 6,
-        padding: 4,
+        marginTop: 1,
+        padding: 1,
     },
     totalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 2,
+        marginBottom: 0,
     },
     totalLabel: {
-        fontSize: 11,
+        fontSize: 6,
         fontWeight: 'bold',
         color: '#000000',
     },
     totalValue: {
-        fontSize: 11,
+        fontSize: 6,
         fontWeight: 'bold',
         color: '#000000',
     },
     footer: {
-        marginTop: 6,
-        padding: 4,
+        marginTop: 1,
+        padding: 1,
     },
     footerText: {
-        fontSize: 7,
+        fontSize: 4,
         color: '#000000',
         textAlign: 'center',
-        lineHeight: 1.2,
+        lineHeight: 0.8,
     },
     notes: {
-        marginBottom: 6,
-        padding: 4,
+        marginBottom: 1,
+        padding: 1,
     },
     notesTitle: {
-        fontSize: 11,
+        fontSize: 6,
         fontWeight: 'bold',
-        marginBottom: 3,
+        marginBottom: 0,
         color: '#000000',
     },
     notesText: {
-        fontSize: 9,
+        fontSize: 5,
         color: '#000000',
     },
 });
@@ -173,7 +173,7 @@ interface IndividualOrderPDFProps {
     client?: Client | null;
 }
 
-const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, client }) => {
+export const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, client }) => {
     // Función para generar identificador de 5 dígitos del ID del pedido
     const generateOrderIdentifier = (orderId: string): string => {
         const numbers = orderId.replace(/\D/g, '');
@@ -188,7 +188,7 @@ const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, client }
 
     return (
         <Document>
-            <Page size="LETTER" style={styles.page}>
+            <Page size={[210, 140]} style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.title}>Mega Donut</Text>
@@ -205,26 +205,16 @@ const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, client }
                 {/* Información del Cliente */}
                 <View style={styles.clientInfo}>
                     <Text style={styles.clientDetails}>
-                        Nombre: {getClientName(order, client)}
+                        Cliente: {getClientName(order, client)}
                     </Text>
                     {order.deliveryDate && (
                         <Text style={styles.clientDetails}>
-                            Fecha de entrega: {order.deliveryDate.toLocaleDateString('es-ES')}
+                            Entrega: {order.deliveryDate.toLocaleDateString('es-ES')}
                         </Text>
                     )}
                     {client?.telefono && (
                         <Text style={styles.clientDetails}>
-                            Teléfono: {client.telefono}
-                        </Text>
-                    )}
-                    {client?.direccion && (
-                        <Text style={styles.clientDetails}>
-                            Dirección: {client.direccion}
-                        </Text>
-                    )}
-                    {client?.cedula && (
-                        <Text style={styles.clientDetails}>
-                            Cédula: {client.cedula}
+                            Tel: {client.telefono}
                         </Text>
                     )}
                 </View>
@@ -278,16 +268,13 @@ const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, client }
                 {/* Footer */}
                 <View style={styles.footer}>
                     <Text style={styles.footerText}>
-                        Gracias por su preferencia - Mega Donut{'\n'}
-                        Generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES')}
+                        Gracias por su preferencia - Mega Donut
                     </Text>
-                    <Text style={[styles.footerText, { color: '#dc2626', marginTop: 4 }]}>
-                        En caso de incumplimiento en el pago del valor establecido en la nota de pedido emitida por MEGA DONUT, el cliente se someterá a las acciones legales correspondientes.
+                    <Text style={[styles.footerText, { color: '#dc2626', marginTop: 1 }]}>
+                        En caso de incumplimiento en el pago, el cliente se someterá a las acciones legales correspondientes.
                     </Text>
                 </View>
             </Page>
         </Document>
     );
 };
-
-export default IndividualOrderPDF;

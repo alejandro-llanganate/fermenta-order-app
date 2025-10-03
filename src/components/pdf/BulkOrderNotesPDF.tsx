@@ -13,55 +13,55 @@ Font.register({
     ]
 });
 
-// Estilos para el PDF
+// Estilos para el PDF - Optimizado para dos pedidos por página
 const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 12,
+        padding: 8,
         fontFamily: 'Helvetica',
-        fontSize: 10,
+        fontSize: 9,
         lineHeight: 1.2,
     },
     header: {
         textAlign: 'center',
-        marginBottom: 8,
-        paddingBottom: 4,
+        marginBottom: 4,
+        paddingBottom: 2,
     },
     title: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
-        marginBottom: 4,
+        marginBottom: 2,
         color: '#000000',
     },
     subtitle: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: 'bold',
-        marginBottom: 2,
+        marginBottom: 1,
         color: '#000000',
     },
     orderNumberSection: {
         textAlign: 'center',
-        marginBottom: 6,
-        padding: 4,
+        marginBottom: 3,
+        padding: 2,
     },
     clientInfo: {
-        marginBottom: 6,
-        padding: 4,
+        marginBottom: 3,
+        padding: 2,
     },
     clientName: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: 'bold',
-        marginBottom: 2,
+        marginBottom: 1,
         color: '#000000',
     },
     clientDetails: {
-        fontSize: 9,
+        fontSize: 8,
         color: '#000000',
-        marginBottom: 1,
+        marginBottom: 0,
     },
     orderNumber: {
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: 'bold',
         color: '#000000',
     },
@@ -70,93 +70,117 @@ const styles = StyleSheet.create({
         borderStyle: 'solid',
         borderWidth: 1,
         borderColor: '#000000',
-        marginBottom: 6,
+        marginBottom: 3,
     },
     tableHeader: {
         flexDirection: 'row',
         borderBottomWidth: 1,
         borderBottomColor: '#000000',
-        padding: 4,
+        padding: 2,
     },
     tableRow: {
         flexDirection: 'row',
         borderBottomWidth: 1,
         borderBottomColor: '#000000',
-        padding: 4,
-        minHeight: 18,
+        padding: 2,
+        minHeight: 14,
     },
     productCell: {
         flex: 2,
-        fontSize: 9,
+        fontSize: 8,
         textAlign: 'left',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 1,
+        paddingRight: 1,
     },
     quantityCell: {
         flex: 1,
-        fontSize: 9,
+        fontSize: 8,
         textAlign: 'center',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 1,
+        paddingRight: 1,
     },
     priceCell: {
         flex: 1,
-        fontSize: 9,
+        fontSize: 8,
         textAlign: 'right',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 1,
+        paddingRight: 1,
     },
     totalCell: {
         flex: 1,
-        fontSize: 9,
+        fontSize: 8,
         textAlign: 'right',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 1,
+        paddingRight: 1,
     },
     headerCell: {
-        fontSize: 9,
+        fontSize: 8,
         fontWeight: 'bold',
         color: '#000000',
-        paddingLeft: 2,
-        paddingRight: 2,
+        paddingLeft: 1,
+        paddingRight: 1,
     },
     totals: {
-        marginTop: 6,
-        padding: 4,
+        marginTop: 3,
+        padding: 2,
     },
     totalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 2,
+        marginBottom: 1,
     },
     totalLabel: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: 'bold',
         color: '#000000',
     },
     totalValue: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: 'bold',
         color: '#000000',
     },
     footer: {
-        marginTop: 6,
-        padding: 4,
+        marginTop: 3,
+        padding: 2,
     },
     footerText: {
         fontSize: 7,
         color: '#000000',
         textAlign: 'center',
-        lineHeight: 1.2,
+        lineHeight: 1.1,
     },
     specialPrice: {
         fontSize: 6,
         color: '#dc2626',
         fontStyle: 'italic',
+    },
+    // Estilos para formato A5 (mitad de A4)
+    a5Container: {
+        width: '100%',
+        height: '50%',
+        padding: 6,
+        borderStyle: 'solid',
+        borderWidth: 1,
+        borderColor: '#cccccc',
+        borderRadius: 4,
+        marginBottom: 4,
+    },
+    a5Top: {
+        borderBottomWidth: 2,
+        borderBottomColor: '#000000',
+    },
+    a5Bottom: {
+        borderTopWidth: 2,
+        borderTopColor: '#000000',
+    },
+    a5Separator: {
+        height: 2,
+        backgroundColor: '#000000',
+        marginVertical: 2,
     },
 });
 
@@ -196,108 +220,136 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
         return client?.nombre || order.clientName || 'No disponible';
     };
 
+    // Función para renderizar un pedido individual (optimizado para A5)
+    const renderOrder = (order: Order, client: Client | undefined) => (
+        <View key={order.id}>
+            {/* Pedido # */}
+            <View style={styles.orderNumberSection}>
+                <Text style={styles.orderNumber}>
+                    Pedido #{generateOrderIdentifier(order.id)}
+                </Text>
+            </View>
+
+            {/* Información del Cliente */}
+            <View style={styles.clientInfo}>
+                <Text style={styles.clientDetails}>
+                    Cliente: {getClientName(order, client)}
+                </Text>
+                {order.deliveryDate && (
+                    <Text style={styles.clientDetails}>
+                        Entrega: {order.deliveryDate.toLocaleDateString('es-ES')}
+                    </Text>
+                )}
+                {client?.telefono && (
+                    <Text style={styles.clientDetails}>
+                        Tel: {client.telefono}
+                    </Text>
+                )}
+            </View>
+
+            {/* Tabla de Productos */}
+            <View style={styles.table}>
+                {/* Header de la tabla */}
+                <View style={styles.tableHeader}>
+                    <Text style={[styles.productCell, styles.headerCell]}>Producto</Text>
+                    <Text style={[styles.quantityCell, styles.headerCell]}>Cantidad</Text>
+                    <Text style={[styles.priceCell, styles.headerCell]}>Precio Unit.</Text>
+                    <Text style={[styles.totalCell, styles.headerCell]}>Total</Text>
+                </View>
+
+                {/* Filas de productos */}
+                {order.items && order.items.map((item: OrderItem) => (
+                    <View key={item.id} style={styles.tableRow}>
+                        <Text style={styles.productCell}>
+                            {item.productName}
+                            {item.usesSpecialPrice && (
+                                <Text style={styles.specialPrice}> (Precio Especial)</Text>
+                            )}
+                        </Text>
+                        <Text style={styles.quantityCell}>{item.quantity}</Text>
+                        <Text style={styles.priceCell}>${item.unitPrice.toFixed(2)}</Text>
+                        <Text style={styles.totalCell}>${item.totalPrice.toFixed(2)}</Text>
+                    </View>
+                ))}
+            </View>
+
+            {/* Totales */}
+            <View style={styles.totals}>
+                <View style={styles.totalRow}>
+                    <Text style={styles.totalLabel}>Total:</Text>
+                    <Text style={styles.totalValue}>${order.totalAmount.toFixed(2)}</Text>
+                </View>
+            </View>
+
+            {/* Notas */}
+            {order.notes && (
+                <View style={styles.footer}>
+                    <Text style={styles.footerText}>
+                        <Text style={{ fontWeight: 'bold' }}>Notas:</Text> {order.notes}
+                    </Text>
+                </View>
+            )}
+        </View>
+    );
+
+    // Agrupar pedidos de dos en dos, asegurando que no haya grupos vacíos
+    const groupedOrders = [];
+    for (let i = 0; i < orders.length; i += 2) {
+        const group = orders.slice(i, i + 2);
+        if (group.length > 0) {
+            groupedOrders.push(group);
+        }
+    }
+
+    // Si no hay pedidos, no generar PDF
+    if (orders.length === 0) {
+        return (
+            <Document>
+                <Page size="A4" style={styles.page}>
+                    <View style={styles.header}>
+                        <Text style={styles.title}>Mega Donut</Text>
+                        <Text style={styles.subtitle}>No hay pedidos para mostrar</Text>
+                    </View>
+                </Page>
+            </Document>
+        );
+    }
 
     return (
         <Document>
-            {orders.map((order, index) => {
-                const client = clients.find(c => c.id === order.clientId);
-                const route = routes.find(r => r.id === order.routeId);
+            {groupedOrders.map((orderGroup, pageIndex) => {
+                // Verificar que el grupo no esté vacío
+                if (!orderGroup || orderGroup.length === 0) {
+                    return null;
+                }
 
                 return (
-                    <Page key={order.id} size="LETTER" style={styles.page}>
-                        {/* Header */}
-                        <View style={styles.header}>
-                            <Text style={styles.title}>Mega Donut</Text>
-                            <Text style={styles.subtitle}>Nota de Pedido</Text>
-                        </View>
+                    <Page key={pageIndex} size="A4" style={styles.page}>
+                        {/* Renderizar pedidos del grupo - cada uno en su mitad A5 con su propio header */}
+                        {orderGroup.map((order, orderIndex) => {
+                            if (!order) return null;
 
-                        {/* Pedido # */}
-                        <View style={styles.orderNumberSection}>
-                            <Text style={styles.orderNumber}>
-                                Pedido #{generateOrderIdentifier(order.id)}
-                            </Text>
-                        </View>
+                            const client = clients.find(c => c.id === order.clientId);
+                            return (
+                                <React.Fragment key={order.id}>
+                                    <View style={[
+                                        styles.a5Container,
+                                        orderIndex === 0 ? styles.a5Top : styles.a5Bottom
+                                    ]}>
+                                        {/* Header individual para cada pedido */}
+                                        <View style={styles.header}>
+                                            <Text style={styles.title}>Mega Donut</Text>
+                                            <Text style={styles.subtitle}>Nota de Pedido</Text>
+                                        </View>
 
-                        {/* Información del Cliente */}
-                        <View style={styles.clientInfo}>
-                            <Text style={styles.clientDetails}>
-                                Nombre: {getClientName(order, client)}
-                            </Text>
-                            {order.deliveryDate && (
-                                <Text style={styles.clientDetails}>
-                                    Fecha de entrega: {order.deliveryDate.toLocaleDateString('es-ES')}
-                                </Text>
-                            )}
-                            {client?.direccion && (
-                                <Text style={styles.clientDetails}>
-                                    Dirección: {client.direccion}
-                                </Text>
-                            )}
-                            {client?.telefono && (
-                                <Text style={styles.clientDetails}>
-                                    Teléfono: {client.telefono}
-                                </Text>
-                            )}
-                            {client?.cedula && (
-                                <Text style={styles.clientDetails}>
-                                    Cédula: {client.cedula}
-                                </Text>
-                            )}
-                        </View>
-
-                        {/* Tabla de Productos */}
-                        <View style={styles.table}>
-                            {/* Header de la tabla */}
-                            <View style={styles.tableHeader}>
-                                <Text style={[styles.productCell, styles.headerCell]}>Producto</Text>
-                                <Text style={[styles.quantityCell, styles.headerCell]}>Cantidad</Text>
-                                <Text style={[styles.priceCell, styles.headerCell]}>Precio Unit.</Text>
-                                <Text style={[styles.totalCell, styles.headerCell]}>Total</Text>
-                            </View>
-
-                            {/* Filas de productos */}
-                            {order.items && order.items.map((item: OrderItem) => (
-                                <View key={item.id} style={styles.tableRow}>
-                                    <Text style={styles.productCell}>
-                                        {item.productName}
-                                        {item.usesSpecialPrice && (
-                                            <Text style={styles.specialPrice}> (Precio Especial)</Text>
-                                        )}
-                                    </Text>
-                                    <Text style={styles.quantityCell}>{item.quantity}</Text>
-                                    <Text style={styles.priceCell}>${item.unitPrice.toFixed(2)}</Text>
-                                    <Text style={styles.totalCell}>${item.totalPrice.toFixed(2)}</Text>
-                                </View>
-                            ))}
-                        </View>
-
-                        {/* Totales */}
-                        <View style={styles.totals}>
-                            <View style={styles.totalRow}>
-                                <Text style={styles.totalLabel}>Total del Pedido:</Text>
-                                <Text style={styles.totalValue}>${order.totalAmount.toFixed(2)}</Text>
-                            </View>
-                        </View>
-
-                        {/* Notas */}
-                        {order.notes && (
-                            <View style={styles.footer}>
-                                <Text style={styles.footerText}>
-                                    <Text style={{ fontWeight: 'bold' }}>Notas:</Text> {order.notes}
-                                </Text>
-                            </View>
-                        )}
-
-                        {/* Footer */}
-                        <View style={styles.footer}>
-                            <Text style={styles.footerText}>
-                                Gracias por su preferencia - Mega Donut
-                            </Text>
-                            <Text style={styles.footerText}>
-                                En caso de incumplimiento en el pago del valor establecido en la nota de pedido emitida por MEGA DONUT, el cliente se someterá a las acciones legales correspondientes.
-                            </Text>
-                        </View>
-
+                                        {renderOrder(order, client)}
+                                    </View>
+                                    {orderIndex < orderGroup.length - 1 && (
+                                        <View style={styles.a5Separator} />
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
                     </Page>
                 );
             })}
