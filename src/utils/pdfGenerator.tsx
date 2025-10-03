@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { Order } from '@/types/order';
 import { Client } from '@/types/client';
 
@@ -26,6 +26,18 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 3,
         paddingBottom: 1,
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    logo: {
+        width: 40,
+        height: 25,
+        marginBottom: 5,
+    },
+    headerText: {
+        flexDirection: 'column',
+        alignItems: 'center',
     },
     title: {
         fontSize: 9,
@@ -191,8 +203,14 @@ export const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, c
             <Page size={[210, 140]} style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Text style={styles.title}>Mega Donut</Text>
-                    <Text style={styles.subtitle}>Nota de Pedido</Text>
+                    <Image
+                        style={styles.logo}
+                        src="/logo_empresa.png"
+                    />
+                    <View style={styles.headerText}>
+                        <Text style={styles.title}>Mega Donut</Text>
+                        <Text style={styles.subtitle}>Nota de Pedido</Text>
+                    </View>
                 </View>
 
                 {/* Pedido # */}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { Order, OrderItem } from '@/types/order';
 import { Client } from '@/types/client';
 import { Route } from '@/types/route';
@@ -18,24 +18,36 @@ const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 8,
+        padding: 6,
         fontFamily: 'Helvetica',
-        fontSize: 9,
-        lineHeight: 1.2,
+        fontSize: 8,
+        lineHeight: 1.1,
     },
     header: {
         textAlign: 'center',
         marginBottom: 4,
         paddingBottom: 2,
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    logo: {
+        width: 60, // Reducido de 80 a 60
+        height: 35, // Reducido de 50 a 35
+        marginBottom: 4, // Reducido de 8 a 4
+    },
+    headerText: {
+        flexDirection: 'column',
+        alignItems: 'center',
     },
     title: {
-        fontSize: 14,
+        fontSize: 12, // Reducido de 14 a 12
         fontWeight: 'bold',
-        marginBottom: 2,
+        marginBottom: 1, // Reducido de 2 a 1
         color: '#000000',
     },
     subtitle: {
-        fontSize: 11,
+        fontSize: 9, // Reducido de 11 a 9
         fontWeight: 'bold',
         marginBottom: 1,
         color: '#000000',
@@ -87,7 +99,7 @@ const styles = StyleSheet.create({
     },
     productCell: {
         flex: 2,
-        fontSize: 8,
+        fontSize: 7, // Reducido de 8 a 7
         textAlign: 'left',
         color: '#000000',
         paddingLeft: 1,
@@ -95,7 +107,7 @@ const styles = StyleSheet.create({
     },
     quantityCell: {
         flex: 1,
-        fontSize: 8,
+        fontSize: 7, // Reducido de 8 a 7
         textAlign: 'center',
         color: '#000000',
         paddingLeft: 1,
@@ -103,7 +115,7 @@ const styles = StyleSheet.create({
     },
     priceCell: {
         flex: 1,
-        fontSize: 8,
+        fontSize: 7, // Reducido de 8 a 7
         textAlign: 'right',
         color: '#000000',
         paddingLeft: 1,
@@ -111,41 +123,41 @@ const styles = StyleSheet.create({
     },
     totalCell: {
         flex: 1,
-        fontSize: 8,
+        fontSize: 7, // Reducido de 8 a 7
         textAlign: 'right',
         color: '#000000',
         paddingLeft: 1,
         paddingRight: 1,
     },
     headerCell: {
-        fontSize: 8,
+        fontSize: 7, // Reducido de 8 a 7
         fontWeight: 'bold',
         color: '#000000',
         paddingLeft: 1,
         paddingRight: 1,
     },
     totals: {
-        marginTop: 3,
-        padding: 2,
+        marginTop: 2, // Reducido de 3 a 2
+        padding: 1, // Reducido de 2 a 1
     },
     totalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 1,
+        marginBottom: 0.5, // Reducido de 1 a 0.5
     },
     totalLabel: {
-        fontSize: 10,
+        fontSize: 8, // Reducido de 10 a 8
         fontWeight: 'bold',
         color: '#000000',
     },
     totalValue: {
-        fontSize: 10,
+        fontSize: 8, // Reducido de 10 a 8
         fontWeight: 'bold',
         color: '#000000',
     },
     footer: {
-        marginTop: 3,
-        padding: 2,
+        marginTop: 2, // Reducido de 3 a 2
+        padding: 1, // Reducido de 2 a 1
     },
     footerText: {
         fontSize: 7,
@@ -158,29 +170,23 @@ const styles = StyleSheet.create({
         color: '#dc2626',
         fontStyle: 'italic',
     },
-    // Estilos para formato A5 (mitad de A4)
+    // Estilos para formato A5 (mitad de A4) - Sin bordes
     a5Container: {
         width: '100%',
-        height: '50%',
-        padding: 6,
-        borderStyle: 'solid',
-        borderWidth: 1,
-        borderColor: '#cccccc',
-        borderRadius: 4,
-        marginBottom: 4,
+        height: '48%',
+        padding: 4,
+        marginBottom: 2,
     },
     a5Top: {
-        borderBottomWidth: 2,
-        borderBottomColor: '#000000',
+        // Sin bordes
     },
     a5Bottom: {
-        borderTopWidth: 2,
-        borderTopColor: '#000000',
+        // Sin bordes
     },
     a5Separator: {
-        height: 2,
-        backgroundColor: '#000000',
-        marginVertical: 2,
+        height: 8,
+        backgroundColor: 'transparent',
+        marginVertical: 4,
     },
 });
 
@@ -292,44 +298,40 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
         </View>
     );
 
-    // Agrupar pedidos de dos en dos, asegurando que no haya grupos vacíos
-    const groupedOrders = [];
-    for (let i = 0; i < orders.length; i += 2) {
-        const group = orders.slice(i, i + 2);
-        if (group.length > 0) {
-            groupedOrders.push(group);
-        }
+    // LÓGICA ULTRA SIMPLE: Solo pedidos válidos
+    const validOrders = orders.filter(order =>
+        order &&
+        order.id &&
+        order.items &&
+        order.items.length > 0
+    );
+
+    if (validOrders.length === 0) {
+        return null;
     }
 
-    // Si no hay pedidos, no generar PDF
-    if (orders.length === 0) {
-        return (
-            <Document>
-                <Page size="A4" style={styles.page}>
-                    <View style={styles.header}>
-                        <Text style={styles.title}>Mega Donut</Text>
-                        <Text style={styles.subtitle}>No hay pedidos para mostrar</Text>
-                    </View>
-                </Page>
-            </Document>
-        );
+    // Crear páginas: 2 pedidos por página
+    const pages = [];
+    for (let i = 0; i < validOrders.length; i += 2) {
+        const pageOrders = validOrders.slice(i, i + 2);
+        pages.push(pageOrders);
     }
 
     return (
         <Document>
-            {groupedOrders.map((orderGroup, pageIndex) => {
-                // Verificar que el grupo no esté vacío
-                if (!orderGroup || orderGroup.length === 0) {
+            {pages.map((pageOrders, pageIndex) => {
+                // Solo renderizar si la página tiene pedidos
+                if (!pageOrders || pageOrders.length === 0) {
                     return null;
                 }
 
                 return (
                     <Page key={pageIndex} size="A4" style={styles.page}>
-                        {/* Renderizar pedidos del grupo - cada uno en su mitad A5 con su propio header */}
-                        {orderGroup.map((order, orderIndex) => {
+                        {pageOrders.map((order, orderIndex) => {
                             if (!order) return null;
 
                             const client = clients.find(c => c.id === order.clientId);
+
                             return (
                                 <React.Fragment key={order.id}>
                                     <View style={[
@@ -338,13 +340,19 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
                                     ]}>
                                         {/* Header individual para cada pedido */}
                                         <View style={styles.header}>
-                                            <Text style={styles.title}>Mega Donut</Text>
-                                            <Text style={styles.subtitle}>Nota de Pedido</Text>
+                                            <Image
+                                                style={styles.logo}
+                                                src="/logo_empresa.png"
+                                            />
+                                            <View style={styles.headerText}>
+                                                <Text style={styles.title}>Mega Donut</Text>
+                                                <Text style={styles.subtitle}>Nota de Pedido</Text>
+                                            </View>
                                         </View>
 
                                         {renderOrder(order, client)}
                                     </View>
-                                    {orderIndex < orderGroup.length - 1 && (
+                                    {orderIndex < pageOrders.length - 1 && (
                                         <View style={styles.a5Separator} />
                                     )}
                                 </React.Fragment>
