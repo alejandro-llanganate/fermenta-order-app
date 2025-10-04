@@ -17,13 +17,10 @@ const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        paddingLeft: 30, // Padding de 30px a la izquierda (15 + 15)
-        paddingRight: 30, // Padding de 30px a la derecha (15 + 15)
-        paddingTop: 15, // Padding de 15px arriba
-        paddingBottom: 15, // Padding de 15px abajo
+        padding: 4, // Padding reducido para PDF individual
         fontFamily: 'Helvetica',
-        fontSize: 6,
-        lineHeight: 0.9,
+        fontSize: 3, // MUCHO más pequeño de 5 a 3
+        lineHeight: 0.7, // Reducido de 0.8 a 0.7
     },
     header: {
         textAlign: 'center',
@@ -34,26 +31,26 @@ const styles = StyleSheet.create({
         justifyContent: 'center', // Centrado
     },
     logo: {
-        width: 25, // Reducido para mantener proporción
-        height: 25, // Mismo valor que width para mantener proporción cuadrada
-        marginLeft: 8, // Aumentado el espacio entre texto y logo (a la derecha)
+        width: 20, // Más pequeño para PDF individual
+        height: 20, // Más pequeño para PDF individual
+        marginLeft: 6, // Reducido el espacio entre texto y logo
     },
     headerText: {
         flexDirection: 'column',
         alignItems: 'center',
     },
     title: {
-        fontSize: 10, // Aumentado de 9 a 10
+        fontSize: 6, // Reducido de 8 a 6
         fontWeight: 'bold',
-        marginBottom: 2, // Aumentado de 1 a 2 para más separación
+        marginBottom: 3, // Aumentado de 1 a 3 para más separación
         color: '#000000',
     },
     subtitle: {
-        fontSize: 8, // Aumentado de 7 a 8
+        fontSize: 4, // Reducido de 6 a 4
         fontWeight: 'bold',
         marginBottom: 0,
         color: '#000000',
-        paddingTop: 1, // Padding superior adicional para "Nota de Pedido"
+        paddingTop: 2, // Aumentado de 1 a 2 para más separación
     },
     orderNumberSection: {
         textAlign: 'center',
@@ -61,7 +58,7 @@ const styles = StyleSheet.create({
         padding: 1,
     },
     orderNumber: {
-        fontSize: 8,
+        fontSize: 3, // MUCHO más pequeño de 8 a 3
         fontWeight: 'bold',
         color: '#000000',
     },
@@ -76,14 +73,15 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     clientDetails: {
-        fontSize: 5,
+        fontSize: 4, // Mismo tamaño que footerText
         color: '#000000',
-        marginBottom: 0,
+        marginBottom: 2, // Aumentado de 0 a 2 para más separación entre líneas
+        lineHeight: 1.5, // Aumentado el interlineado
     },
     table: {
         width: '100%',
         borderStyle: 'solid',
-        borderWidth: 1,
+        borderWidth: 0.5, // MUCHO menos grueso de 1 a 0.5
         borderColor: '#000000',
         marginBottom: 1,
         paddingLeft: 4, // Aumentado de 3 a 4
@@ -91,20 +89,20 @@ const styles = StyleSheet.create({
     },
     tableHeader: {
         flexDirection: 'row',
-        borderBottomWidth: 1,
+        borderBottomWidth: 0.5, // MUCHO menos grueso de 1 a 0.5
         borderBottomColor: '#000000',
         padding: 1,
     },
     tableRow: {
         flexDirection: 'row',
-        borderBottomWidth: 1,
+        borderBottomWidth: 0.5, // MUCHO menos grueso de 1 a 0.5
         borderBottomColor: '#000000',
         padding: 1,
         minHeight: 8,
     },
     productCell: {
         flex: 2,
-        fontSize: 6, // Aumentado de 5 a 6
+        fontSize: 3, // MUCHO más pequeño de 4 a 3
         textAlign: 'left',
         color: '#000000',
         paddingLeft: 0,
@@ -112,7 +110,7 @@ const styles = StyleSheet.create({
     },
     quantityCell: {
         flex: 1,
-        fontSize: 6, // Aumentado de 5 a 6
+        fontSize: 3, // MUCHO más pequeño de 4 a 3
         textAlign: 'center',
         color: '#000000',
         paddingLeft: 0,
@@ -120,7 +118,7 @@ const styles = StyleSheet.create({
     },
     priceCell: {
         flex: 1,
-        fontSize: 6, // Aumentado de 5 a 6
+        fontSize: 3, // MUCHO más pequeño de 4 a 3
         textAlign: 'right',
         color: '#000000',
         paddingLeft: 0,
@@ -128,14 +126,14 @@ const styles = StyleSheet.create({
     },
     totalCell: {
         flex: 1,
-        fontSize: 6, // Aumentado de 5 a 6
+        fontSize: 3, // MUCHO más pequeño de 4 a 3
         textAlign: 'right',
         color: '#000000',
         paddingLeft: 0,
         paddingRight: 0,
     },
     headerCell: {
-        fontSize: 6, // Aumentado de 5 a 6
+        fontSize: 3, // MUCHO más pequeño de 4 a 3
         fontWeight: 'bold',
         color: '#000000',
         paddingLeft: 0,
@@ -151,12 +149,12 @@ const styles = StyleSheet.create({
         marginBottom: 0,
     },
     totalLabel: {
-        fontSize: 7, // Aumentado de 6 a 7
+        fontSize: 3, // MUCHO más pequeño de 5 a 3
         fontWeight: 'bold',
         color: '#000000',
     },
     totalValue: {
-        fontSize: 7, // Aumentado de 6 a 7
+        fontSize: 3, // MUCHO más pequeño de 5 a 3
         fontWeight: 'bold',
         color: '#000000',
     },
