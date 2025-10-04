@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
         padding: 1,
     },
     legalText: {
-        fontSize: 5, // Letra pequeña
+        fontSize: 7, // Aumentado para mejor legibilidad
         color: '#000000',
         textAlign: 'center',
         lineHeight: 1.1,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     },
     specialPrice: {
         fontSize: 6,
-        color: '#dc2626',
+        color: '#000000',
         fontStyle: 'italic',
     },
     // Estilos para formato A5 (mitad de A4) - Sin bordes
@@ -369,7 +369,7 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
                                                 <Text style={styles.subtitle}>Nota de Pedido</Text>
                                             </View>
                                             <Image
-                                                style={styles.logo}
+                                                style={[styles.logo, { filter: 'grayscale(100%) brightness(0) invert(1)' }]}
                                                 src="/logo_empresa.png"
                                             />
                                         </View>

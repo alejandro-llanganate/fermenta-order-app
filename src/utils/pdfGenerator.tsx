@@ -213,7 +213,7 @@ export const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, c
                         <Text style={styles.subtitle}>Nota de Pedido</Text>
                     </View>
                     <Image
-                        style={styles.logo}
+                        style={[styles.logo, { filter: 'grayscale(100%) brightness(0) invert(1)' }]}
                         src="/logo_empresa.png"
                     />
                 </View>
@@ -293,7 +293,7 @@ export const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, c
                     <Text style={styles.footerText}>
                         Gracias por su preferencia - Mega Donut
                     </Text>
-                    <Text style={[styles.footerText, { color: '#dc2626', marginTop: 1 }]}>
+                    <Text style={[styles.footerText, { color: '#000000', marginTop: 1 }]}>
                         En caso de incumplimiento en el pago, el cliente se someterá a las acciones legales correspondientes.
                     </Text>
                 </View>

@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     finalTotalProductHeaderNaranja: {
         fontSize: 8,
         fontWeight: 'bold',
-        color: '#dc2626', // Rojo más intenso para naranja
+        color: '#000000', // Negro para mejor legibilidad
         textAlign: 'center',
     },
     finalTotalDataCell: {
