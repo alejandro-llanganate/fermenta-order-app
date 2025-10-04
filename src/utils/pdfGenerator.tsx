@@ -17,7 +17,10 @@ const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 8, // Aumentado de 4 a 8 para más padding lateral
+        paddingLeft: 30, // Padding de 30px a la izquierda (15 + 15)
+        paddingRight: 30, // Padding de 30px a la derecha (15 + 15)
+        paddingTop: 15, // Padding de 15px arriba
+        paddingBottom: 15, // Padding de 15px abajo
         fontFamily: 'Helvetica',
         fontSize: 6,
         lineHeight: 0.9,
@@ -31,9 +34,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center', // Centrado
     },
     logo: {
-        width: 35, // Ajustado para que quepa mejor en el formato pequeño
-        height: 20, // Ajustado para que quepa mejor en el formato pequeño
-        marginLeft: 6, // Espacio entre texto y logo (a la derecha)
+        width: 25, // Reducido para mantener proporción
+        height: 25, // Mismo valor que width para mantener proporción cuadrada
+        marginLeft: 8, // Aumentado el espacio entre texto y logo (a la derecha)
     },
     headerText: {
         flexDirection: 'column',
@@ -206,14 +209,14 @@ export const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, c
             <Page size={[210, 140]} style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Image
-                        style={styles.logo}
-                        src="/logo_empresa.png"
-                    />
                     <View style={styles.headerText}>
                         <Text style={styles.title}>Mega Donut</Text>
                         <Text style={styles.subtitle}>Nota de Pedido</Text>
                     </View>
+                    <Image
+                        style={styles.logo}
+                        src="/logo_empresa.png"
+                    />
                 </View>
 
                 {/* Pedido # */}

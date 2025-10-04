@@ -18,7 +18,10 @@ const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 10, // Aumentado de 6 a 10 para más padding lateral
+        paddingLeft: 30, // Padding de 30px a la izquierda (15 + 15)
+        paddingRight: 30, // Padding de 30px a la derecha (15 + 15)
+        paddingTop: 15, // Padding de 15px arriba
+        paddingBottom: 15, // Padding de 15px abajo
         fontFamily: 'Helvetica',
         fontSize: 8,
         lineHeight: 1.1,
@@ -32,9 +35,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center', // Centrado
     },
     logo: {
-        width: 50, // Ajustado para que quepa mejor
-        height: 30, // Ajustado para que quepa mejor
-        marginLeft: 8, // Espacio entre texto y logo (a la derecha)
+        width: 40, // Reducido para mantener proporción
+        height: 40, // Mismo valor que width para mantener proporción cuadrada
+        marginLeft: 12, // Aumentado el espacio entre texto y logo (a la derecha)
     },
     headerText: {
         flexDirection: 'column',
@@ -343,14 +346,14 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
                                     ]}>
                                         {/* Header individual para cada pedido */}
                                         <View style={styles.header}>
-                                            <Image
-                                                style={styles.logo}
-                                                src="/logo_empresa.png"
-                                            />
                                             <View style={styles.headerText}>
                                                 <Text style={styles.title}>Mega Donut</Text>
                                                 <Text style={styles.subtitle}>Nota de Pedido</Text>
                                             </View>
+                                            <Image
+                                                style={styles.logo}
+                                                src="/logo_empresa.png"
+                                            />
                                         </View>
 
                                         {renderOrder(order, client)}
