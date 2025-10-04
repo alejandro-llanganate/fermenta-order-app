@@ -213,7 +213,7 @@ export const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, c
                         <Text style={styles.subtitle}>Nota de Pedido</Text>
                     </View>
                     <Image
-                        style={[styles.logo, { filter: 'grayscale(100%) brightness(0) invert(1)' }]}
+                        style={styles.logo}
                         src="/logo_empresa.png"
                     />
                 </View>
