@@ -17,7 +17,7 @@ const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 4,
+        padding: 8, // Aumentado de 4 a 8 para más padding lateral
         fontFamily: 'Helvetica',
         fontSize: 6,
         lineHeight: 0.9,
@@ -26,30 +26,31 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 3,
         paddingBottom: 1,
-        flexDirection: 'column',
+        flexDirection: 'row', // Cambiado de column a row para logo al lado
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center', // Centrado
     },
     logo: {
-        width: 40,
-        height: 25,
-        marginBottom: 5,
+        width: 35, // Ajustado para que quepa mejor en el formato pequeño
+        height: 20, // Ajustado para que quepa mejor en el formato pequeño
+        marginLeft: 6, // Espacio entre texto y logo (a la derecha)
     },
     headerText: {
         flexDirection: 'column',
         alignItems: 'center',
     },
     title: {
-        fontSize: 9,
+        fontSize: 10, // Aumentado de 9 a 10
         fontWeight: 'bold',
-        marginBottom: 1,
+        marginBottom: 2, // Aumentado de 1 a 2 para más separación
         color: '#000000',
     },
     subtitle: {
-        fontSize: 7,
+        fontSize: 8, // Aumentado de 7 a 8
         fontWeight: 'bold',
         marginBottom: 0,
         color: '#000000',
+        paddingTop: 1, // Padding superior adicional para "Nota de Pedido"
     },
     orderNumberSection: {
         textAlign: 'center',
@@ -82,6 +83,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#000000',
         marginBottom: 1,
+        paddingLeft: 4, // Aumentado de 3 a 4
+        paddingRight: 4, // Aumentado de 3 a 4
     },
     tableHeader: {
         flexDirection: 'row',
@@ -98,7 +101,7 @@ const styles = StyleSheet.create({
     },
     productCell: {
         flex: 2,
-        fontSize: 5,
+        fontSize: 6, // Aumentado de 5 a 6
         textAlign: 'left',
         color: '#000000',
         paddingLeft: 0,
@@ -106,7 +109,7 @@ const styles = StyleSheet.create({
     },
     quantityCell: {
         flex: 1,
-        fontSize: 5,
+        fontSize: 6, // Aumentado de 5 a 6
         textAlign: 'center',
         color: '#000000',
         paddingLeft: 0,
@@ -114,7 +117,7 @@ const styles = StyleSheet.create({
     },
     priceCell: {
         flex: 1,
-        fontSize: 5,
+        fontSize: 6, // Aumentado de 5 a 6
         textAlign: 'right',
         color: '#000000',
         paddingLeft: 0,
@@ -122,14 +125,14 @@ const styles = StyleSheet.create({
     },
     totalCell: {
         flex: 1,
-        fontSize: 5,
+        fontSize: 6, // Aumentado de 5 a 6
         textAlign: 'right',
         color: '#000000',
         paddingLeft: 0,
         paddingRight: 0,
     },
     headerCell: {
-        fontSize: 5,
+        fontSize: 6, // Aumentado de 5 a 6
         fontWeight: 'bold',
         color: '#000000',
         paddingLeft: 0,
@@ -145,12 +148,12 @@ const styles = StyleSheet.create({
         marginBottom: 0,
     },
     totalLabel: {
-        fontSize: 6,
+        fontSize: 7, // Aumentado de 6 a 7
         fontWeight: 'bold',
         color: '#000000',
     },
     totalValue: {
-        fontSize: 6,
+        fontSize: 7, // Aumentado de 6 a 7
         fontWeight: 'bold',
         color: '#000000',
     },
