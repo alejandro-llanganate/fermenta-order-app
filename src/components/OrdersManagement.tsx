@@ -1945,44 +1945,51 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
             `}</style>
             <div className="flex-1 p-6">
                 <div className="max-w-7xl mx-auto">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center space-x-4">
-                            <button
-                                onClick={onBack}
-                                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-colors"
-                            >
-                                <ArrowLeft className="h-5 w-5" />
-                            </button>
-                            <div className="flex items-center space-x-3">
-                                <ShoppingCart className="h-8 w-8 text-orange-500" />
-                                <h1 className="text-2xl font-bold text-gray-900">Gestión de pedidos</h1>
+                    {/* Header responsive */}
+                    <div className="mb-6">
+                        {/* Título y botón de regreso */}
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center space-x-4">
+                                <button
+                                    onClick={onBack}
+                                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg transition-colors"
+                                >
+                                    <ArrowLeft className="h-5 w-5" />
+                                </button>
+                                <div className="flex items-center space-x-3">
+                                    <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500" />
+                                    <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Gestión de pedidos</h1>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex items-center space-x-3">
+
+                        {/* Botones de acción - Responsive */}
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                             <button
                                 onClick={() => setShowCreateModal(true)}
-                                className="flex items-center space-x-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                                className="flex items-center justify-center space-x-2 bg-orange-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm sm:text-base"
                             >
                                 <Plus className="h-4 w-4" />
-                                <span>Nuevo pedido</span>
+                                <span className="hidden sm:inline">Nuevo pedido</span>
+                                <span className="sm:hidden">Nuevo</span>
                             </button>
                             <button
                                 onClick={handleRefresh}
-                                className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                                className="flex items-center justify-center space-x-2 bg-blue-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
                                 title="Actualizar datos de la tabla"
                             >
                                 <RefreshCw className="h-4 w-4" />
-                                <span>Refrescar</span>
+                                <span className="hidden sm:inline">Refrescar</span>
+                                <span className="sm:hidden">Actualizar</span>
                             </button>
                             <button
                                 onClick={() => setShowRoutePreviewModal(true)}
-                                className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                                className="flex items-center justify-center space-x-2 bg-blue-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
                             >
                                 <MapPinIcon className="h-4 w-4" />
-                                <span>Guías de rutas</span>
+                                <span className="hidden sm:inline">Guías de rutas</span>
+                                <span className="sm:hidden">Rutas</span>
                             </button>
-
                         </div>
                     </div>
 
@@ -1991,34 +1998,36 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                         <div className="space-y-4">
                             {/* Primera fila: Búsqueda y Ruta */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2">
                                     <div className="relative flex-1">
                                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                         <input
                                             type="text"
-                                            placeholder="Buscar por número de pedido, cliente, teléfono, estado o código de ruta..."
+                                            placeholder="Buscar pedido, cliente, teléfono..."
                                             value={tempSearchTerm}
                                             onChange={(e) => setTempSearchTerm(e.target.value)}
                                             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700"
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-700 text-sm sm:text-base"
                                         />
                                     </div>
-                                    <button
-                                        onClick={handleSearch}
-                                        className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors flex items-center gap-2"
-                                    >
-                                        <Search className="h-4 w-4" />
-                                        Buscar
-                                    </button>
-                                    {searchTerm && (
+                                    <div className="flex gap-2">
                                         <button
-                                            onClick={handleClearSearch}
-                                            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors flex items-center gap-2"
+                                            onClick={handleSearch}
+                                            className="px-3 py-2 sm:px-4 sm:py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors flex items-center gap-2 text-sm sm:text-base"
                                         >
-                                            <X className="h-4 w-4" />
-                                            Limpiar
+                                            <Search className="h-4 w-4" />
+                                            <span className="hidden sm:inline">Buscar</span>
                                         </button>
-                                    )}
+                                        {searchTerm && (
+                                            <button
+                                                onClick={handleClearSearch}
+                                                className="px-3 py-2 sm:px-4 sm:py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors flex items-center gap-2 text-sm sm:text-base"
+                                            >
+                                                <X className="h-4 w-4" />
+                                                <span className="hidden sm:inline">Limpiar</span>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                                 <div>
                                     <select
@@ -2150,10 +2159,10 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                 }`}
                             onScroll={checkScrollButtons}
                         >
-                            <table className="min-w-full divide-y divide-gray-200 zoom-friendly-table">
+                            <table className="min-w-full divide-y divide-gray-200 zoom-friendly-table text-xs sm:text-sm">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
@@ -2161,28 +2170,28 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                 className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                                             />
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Número de pedido
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Cliente
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Ruta
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Fecha de registro
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Fecha de entrega
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Estado
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-2 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Total
                                         </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-2 sm:px-4 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Opciones
                                         </th>
                                     </tr>
@@ -2272,24 +2281,26 @@ export default function OrdersManagement({ onBack }: OrdersManagementProps) {
                                                 <div className="flex items-center justify-end space-x-3">
                                                     <button
                                                         onClick={() => handlePrint(order)}
-                                                        className="text-purple-600 hover:text-purple-900 p-1 rounded"
+                                                        className="text-purple-600 hover:text-purple-900 p-1 rounded text-xs sm:text-sm"
                                                         title="Imprimir pedido"
                                                     >
-                                                        <Printer className="h-4 w-4" />
+                                                        <Printer className="h-3 w-3 sm:h-4 sm:w-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => openEditModal(order)}
-                                                        className="text-blue-600 hover:text-blue-900 px-3 py-1 rounded text-xs font-medium border border-blue-200 hover:bg-blue-50"
+                                                        className="text-blue-600 hover:text-blue-900 px-2 py-1 sm:px-3 sm:py-1 rounded text-xs font-medium border border-blue-200 hover:bg-blue-50"
                                                         title="Editar pedido"
                                                     >
-                                                        Editar
+                                                        <span className="hidden sm:inline">Editar</span>
+                                                        <span className="sm:hidden">Ed</span>
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteOrder(order.id)}
-                                                        className="text-red-600 hover:text-red-900 px-3 py-1 rounded text-xs font-medium border border-red-200 hover:bg-red-50"
+                                                        className="text-red-600 hover:text-red-900 px-2 py-1 sm:px-3 sm:py-1 rounded text-xs font-medium border border-red-200 hover:bg-red-50"
                                                         title="Eliminar pedido"
                                                     >
-                                                        Eliminar
+                                                        <span className="hidden sm:inline">Eliminar</span>
+                                                        <span className="sm:hidden">Del</span>
                                                     </button>
                                                 </div>
                                             </td>
