@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
         padding: 1,
     },
     legalText: {
-        fontSize: 7, // Aumentado para mejor legibilidad
+        fontSize: 8, // Aumentado aún más para mejor legibilidad
         color: '#000000',
         textAlign: 'center',
         lineHeight: 1.1,
