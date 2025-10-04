@@ -171,6 +171,17 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 1.1,
     },
+    legalNotice: {
+        marginTop: 2,
+        padding: 1,
+    },
+    legalText: {
+        fontSize: 5, // Letra pequeña
+        color: '#000000',
+        textAlign: 'center',
+        lineHeight: 1.1,
+        fontStyle: 'italic',
+    },
     specialPrice: {
         fontSize: 6,
         color: '#dc2626',
@@ -301,6 +312,13 @@ const BulkOrderNotesPDF: React.FC<BulkOrderNotesPDFProps> = ({
                     </Text>
                 </View>
             )}
+
+            {/* Aviso Legal */}
+            <View style={styles.legalNotice}>
+                <Text style={styles.legalText}>
+                    En caso de incumplimiento en el pago, el cliente se someterá a las acciones legales correspondientes.
+                </Text>
+            </View>
         </View>
     );
 
