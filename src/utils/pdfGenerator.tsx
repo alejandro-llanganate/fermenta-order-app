@@ -12,15 +12,16 @@ Font.register({
     ]
 });
 
-// Estilos para el PDF - Optimizados para 14cm x 21cm - ULTRA COMPACTO
+// Estilos para el PDF - Optimizados para A4 con contenido en primera mitad (A5)
 const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        padding: 15, // Padding adecuado para A5
+        padding: 15, // Padding adecuado para A4
         fontFamily: 'Helvetica',
-        fontSize: 8, // Aumentado para A5
-        lineHeight: 1.1, // Aumentado para A5
+        fontSize: 8,
+        lineHeight: 1.1,
+        height: '50%', // Limitar altura a la primera mitad de A4 (equivalente a A5)
     },
     header: {
         textAlign: 'center',
@@ -31,26 +32,26 @@ const styles = StyleSheet.create({
         justifyContent: 'center', // Centrado
     },
     logo: {
-        width: 40, // Aumentado para A5
-        height: 40, // Aumentado para A5
-        marginLeft: 8, // Espacio entre texto y logo
+        width: 50, // Aumentado para A4
+        height: 50, // Aumentado para A4
+        marginLeft: 10, // Espacio entre texto y logo
     },
     headerText: {
         flexDirection: 'column',
         alignItems: 'center',
     },
     title: {
-        fontSize: 12, // Aumentado para A5
+        fontSize: 14, // Aumentado para A4
         fontWeight: 'bold',
-        marginBottom: 3, // Aumentado de 1 a 3 para más separación
+        marginBottom: 4, // Aumentado para A4
         color: '#000000',
     },
     subtitle: {
-        fontSize: 10, // Aumentado para A5
+        fontSize: 12, // Aumentado para A4
         fontWeight: 'bold',
         marginBottom: 0,
         color: '#000000',
-        paddingTop: 2, // Aumentado de 1 a 2 para más separación
+        paddingTop: 3, // Aumentado para A4
     },
     orderNumberSection: {
         textAlign: 'center',
@@ -58,7 +59,7 @@ const styles = StyleSheet.create({
         padding: 1,
     },
     orderNumber: {
-        fontSize: 10, // Aumentado para A5
+        fontSize: 12, // Aumentado para A4
         fontWeight: 'bold',
         color: '#000000',
     },
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
         color: '#000000',
     },
     clientDetails: {
-        fontSize: 8, // Aumentado para A5
+        fontSize: 10, // Aumentado para A4
         color: '#000000',
         marginBottom: 2, // Aumentado de 0 a 2 para más separación entre líneas
         lineHeight: 1.5, // Aumentado el interlineado
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
     },
     productCell: {
         flex: 2,
-        fontSize: 7, // Aumentado para A5
+        fontSize: 9, // Aumentado para A4
         textAlign: 'left',
         color: '#000000',
         paddingLeft: 0,
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
     },
     quantityCell: {
         flex: 1,
-        fontSize: 7, // Aumentado para A5
+        fontSize: 9, // Aumentado para A4
         textAlign: 'center',
         color: '#000000',
         paddingLeft: 0,
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     },
     priceCell: {
         flex: 1,
-        fontSize: 7, // Aumentado para A5
+        fontSize: 9, // Aumentado para A4
         textAlign: 'right',
         color: '#000000',
         paddingLeft: 0,
@@ -126,14 +127,14 @@ const styles = StyleSheet.create({
     },
     totalCell: {
         flex: 1,
-        fontSize: 7, // Aumentado para A5
+        fontSize: 9, // Aumentado para A4
         textAlign: 'right',
         color: '#000000',
         paddingLeft: 0,
         paddingRight: 0,
     },
     headerCell: {
-        fontSize: 7, // Aumentado para A5
+        fontSize: 9, // Aumentado para A4
         fontWeight: 'bold',
         color: '#000000',
         paddingLeft: 0,
@@ -149,12 +150,12 @@ const styles = StyleSheet.create({
         marginBottom: 0,
     },
     totalLabel: {
-        fontSize: 8, // Aumentado para A5
+        fontSize: 10, // Aumentado para A4
         fontWeight: 'bold',
         color: '#000000',
     },
     totalValue: {
-        fontSize: 8, // Aumentado para A5
+        fontSize: 10, // Aumentado para A4
         fontWeight: 'bold',
         color: '#000000',
     },
@@ -163,23 +164,23 @@ const styles = StyleSheet.create({
         padding: 1,
     },
     footerText: {
-        fontSize: 8, // Aumentado para A5
+        fontSize: 10, // Aumentado para A4
         color: '#000000',
         textAlign: 'center',
-        lineHeight: 1.1, // Aumentado para A5
+        lineHeight: 1.2, // Aumentado para A4
     },
     notes: {
         marginBottom: 1,
         padding: 1,
     },
     notesTitle: {
-        fontSize: 6,
+        fontSize: 8, // Aumentado para A4
         fontWeight: 'bold',
         marginBottom: 0,
         color: '#000000',
     },
     notesText: {
-        fontSize: 5,
+        fontSize: 7, // Aumentado para A4
         color: '#000000',
     },
 });
@@ -204,7 +205,7 @@ export const IndividualOrderPDF: React.FC<IndividualOrderPDFProps> = ({ order, c
 
     return (
         <Document>
-            <Page size="A5" orientation="landscape" style={styles.page}>
+            <Page size="A4" orientation="portrait" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.headerText}>
